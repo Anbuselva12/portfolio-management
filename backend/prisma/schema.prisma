@@ -1,0 +1,368 @@
+// FinFamily — Prisma Schema (Story 1 & Story 2)
+// Prisma 5.22.0 / SQLite (dev) — no named FK map: on relations (SQLite unsupported)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Family ──────────────────────────────────────────────────────────────────
+
+model Family {
+  id              String   @id @default(uuid())
+  name            String
+  base_currency   String   @default("INR")
+  country         String   @default("IN")
+  join_policy     String   @default("approval_required") // open | approval_required
+  is_discoverable Boolean  @default(false)
+  created_at      DateTime @default(now())
+
+  members          Member[]
+  assets           Asset[]
+  income_entries   IncomeEntry[]
+  expense_cats     ExpenseCategory[]
+  expense_entries  ExpenseEntry[]
+  insurance_pols   InsurancePolicy[]
+  loans            Loan[]
+  audit_logs       AuditLogEntry[]
+  currency_rates   CurrencyRate[]
+  suggestion_snaps SuggestionSnapshot[]
+  strategy_weights String?  // JSON stringified: { weightRate, weightBalance, weightFlexibility, weightPenalty, weightTenure, mode }
+  income_receipts  MonthlyIncomeReceipt[]
+}
+
+// ─── Member ───────────────────────────────────────────────────────────────────
+
+model Member {
+  id                 String    @id @default(uuid())
+  family_id          String?
+  username           String    @unique
+  password_hash      String
+  display_name       String
+  role               String    @default("member") // admin | member
+  status             String    @default("unaffiliated") // unaffiliated | pending_approval | active | deactivated
+  is_active          Boolean   @default(true)
+  preferred_currency String    @default("INR")
+  created_at         DateTime  @default(now())
+  last_login_at      DateTime?
+
+  family           Family?              @relation(fields: [family_id], references: [id])
+  assets           Asset[]
+  income_entries   IncomeEntry[]
+  expense_entries  ExpenseEntry[]
+  insurance_pols   InsurancePolicy[]
+  loans            Loan[]
+  audit_logs       AuditLogEntry[]
+  refresh_tokens   RefreshToken[]
+  suggestion_snaps SuggestionSnapshot[]
+  income_receipts  MonthlyIncomeReceipt[]
+}
+
+// ─── Asset ────────────────────────────────────────────────────────────────────
+
+model Asset {
+  id                 String    @id @default(uuid())
+  member_id          String
+  family_id          String
+  type               String    // bank_balance | fd | rd | mutual_fund | stocks | pf | nps | gold | real_estate | other
+  name               String
+  currency           String    @default("INR")
+  current_value      Decimal
+  principal_invested Decimal?
+  maturity_date      DateTime?
+  interest_rate      Decimal?
+  notes              String?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+
+  family Family @relation(fields: [family_id], references: [id])
+  member Member @relation(fields: [member_id], references: [id])
+}
+
+// ─── IncomeEntry ──────────────────────────────────────────────────────────────
+
+model IncomeEntry {
+  id                      String    @id @default(uuid())
+  member_id               String
+  family_id               String
+  type                    String    // salary | rent | dividend | interest | freelance | other
+  label                   String
+  amount                  Decimal
+  currency                String    @default("INR")
+  recurrence              String    // recurring_monthly | one_off
+  start_date              DateTime
+  end_date                DateTime?
+  status                  String    @default("active") // active | stopped | superseded
+  superseded_by_id        String?
+  last_amount_change_date DateTime?
+  reminders_enabled       Boolean   @default(true)
+  due_day_of_month        Int?      @default(1)
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
+
+  superseded_by IncomeEntry?           @relation("SupersededBy", fields: [superseded_by_id], references: [id])
+  supersedes    IncomeEntry[]          @relation("SupersededBy")
+  family        Family                 @relation(fields: [family_id], references: [id])
+  member        Member                 @relation(fields: [member_id], references: [id])
+  receipts      MonthlyIncomeReceipt[]
+}
+
+// ─── ExpenseCategory ─────────────────────────────────────────────────────────
+
+model ExpenseCategory {
+  id         String   @id @default(uuid())
+  family_id  String
+  name       String
+  icon       String?
+  color      String?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  family          Family            @relation(fields: [family_id], references: [id])
+  expense_entries ExpenseEntry[]
+  insurance_pols  InsurancePolicy[]
+}
+
+// ─── ExpenseEntry ─────────────────────────────────────────────────────────────
+
+model ExpenseEntry {
+  id             String    @id @default(uuid())
+  member_id      String
+  family_id      String
+  category_id    String
+  amount         Decimal
+  currency       String    @default("INR")
+  date           DateTime
+  notes          String?
+  source         String    @default("manual") // manual | insurance_auto | loan_emi_auto
+  loan_id           String?
+  installment_id    String?
+  is_paid           Boolean   @default(true)
+  is_recurring      Boolean   @default(false)
+  reminders_enabled Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+
+  member   Member          @relation(fields: [member_id], references: [id])
+  family   Family          @relation(fields: [family_id], references: [id])
+  category ExpenseCategory @relation(fields: [category_id], references: [id])
+}
+
+// ─── InsurancePolicy ─────────────────────────────────────────────────────────
+
+model InsurancePolicy {
+  id                 String    @id @default(uuid())
+  member_id          String
+  family_id          String
+  policy_type        String    // life | health | vehicle | home | other
+  provider           String
+  policy_number      String
+  sum_assured        Decimal
+  premium_amount     Decimal
+  premium_frequency  String    // monthly | quarterly | annual
+  next_due_date      DateTime
+  linked_category_id String?
+  status             String    @default("active") // active | lapsed | matured
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+
+  member          Member           @relation(fields: [member_id], references: [id])
+  family          Family           @relation(fields: [family_id], references: [id])
+  linked_category ExpenseCategory? @relation(fields: [linked_category_id], references: [id])
+}
+
+// ─── Loan ─────────────────────────────────────────────────────────────────────
+
+model Loan {
+  id                        String    @id @default(uuid())
+  member_id                 String
+  family_id                 String
+  name                      String    @default("Loan")
+  place_or_purpose          String?
+  comments                  String?
+  emi_reminders_enabled     Boolean   @default(true)
+  type                      String    // home | car | personal | jewel | education | business | gold | other
+  lender                    String
+  currency                  String    @default("INR")
+  principal                 Decimal
+  interest_type             String    @default("reducing_compound") // reducing_compound | flat_simple
+  compounding_frequency     String    @default("monthly") // monthly | daily
+  interest_rate             Decimal   // annual percentage e.g. 8.5
+  tenure_months             Int
+  start_date                DateTime
+  emi_amount                Decimal
+  user_emi_input            Decimal?
+  emi_type                  String    @default("fixed") // fixed | flexible
+  prepayment_penalty_type   String    @default("none") // none | percentage_of_prepayment | fixed_amount
+  prepayment_penalty_value  Decimal?
+  country_rule_set          String    @default("IN")
+  status                    String    @default("active") // active | paid_off | defaulted
+  discrepancy_flag          Boolean   @default(false)
+  discrepancy_details       String?   // JSON stringified: { calculatedEmi, userEmi, diffPct, impliedRate }
+  created_at                DateTime  @default(now())
+  updated_at                DateTime  @updatedAt
+  deleted_at                DateTime?
+
+  family       Family                 @relation(fields: [family_id], references: [id])
+  member       Member                 @relation(fields: [member_id], references: [id])
+  schedule     RepaymentInstallment[]
+  prepayments  PrepaymentRecord[]
+  rate_revisions RateRevisionRecord[]
+}
+
+// ─── RepaymentInstallment ─────────────────────────────────────────────────────
+
+model RepaymentInstallment {
+  id                   String    @id @default(uuid())
+  loan_id              String
+  installment_number   Int
+  due_date             DateTime
+  opening_balance      Decimal
+  emi_amount           Decimal
+  principal_component  Decimal
+  interest_component   Decimal
+  closing_balance      Decimal
+  is_paid              Boolean   @default(false)
+  paid_date            DateTime?
+  is_manually_edited   Boolean   @default(false)
+  notes                String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  loan Loan @relation(fields: [loan_id], references: [id])
+}
+
+// ─── PrepaymentRecord ─────────────────────────────────────────────────────────
+
+model PrepaymentRecord {
+  id                   String    @id @default(uuid())
+  loan_id              String
+  amount               Decimal
+  date                 DateTime
+  mode                 String    // reduce_tenure | reduce_emi
+  penalty_amount       Decimal   @default(0)
+  accrued_interest     Decimal   @default(0)
+  total_paid           Decimal?
+  interest_saved       Decimal   @default(0)
+  previous_payoff_date DateTime?
+  new_payoff_date      DateTime?
+  previous_emi         Decimal?
+  new_emi              Decimal?
+  notes                String?
+  created_at           DateTime  @default(now())
+
+  loan Loan @relation(fields: [loan_id], references: [id])
+}
+
+// ─── RateRevisionRecord ───────────────────────────────────────────────────────
+
+model RateRevisionRecord {
+  id                   String    @id @default(uuid())
+  loan_id              String
+  effective_date       DateTime
+  old_rate             Decimal
+  new_rate             Decimal
+  policy               String    // keep_emi | keep_tenure
+  old_tenure_months    Int
+  new_tenure_months    Int
+  old_emi              Decimal
+  new_emi              Decimal
+  interest_saved       Decimal   @default(0)
+  notes                String?
+  created_at           DateTime  @default(now())
+
+  loan Loan @relation(fields: [loan_id], references: [id])
+}
+
+// ─── AuditLogEntry ────────────────────────────────────────────────────────────
+
+model AuditLogEntry {
+  id            String   @id @default(uuid())
+  family_id     String?
+  member_id     String?
+  entity_type   String
+  entity_id     String
+  action        String   // create | update | delete | restore | login | password_reset | approve | reject
+  field_changes String?  // JSON stringified: { field: { old, new } }
+  timestamp     DateTime @default(now())
+
+  family Family? @relation(fields: [family_id], references: [id])
+  member Member? @relation(fields: [member_id], references: [id])
+}
+
+// ─── RefreshToken ─────────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  member_id  String
+  token_hash String
+  expires_at DateTime
+  created_at DateTime @default(now())
+  revoked    Boolean  @default(false)
+
+  member Member @relation(fields: [member_id], references: [id])
+}
+
+// ─── CurrencyRate ─────────────────────────────────────────────────────────────
+
+model CurrencyRate {
+  id            String   @id @default(uuid())
+  family_id     String
+  from_currency String
+  to_currency   String
+  rate          Decimal
+  updated_at    DateTime @updatedAt
+  created_at    DateTime @default(now())
+
+  family Family @relation(fields: [family_id], references: [id])
+
+  @@unique([family_id, from_currency, to_currency])
+}
+
+// ─── SuggestionSnapshot ───────────────────────────────────────────────────────
+
+model SuggestionSnapshot {
+  id            String   @id @default(uuid())
+  family_id     String
+  member_id     String
+  strategy_name String   // avalanche | snowball | custom_weighted | ai_suggestion
+  surplus       Decimal
+  allocations   String   // JSON stringified: [{ loan_id, extra_amount }]
+  metrics       String   // JSON stringified: { monthsToDebtFree, interestSaved, payoffDate }
+  created_at    DateTime @default(now())
+
+  family Family @relation(fields: [family_id], references: [id])
+  member Member @relation(fields: [member_id], references: [id])
+}
+
+// ─── MonthlyIncomeReceipt (Actuals & Discrepancies) ─────────────────────────
+
+model MonthlyIncomeReceipt {
+  id               String   @id @default(uuid())
+  income_id        String
+  family_id        String
+  member_id        String
+  year_month       String   // e.g. "2026-09"
+  scheduled_amount Decimal
+  received_amount  Decimal
+  status           String   @default("received") // received | skipped
+  received_date    DateTime @default(now())
+  notes            String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  income IncomeEntry @relation(fields: [income_id], references: [id])
+  family Family      @relation(fields: [family_id], references: [id])
+  member Member      @relation(fields: [member_id], references: [id])
+
+  @@unique([income_id, year_month])
+}
+

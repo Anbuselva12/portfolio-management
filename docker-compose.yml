@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: finfamily_backend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - STORAGE_MODE=prisma
+      - JWT_ACCESS_SECRET=your-super-secret-jwt-key-min-32-chars-long
+      - JWT_ACCESS_EXPIRES_IN=15m
+      - JWT_REFRESH_SECRET=your-refresh-secret-jwt-key-min-32-chars-long
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=gemini-2.5-flash
+      - FRONTEND_URL=http://localhost:5173
+    volumes:
+      - backend_data:/app/prisma
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: finfamily_frontend
+    restart: unless-stopped
+    ports:
+      - '5173:80'
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
+
