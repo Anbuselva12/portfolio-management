@@ -41,6 +41,9 @@ export const StrategyComparisonPage: React.FC = () => {
   // Prepayment Mode: one_off_lump_sum vs recurring_monthly
   const [prepaymentMode, setPrepaymentMode] = useState<'one_off_lump_sum' | 'recurring_monthly'>('one_off_lump_sum');
 
+  // AI Advisor on-demand toggle
+  const [includeAi, setIncludeAi] = useState<boolean>(false);
+
   // Custom weights
   const [customWeights, setCustomWeights] = useState<CustomWeights>({
     weightRate: 40,
@@ -64,7 +67,7 @@ export const StrategyComparisonPage: React.FC = () => {
     setIsLoading(true);
     try {
       const [compRes, snapRes] = await Promise.all([
-        strategiesApi.compare({ customWeights, prepaymentMode: 'one_off_lump_sum' }),
+        strategiesApi.compare({ customWeights, prepaymentMode: 'one_off_lump_sum', includeAi: false }),
         strategiesApi.getLatestSnapshot(),
       ]);
       setData(compRes);
@@ -84,14 +87,17 @@ export const StrategyComparisonPage: React.FC = () => {
     overrideValue?: string,
     updatedWeights?: CustomWeights,
     modeOverride?: 'one_off_lump_sum' | 'recurring_monthly',
+    aiOverride?: boolean,
   ) => {
     setIsRecalculating(true);
     try {
       const targetMode = modeOverride || prepaymentMode;
+      const targetAi = aiOverride !== undefined ? aiOverride : includeAi;
       const res = await strategiesApi.compare({
         surplusOverride: overrideValue !== undefined ? overrideValue : surplusInput,
         prepaymentMode: targetMode,
         customWeights: updatedWeights || customWeights,
+        includeAi: targetAi,
       });
       setData(res);
       setSurplusInput(res.activeSurplus);
@@ -291,36 +297,123 @@ export const StrategyComparisonPage: React.FC = () => {
           </div>
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleRecalculate();
-          }}
-          className="flex items-center gap-2 self-start lg:self-center"
-        >
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">₹</span>
-            <input
-              type="number"
-              step="any"
-              min="0"
-              value={surplusInput}
-              onChange={(e) => setSurplusInput(e.target.value)}
-              placeholder="Custom amount..."
-              className="w-36 pl-7 pr-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            />
+        <div className="flex items-center gap-3 self-start lg:self-center flex-wrap">
+          {/* Ask AI Advisor On-Demand Button */}
+          <button
+            type="button"
+            onClick={() => {
+              const nextAi = !includeAi;
+              setIncludeAi(nextAi);
+              handleRecalculate(undefined, undefined, undefined, nextAi);
+            }}
+            disabled={isRecalculating}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border shadow-sm ${
+              includeAi
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-500'
+                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750'
+            }`}
+            title="Ask Google Gemini for personalized strategic allocation"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>{includeAi ? 'AI Advisor (Active)' : 'Ask Gemini AI'}</span>
+          </button>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleRecalculate();
+            }}
+            className="flex items-center gap-2"
+          >
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">₹</span>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                value={surplusInput}
+                onChange={(e) => setSurplusInput(e.target.value)}
+                placeholder="Custom amount..."
+                className="w-36 pl-7 pr-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isRecalculating}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 cursor-pointer shadow-sm"
+            >
+              {isRecalculating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              <span>Recalculate</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Executive Strategy Recommendation Banner */}
+      {data.summaryBanner && (
+        <div className="bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-teal-500/10 border border-emerald-500/30 dark:border-emerald-500/20 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-emerald-500/20 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-sm shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] uppercase tracking-wider font-extrabold text-emerald-800 dark:text-emerald-300">
+                    Executive Strategy Verdict
+                  </span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                    Leader: {data.summaryBanner.bestStrategyTitle}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  {data.summaryBanner.recommendationVerdict}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 text-xs font-mono self-start md:self-auto shrink-0">
+              <div className="text-right">
+                <div className="text-[10px] text-slate-400 uppercase font-sans font-semibold">Max Interest Saved</div>
+                <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                  +{formatINR(data.summaryBanner.maxInterestSaved)}
+                </div>
+              </div>
+              {data.summaryBanner.tenureReductionMonths > 0 && (
+                <div className="text-right pl-3 border-l border-slate-200 dark:border-slate-700">
+                  <div className="text-[10px] text-slate-400 uppercase font-sans font-semibold">Tenure Shaved</div>
+                  <div className="text-sm font-black text-cyan-600 dark:text-cyan-400">
+                    {data.summaryBanner.tenureReductionMonths} mos
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={isRecalculating}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 cursor-pointer shadow-sm"
-          >
-            {isRecalculating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-            <span>Recalculate</span>
-          </button>
-        </form>
-      </div>
+          {/* Quickest Loan Closure Milestone Callout */}
+          {data.summaryBanner.quickestLoanToClose && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white/80 dark:bg-slate-850/80 rounded-xl border border-emerald-200/80 dark:border-slate-800 text-xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  <strong>Fastest Debt Elimination:</strong> You can completely wipe out{' '}
+                  <strong className="text-slate-900 dark:text-white">
+                    {data.summaryBanner.quickestLoanToClose.name}
+                  </strong>{' '}
+                  (<span className="font-mono font-bold text-rose-500">{formatINR(data.summaryBanner.quickestLoanToClose.principal)}</span>) today with this {prepaymentMode === 'one_off_lump_sum' ? 'lump sum' : 'surplus'}!
+                </span>
+              </div>
+              <Link
+                to={`/loans/${data.summaryBanner.quickestLoanToClose.loanId}`}
+                className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 shrink-0"
+              >
+                <span>Execute Prepayment →</span>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Strategies Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

@@ -553,8 +553,24 @@ All strategies run against a parameterized simulation core supporting two distin
 2. **Strategy Allocation Policies:**
    - **Avalanche**: sort active loans by `interest_rate_annual` descending; allocate to top-rate loan first until paid off.
    - **Snowball**: sort by `current_outstanding_principal` ascending; allocate to smallest-balance loan first until paid off.
-   - **Custom-Weighted**: compute a composite score per loan (formula in FR-30.3); allocate surplus **proportionally to score** across top loans (or cascade to top-ranked loan).
-   - **AI Suggestion**: the anonymized loan portfolio snapshot along with the `prepayment_mode` is passed server-side to the **Google Gemini API** (`gemini-2.x`). The prompt instructs the model on whether this is a one-off windfall allocation or a monthly recurring surplus. Gemini returns `{allocations: [{loan_id, extra_amount}], rationale: string}`, which is fed into the simulation core to produce identical projections and cards. Graceful degradation omits the card if Gemini is unavailable.
+   - **Custom-Weighted**: compute a composite score per loan (formula in FR-30.3); allocate surplus **proportionally to score** across top loans (or cascade to top-ranked loan). Provides an "Optimal Distributed Split" evaluator that details recommended percentage distribution across loans.
+   - **AI Suggestion (On-Demand)**: Requested only when the user explicitly enables AI (`include_ai = true`). When enabled, the anonymized loan portfolio snapshot along with the `prepayment_mode` is passed server-side to the **Google Gemini API** (`gemini-2.x`). The prompt instructs the model on whether this is a one-off windfall allocation or a monthly recurring surplus. Gemini returns `{allocations: [{loan_id, extra_amount}], rationale: string}`, which is fed into the simulation core. Graceful degradation omits the card if Gemini is unavailable or disabled.
+
+3. **Multi-Loan Cascading Overflow Guarantee (Crucial Rule):**
+   - Whenever surplus funds (in either `one_off_lump_sum` or `recurring_monthly` mode) exceed the outstanding balance of the target loan, the engine **must never discard the excess funds**.
+   - The primary target loan receives the exact principal needed to reach ₹0.00 (clearing the loan).
+   - Any remaining surplus **cascades immediately** to the next ranked loan in the strategy's priority list:
+     - **Snowball**: Cascades to the 2nd smallest balance loan, then 3rd, and so on until 100% of the surplus is deployed or all debt is eliminated.
+     - **Avalanche**: Cascades to the 2nd highest APR loan, then 3rd, and so on.
+     - **Custom-Weighted (Cascade)**: Cascades to the next highest composite scored loan.
+     - **Custom-Weighted (Split)**: If a loan's share exceeds its balance, the overflow is redistributed across the remaining active loans.
+   - Each strategy card's allocation list reflects the exact multi-loan partition of the surplus, and lifetime interest savings reflect the deployment of the entire surplus amount.
+
+4. **Executive Strategy Recommendation Banner:**
+   - An executive summary banner rendered directly above the strategy comparison cards provides immediate strategic clarity:
+     - **Maximum Savings Leader**: Name of strategy and exact lifetime interest saved (e.g., "Debt Avalanche saves ₹4,68,890.78, cutting tenure by X months").
+     - **Quickest Milestone Closure**: Identifies loans that can be completely extinguished today with this lump sum (e.g. "Instant Milestone: Fully eliminate Insurance Premium (₹69,881) today to remove 1 monthly EMI obligation").
+     - **Actionable Verdict**: Practical recommendation synthesizing interest savings and psychological cash-flow relief.
 
 All strategies output identical card formats with target loan highlights, direct links to `/loans/:id` for execution, interest saved, and payoff timeline overlay.
 

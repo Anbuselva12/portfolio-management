@@ -40,6 +40,9 @@ export class CompareStrategiesDto {
   @ValidateNested()
   @Type(() => CustomWeightsDto)
   customWeights?: CustomWeightsDto;
+
+  @IsOptional()
+  includeAi?: boolean = false;
 }
 
 export class SaveSnapshotDto {

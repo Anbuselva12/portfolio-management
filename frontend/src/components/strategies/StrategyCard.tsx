@@ -189,9 +189,15 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
                             {alloc.type}
                           </span>
                           {isRecipient && (
-                            <span className="inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-                              <Target className="w-2.5 h-2.5" /> Target Loan
-                            </span>
+                            extraAmt >= Number(alloc.currentPrincipal) ? (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100">
+                                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-700 dark:text-emerald-200" /> Fully Paid Off!
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                                <Target className="w-2.5 h-2.5" /> Prepay Target
+                              </span>
+                            )
                           )}
                         </div>
 

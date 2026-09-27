@@ -340,6 +340,24 @@ export interface StrategySimulationResult {
   rationale?: string;
 }
 
+export interface StrategySummaryBanner {
+  bestOverallStrategy: string;
+  bestStrategyTitle: string;
+  maxInterestSaved: string;
+  tenureReductionMonths: number;
+  quickestLoanToClose: {
+    loanId: string;
+    name: string;
+    placeOrPurpose?: string;
+    lender: string;
+    principal: string;
+    interestRate: string;
+    minimumEmi: string;
+  } | null;
+  fullyPayableCount: number;
+  recommendationVerdict: string;
+}
+
 export interface StrategyComparisonResponse {
   autoSurplus: string;
   activeSurplus: string;
@@ -348,6 +366,7 @@ export interface StrategyComparisonResponse {
   loanCount: number;
   baseline: StrategySimulationResult;
   strategies: StrategySimulationResult[];
+  summaryBanner?: StrategySummaryBanner;
 }
 
 export interface AuditLogEntry {

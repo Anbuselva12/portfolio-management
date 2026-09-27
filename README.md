@@ -101,3 +101,4 @@ npm test
 - All credentials, JWT secrets, and AI keys are strictly managed via environment variables and never committed to version control.
 - Passwords hashed using bcrypt (cost factor ≥ 12).
 - Zero floating-point math for financial figures (fixed-point Decimal precision).
+

@@ -137,6 +137,50 @@ describe('Story 3 — Debt Strategy Engine, AI Suggestions, Audit & Multi-Curren
       const loan1Alloc = oneOffAvalanche.allocations.find((a) => a.loanId === 'loan-1');
       expect(Number(loan1Alloc?.extraAmount)).toBe(50000);
     });
+
+    it('Cascades surplus across multiple loans when primary loan balance is less than lump sum', () => {
+      // Loan A: 70k, Loan B: 200k
+      const testLoans: StrategyLoanInput[] = [
+        {
+          id: 'loan-small',
+          lender: 'Small Bank',
+          type: 'personal',
+          principal: new Decimal(70000),
+          interestRate: new Decimal(10),
+          emiAmount: new Decimal(3500),
+          tenureMonths: 24,
+        },
+        {
+          id: 'loan-big',
+          lender: 'Big Bank',
+          type: 'home',
+          principal: new Decimal(200000),
+          interestRate: new Decimal(8.5),
+          emiAmount: new Decimal(5000),
+          tenureMonths: 48,
+        },
+      ];
+
+      const baseline = StrategyEngine.simulateBaseline(testLoans);
+      const lumpSum = new Decimal(100000); // 1 Lakh, which is greater than Loan A's 70k balance
+      const snowball = StrategyEngine.simulateSnowball(
+        testLoans,
+        lumpSum,
+        new Decimal(baseline.totalInterestPaid),
+        'one_off_lump_sum',
+      );
+
+      const smallAlloc = snowball.allocations.find((a) => a.loanId === 'loan-small');
+      const bigAlloc = snowball.allocations.find((a) => a.loanId === 'loan-big');
+
+      // Small loan gets capped at 70,000 (its balance)
+      expect(Number(smallAlloc?.extraAmount)).toBe(70000);
+      // Remaining 30,000 cascades to big loan
+      expect(Number(bigAlloc?.extraAmount)).toBe(30000);
+      // Total allocated equals full 100,000 lump sum
+      const totalAllocated = snowball.allocations.reduce((sum, a) => sum + Number(a.extraAmount), 0);
+      expect(totalAllocated).toBe(100000);
+    });
   });
 
   describe('2. Gemini AI Integration & Graceful Degradation', () => {

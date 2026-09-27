@@ -15,12 +15,14 @@
 - **Prepayment Mode Switcher**:
   - **One-Off Lump Sum**: Simulates a single windfall deployed in Month 1 across target loans, with baseline EMIs continuing Month 2 onwards. Computes lifetime interest saved and tenure reduction.
   - **Recurring Monthly**: Ongoing surplus injected every month with cascading payoff.
-- **Avalanche**: highest-interest-rate loan first, cascade
-- **Snowball**: smallest-outstanding-balance loan first, cascade
-- **Custom-Weighted**: configurable composite score (rate, balance, EMI flexibility, penalty-free, remaining tenure), split-vs-cascade mode, weights editable in Family Settings
+- **Avalanche**: highest-interest-rate loan first, with multi-loan cascading overflow ensuring 100% of surplus is allocated
+- **Snowball**: smallest-outstanding-balance loan first, with multi-loan cascading overflow ensuring 100% of surplus is allocated
+- **Custom-Weighted**: configurable composite score (rate, balance, EMI flexibility, penalty-free, remaining tenure), split-vs-cascade mode, optimal distributed split suggestions, weights editable in Family Settings
+- **Multi-Loan Cascading Overflow Guarantee**: When surplus exceeds a loan's balance, excess funds cascade to next ranked loans so the full surplus is deployed and interest saved is fully calculated
 - Simulation core: month-by-month simulator shared by all strategies, producing months-to-debt-free and total-interest-saved-vs-baseline for each mode
 
-### AI Suggestion Strategy (Gemini)
+### AI Suggestion Strategy (Gemini - On-Demand)
+- Explicit user control: requested only when the user chooses "Include Gemini AI Advisor" (or clicks "Ask AI")
 - Server-side proxy call to Google Gemini API using `GEMINI_API_KEY` from `.env` (never exposed to frontend)
 - Anonymized loan/income/expense snapshot sent (no PII — lender names/strings excluded)
 - Mode-aware prompt: instructs Gemini whether recommendation is for a one-off lump-sum allocation or recurring surplus
@@ -28,8 +30,10 @@
 - Graceful degradation: if the Gemini call fails/times out, the AI card is simply omitted rather than shown as an error
 
 ### Strategy Comparison Screen
+- **Executive Strategy Recommendation Banner**: Instant summary showing top interest-saving strategy, fastest debt elimination loan, and actionable verdict
 - Mode switcher ("One-Off Lump Sum" vs "Recurring Monthly") and surplus amount input with presets
-- Strategy cards side by side: target loan highlight, allocation table, months-to-debt-free, total interest saved, rationale (AI card only), direct link to execute prepayment on target loan
+- AI Advisor On-Demand toggle
+- Strategy cards side by side: target loan highlights, multi-loan allocation table, months-to-debt-free, total interest saved, rationale (AI card only), direct link to execute prepayment on target loan
 - "Compare on Timeline" — overlay any two strategies on the Debt Payoff Timeline chart (extends Story 2's single-strategy chart to multi-strategy overlay)
 - "Mark as My Plan" — stores the chosen SuggestionSnapshot for tracking only; does not auto-apply any prepayment (user still uses Story 2's Prepayment Calculator to execute)
 

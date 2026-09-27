@@ -127,9 +127,9 @@ export class StrategiesService {
     };
     const customWeighted = StrategyEngine.simulateCustomWeighted(loanInputs, effectiveSurplus, weights, baselineInterest, prepaymentMode);
 
-    // 7. Gemini AI Suggestion (Graceful degradation)
+    // 7. Gemini AI Suggestion (Requested On-Demand only when dto.includeAi === true)
     let aiStrategy: StrategySimulationResult | null = null;
-    if (loanInputs.length > 0 && effectiveSurplus.greaterThan(0)) {
+    if (dto.includeAi && loanInputs.length > 0 && effectiveSurplus.greaterThan(0)) {
       const aiResponse = await this.geminiAiService.getAiStrategy(loanInputs, effectiveSurplus, prepaymentMode);
       if (aiResponse && aiResponse.allocations.length > 0) {
         aiStrategy = StrategyEngine.simulateAiStrategy(
@@ -148,6 +148,58 @@ export class StrategiesService {
       strategies.push(aiStrategy);
     }
 
+    // 8. Generate Executive Recommendation Summary Banner
+    const allSimulated = [avalanche, snowball, customWeighted, ...(aiStrategy ? [aiStrategy] : [])];
+
+    let maxInterestStrategy = avalanche;
+    for (const s of allSimulated) {
+      if (new Decimal(s.totalInterestSaved).greaterThan(new Decimal(maxInterestStrategy.totalInterestSaved))) {
+        maxInterestStrategy = s;
+      }
+    }
+
+    // Identify loans that can be fully paid off today with this surplus
+    const fullyPayableLoans = loanInputs
+      .filter((l) => l.principal.lessThanOrEqualTo(effectiveSurplus))
+      .sort((a, b) => a.principal.minus(b.principal).toNumber());
+
+    // Best strategy verdict
+    let verdict = '';
+    const avalancheSaved = new Decimal(avalanche.totalInterestSaved);
+    const snowballSaved = new Decimal(snowball.totalInterestSaved);
+    const diff = avalancheSaved.minus(snowballSaved);
+
+    if (fullyPayableLoans.length > 0) {
+      const topClose = fullyPayableLoans[0];
+      if (diff.lessThan(5000) && diff.greaterThanOrEqualTo(0)) {
+        verdict = `Snowball is highly recommended: fully eliminates "${topClose.name}" (₹${topClose.principal.toFixed(0)}) immediately while saving virtually the same interest (₹${snowballSaved.toFixed(0)} vs ₹${avalancheSaved.toFixed(0)}).`;
+      } else {
+        verdict = `Debt Avalanche delivers maximum interest savings (₹${avalancheSaved.toFixed(0)}). Alternatively, Snowball completely wipes out "${topClose.name}" today for immediate psychological relief.`;
+      }
+    } else {
+      verdict = `Debt Avalanche maximizes your savings (₹${avalancheSaved.toFixed(0)} saved) and cuts tenure by ${baseline.monthsToDebtFree - avalanche.monthsToDebtFree} months.`;
+    }
+
+    const summaryBanner = {
+      bestOverallStrategy: maxInterestStrategy.strategyName,
+      bestStrategyTitle: maxInterestStrategy.title,
+      maxInterestSaved: maxInterestStrategy.totalInterestSaved,
+      tenureReductionMonths: baseline.monthsToDebtFree - maxInterestStrategy.monthsToDebtFree,
+      quickestLoanToClose: fullyPayableLoans[0]
+        ? {
+            loanId: fullyPayableLoans[0].id,
+            name: fullyPayableLoans[0].name || fullyPayableLoans[0].lender,
+            placeOrPurpose: fullyPayableLoans[0].placeOrPurpose,
+            lender: fullyPayableLoans[0].lender,
+            principal: fullyPayableLoans[0].principal.toFixed(2),
+            interestRate: fullyPayableLoans[0].interestRate.toFixed(2),
+            minimumEmi: fullyPayableLoans[0].emiAmount.toFixed(2),
+          }
+        : null,
+      fullyPayableCount: fullyPayableLoans.length,
+      recommendationVerdict: verdict,
+    };
+
     return {
       autoSurplus: autoSurplus.toFixed(2),
       activeSurplus: effectiveSurplus.toFixed(2),
@@ -156,6 +208,7 @@ export class StrategiesService {
       loanCount: loanInputs.length,
       baseline,
       strategies,
+      summaryBanner,
     };
   }
 

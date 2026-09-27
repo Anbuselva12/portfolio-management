@@ -93,6 +93,33 @@ export class StrategyEngine {
   }
 
   /**
+   * Helper: allocate surplus across prioritized loans in cascade order
+   * ensuring no excess is wasted when a loan reaches zero.
+   */
+  public static cascadeSurplusAcrossRankedLoans(
+    rankedLoans: StrategyLoanInput[],
+    currentBalances: Map<string, Decimal>,
+    surplus: Decimal,
+  ): Record<string, Decimal> {
+    const result: Record<string, Decimal> = {};
+    let remainingSurplus = new Decimal(surplus);
+
+    for (const loan of rankedLoans) {
+      if (remainingSurplus.lessThanOrEqualTo(0)) break;
+      const bal = currentBalances.get(loan.id) || new Decimal(loan.principal);
+      if (bal.greaterThan(0)) {
+        // Allocate up to the current balance of this loan
+        const toAllocate = Decimal.min(remainingSurplus, bal);
+        if (toAllocate.greaterThan(0)) {
+          result[loan.id] = toAllocate;
+          remainingSurplus = remainingSurplus.minus(toAllocate);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
    * Avalanche Strategy: Prioritize highest interest rate first
    */
   static simulateAvalanche(
@@ -115,15 +142,21 @@ export class StrategyEngine {
       };
     }
 
-    // Allocate current month: 100% of surplus to highest interest rate loan
-    const sorted = [...active].sort((a, b) => b.interestRate.minus(a.interestRate).toNumber());
-    const topLoan = sorted[0];
+    // Sort by interest rate descending (ties broken by smaller balance)
+    const sorted = [...active].sort((a, b) => {
+      const rateDiff = b.interestRate.minus(a.interestRate).toNumber();
+      if (rateDiff !== 0) return rateDiff;
+      return a.principal.minus(b.principal).toNumber();
+    });
+
+    const initialBalances = new Map<string, Decimal>();
+    for (const l of active) {
+      initialBalances.set(l.id, new Decimal(l.principal));
+    }
+    const initialCascade = this.cascadeSurplusAcrossRankedLoans(sorted, initialBalances, surplus);
 
     const allocationStrategy = (currentBalances: Map<string, Decimal>, extraSurplus: Decimal) => {
-      // Find highest interest rate loan with balance > 0
-      const target = sorted.find((l) => (currentBalances.get(l.id) || new Decimal(0)).greaterThan(0));
-      if (!target) return {};
-      return { [target.id]: extraSurplus };
+      return this.cascadeSurplusAcrossRankedLoans(sorted, currentBalances, extraSurplus);
     };
 
     const { monthsToDebtFree, totalInterestPaid, timeline } = this.runSimulationLoop(
@@ -139,14 +172,14 @@ export class StrategyEngine {
       strategyName: 'avalanche',
       title: 'Debt Avalanche (Highest Interest First)',
       description: isOneOff
-        ? 'Directs the one-off lump sum to the highest APR loan, cutting lifetime interest and shortening tenure.'
+        ? 'Directs the one-off lump sum to the highest APR loan, cutting lifetime interest and cascading to subsequent loans as balances clear.'
         : 'Directs ongoing monthly surplus to the highest APR loan first, cascading as loans close.',
       monthsToDebtFree,
       totalInterestPaid: totalInterestPaid.toFixed(2),
       totalInterestSaved: interestSaved.toFixed(2),
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
       allocations: active.map((l) => {
-        const extra = l.id === topLoan.id ? surplus : new Decimal(0);
+        const extra = initialCascade[l.id] || new Decimal(0);
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -187,14 +220,21 @@ export class StrategyEngine {
       };
     }
 
-    // Sort by principal balance ascending
-    const sorted = [...active].sort((a, b) => a.principal.minus(b.principal).toNumber());
-    const topLoan = sorted[0];
+    // Sort by principal balance ascending (ties broken by higher interest rate)
+    const sorted = [...active].sort((a, b) => {
+      const balDiff = a.principal.minus(b.principal).toNumber();
+      if (balDiff !== 0) return balDiff;
+      return b.interestRate.minus(a.interestRate).toNumber();
+    });
+
+    const initialBalances = new Map<string, Decimal>();
+    for (const l of active) {
+      initialBalances.set(l.id, new Decimal(l.principal));
+    }
+    const initialCascade = this.cascadeSurplusAcrossRankedLoans(sorted, initialBalances, surplus);
 
     const allocationStrategy = (currentBalances: Map<string, Decimal>, extraSurplus: Decimal) => {
-      const target = sorted.find((l) => (currentBalances.get(l.id) || new Decimal(0)).greaterThan(0));
-      if (!target) return {};
-      return { [target.id]: extraSurplus };
+      return this.cascadeSurplusAcrossRankedLoans(sorted, currentBalances, extraSurplus);
     };
 
     const { monthsToDebtFree, totalInterestPaid, timeline } = this.runSimulationLoop(
@@ -210,14 +250,14 @@ export class StrategyEngine {
       strategyName: 'snowball',
       title: 'Debt Snowball (Lowest Balance First)',
       description: isOneOff
-        ? 'Directs the one-off lump sum to the smallest balance loan to wipe it out fastest or cut it down dramatically.'
+        ? 'Directs the one-off lump sum to the smallest balance loans first, cascading to larger loans as debts are cleared.'
         : 'Clears smallest loans first to build quick psychological momentum and eliminate monthly debt obligations.',
       monthsToDebtFree,
       totalInterestPaid: totalInterestPaid.toFixed(2),
       totalInterestSaved: interestSaved.toFixed(2),
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
       allocations: active.map((l) => {
-        const extra = l.id === topLoan.id ? surplus : new Decimal(0);
+        const extra = initialCascade[l.id] || new Decimal(0);
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -285,51 +325,60 @@ export class StrategyEngine {
 
     const sorted = [...active].sort((a, b) => (scores.get(b.id) || 0) - (scores.get(a.id) || 0));
 
-    // Current month extra allocations
-    const currentAllocations = new Map<string, Decimal>();
-    if (weights.mode === 'split') {
-      const totalScore = sorted.reduce((sum, l) => sum + (scores.get(l.id) || 0), 0);
-      let allocatedSoFar = new Decimal(0);
-      for (let i = 0; i < sorted.length; i++) {
-        const l = sorted[i];
-        if (i === sorted.length - 1) {
-          currentAllocations.set(l.id, surplus.minus(allocatedSoFar));
-        } else {
-          const share = totalScore > 0 ? (scores.get(l.id) || 0) / totalScore : 1 / sorted.length;
-          const amt = surplus.times(share).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
-          currentAllocations.set(l.id, amt);
-          allocatedSoFar = allocatedSoFar.plus(amt);
-        }
-      }
-    } else {
-      // cascade: 100% to highest score
-      currentAllocations.set(sorted[0].id, surplus);
+    const initialBalances = new Map<string, Decimal>();
+    for (const l of active) {
+      initialBalances.set(l.id, new Decimal(l.principal));
     }
 
-    const allocationStrategy = (currentBalances: Map<string, Decimal>, extraSurplus: Decimal) => {
-      const result: Record<string, Decimal> = {};
-      const remainingLoans = sorted.filter((l) => (currentBalances.get(l.id) || new Decimal(0)).greaterThan(0));
-      if (remainingLoans.length === 0) return result;
+    let initialAllocs: Record<string, Decimal> = {};
+    let allocationStrategy: (currentBalances: Map<string, Decimal>, extraSurplus: Decimal) => Record<string, Decimal>;
 
-      if (weights.mode === 'split') {
-        const totalRemScore = remainingLoans.reduce((sum, l) => sum + (scores.get(l.id) || 0), 0);
-        let alloc = new Decimal(0);
+    if (weights.mode === 'split') {
+      const splitFn = (balances: Map<string, Decimal>, extraSurplus: Decimal) => {
+        const result: Record<string, Decimal> = {};
+        const remainingLoans = sorted.filter((l) => (balances.get(l.id) || new Decimal(0)).greaterThan(0));
+        if (remainingLoans.length === 0) return result;
+
+        const totalScore = remainingLoans.reduce((sum, l) => sum + (scores.get(l.id) || 0), 0);
+        let remSurplus = new Decimal(extraSurplus);
+
+        // First pass: proportional allocation based on score
         for (let i = 0; i < remainingLoans.length; i++) {
           const l = remainingLoans[i];
-          if (i === remainingLoans.length - 1) {
-            result[l.id] = extraSurplus.minus(alloc);
-          } else {
-            const share = totalRemScore > 0 ? (scores.get(l.id) || 0) / totalRemScore : 1 / remainingLoans.length;
-            const amt = extraSurplus.times(share).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
-            result[l.id] = amt;
-            alloc = alloc.plus(amt);
+          const bal = balances.get(l.id) || new Decimal(0);
+          const share = totalScore > 0 ? (scores.get(l.id) || 0) / totalScore : 1 / remainingLoans.length;
+          const targetAmt = extraSurplus.times(share).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+          const actualAmt = Decimal.min(targetAmt, bal, remSurplus);
+          result[l.id] = actualAmt;
+          remSurplus = remSurplus.minus(actualAmt);
+        }
+
+        // Second pass: if any loan hit its balance cap and surplus remains, cascade the excess to remaining loans
+        if (remSurplus.greaterThan(0)) {
+          for (const l of remainingLoans) {
+            if (remSurplus.lessThanOrEqualTo(0)) break;
+            const bal = balances.get(l.id) || new Decimal(0);
+            const alreadyAlloc = result[l.id] || new Decimal(0);
+            const canAbsorb = bal.minus(alreadyAlloc);
+            if (canAbsorb.greaterThan(0)) {
+              const addAmt = Decimal.min(remSurplus, canAbsorb);
+              result[l.id] = alreadyAlloc.plus(addAmt);
+              remSurplus = remSurplus.minus(addAmt);
+            }
           }
         }
-      } else {
-        result[remainingLoans[0].id] = extraSurplus;
-      }
-      return result;
-    };
+        return result;
+      };
+
+      initialAllocs = splitFn(initialBalances, surplus);
+      allocationStrategy = splitFn;
+    } else {
+      // cascade mode: 100% to highest score with overflow cascading to next
+      initialAllocs = this.cascadeSurplusAcrossRankedLoans(sorted, initialBalances, surplus);
+      allocationStrategy = (balances: Map<string, Decimal>, extraSurplus: Decimal) => {
+        return this.cascadeSurplusAcrossRankedLoans(sorted, balances, extraSurplus);
+      };
+    }
 
     const { monthsToDebtFree, totalInterestPaid, timeline } = this.runSimulationLoop(
       active,
@@ -339,16 +388,32 @@ export class StrategyEngine {
     );
     const interestSaved = Decimal.max(0, baselineInterest.minus(totalInterestPaid));
 
+    // Compute distributed split summary string
+    const splitPercentages: string[] = [];
+    if (surplus.greaterThan(0)) {
+      for (const l of sorted) {
+        const amt = initialAllocs[l.id] || new Decimal(0);
+        if (amt.greaterThan(0)) {
+          const pct = Math.round(amt.dividedBy(surplus).times(100).toNumber());
+          splitPercentages.push(`${pct}% to ${l.name || l.lender}`);
+        }
+      }
+    }
+
+    const splitInsight = splitPercentages.length > 0
+      ? `Optimal Allocation: ${splitPercentages.join(', ')}.`
+      : `Tailored balance across ${weights.weightRate}% APR, ${weights.weightBalance}% Balance in ${weights.mode} mode.`;
+
     return {
       strategyName: 'custom_weighted',
       title: 'Custom-Weighted Strategy',
-      description: `Tailored balance across ${weights.weightRate}% APR, ${weights.weightBalance}% Balance, and debt flexibility in ${weights.mode} mode.`,
+      description: splitInsight,
       monthsToDebtFree,
       totalInterestPaid: totalInterestPaid.toFixed(2),
       totalInterestSaved: interestSaved.toFixed(2),
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
       allocations: active.map((l) => {
-        const extra = currentAllocations.get(l.id) || new Decimal(0);
+        const extra = initialAllocs[l.id] || new Decimal(0);
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -500,12 +565,22 @@ export class StrategyEngine {
 
         if (principalReduction.greaterThanOrEqualTo(bal)) {
           // Loan paid off this month!
+          const unspentRemainder = principalReduction.minus(bal);
           balances.set(loan.id, new Decimal(0));
           if (!payoffMonths.has(loan.id)) {
             payoffMonths.set(loan.id, month);
             // Freed up EMI joins the rolling surplus cascade ONLY in recurring mode!
             if (prepaymentMode === 'recurring_monthly') {
               rollingSurplus = rollingSurplus.plus(regularEmi);
+            }
+          }
+          // If any surplus remainder was unspent, cascade immediately to the next active loan
+          if (unspentRemainder.greaterThan(0)) {
+            const nextLoan = activeLoans.find(
+              (other) => other.id !== loan.id && (balances.get(other.id) || new Decimal(0)).greaterThan(0),
+            );
+            if (nextLoan) {
+              extraAllocs[nextLoan.id] = (extraAllocs[nextLoan.id] || new Decimal(0)).plus(unspentRemainder);
             }
           }
         } else {
