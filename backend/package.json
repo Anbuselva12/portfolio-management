@@ -18,7 +18,9 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "db:export": "node prisma/export-data.js",
+    "db:import": "node prisma/import-data.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
