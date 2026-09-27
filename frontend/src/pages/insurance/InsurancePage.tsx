@@ -188,7 +188,7 @@ export const InsurancePage: React.FC = () => {
                       </span>
                       <button
                         onClick={() => handleDelete(policy.id, policy.provider)}
-                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 transition-colors"
+                        className="min-h-[38px] min-w-[38px] flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                         title="Delete policy"
                       >
                         <Trash2 className="w-4 h-4" />

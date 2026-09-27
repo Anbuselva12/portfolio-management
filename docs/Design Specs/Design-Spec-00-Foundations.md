@@ -78,9 +78,18 @@ Light and dark mode both supported; charts must maintain positive/negative/warni
 - Monetary values always formatted with currency symbol/code + locale grouping (₹1,23,456 for INR).
 
 ### 4.3 Layout & Responsiveness
-- Desktop: sidebar nav + content area, charts in responsive grid (2-col → 1-col at tablet breakpoint).
-- Mobile: bottom tab bar, single-column stacked cards/charts; wide tables (e.g., Repayment Schedule) become card-per-row scrollable lists.
-- All drawers/modals become full-screen sheets on mobile.
+- **Desktop (≥ 1024px)**: Full persistent left sidebar, multi-column KPI strip (6 cards), 2-3 column chart areas, full data tables.
+- **Tablet / iPad (640px – 1023px)**:
+  - Adaptive 2-column and 3-column grids.
+  - Sidebar can be collapsed or toggled.
+  - Dashboard charts stack into comfortable 2-column or full-width layouts.
+  - Slide drawers occupy 50–60% width with touch-friendly controls.
+- **Mobile (< 640px)**:
+  - **Mobile AppShell Navigation**: Responsive header with hamburger menu button that opens a slide-over navigation drawer with backdrop overlay.
+  - **KPI Strip**: Formatted as a 2-column responsive grid with compact typography to eliminate horizontal page squishing.
+  - **Responsive Data Lists / Tables**: Wide tables (Income, Assets, Expenses, Insurance, Loans) adapt with horizontal scroll wrappers and compact card views so no action buttons or dates are clipped.
+  - **Drawers & Modals**: Slide drawers (`SlideDrawer`) and dialogs expand to full screen (`w-full`) on mobile with sticky footer action buttons.
+  - **Touch Targets**: Minimum 44×44px interactive tap targets for all action buttons (Delete, Edit, Confirm, Pay).
 
 ---
 

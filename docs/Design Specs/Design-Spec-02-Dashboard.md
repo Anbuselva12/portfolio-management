@@ -21,6 +21,12 @@ The home screen after login (once `status = active` and a family is set).
 
 ### Pending Reminders & Monthly Action Queue (Directly Below KPI Strip)
 A dedicated, prominent action widget for the current month tracking incoming revenues and outgoing loan payments:
+- **Collapsible Toggle (Default: Collapsed)**:
+  - By default, the widget is rendered in a compact, collapsed summary bar showing:
+    - Month tag (e.g. "September 2026")
+    - Pending action badge (e.g., "5 Actions Pending" or "All Caught Up")
+    - Expand / Collapse toggle button with chevron indicator ("Show Reminders" / "Hide").
+  - When expanded, reveals the full two-column interactive queues. This preserves screen real estate and lets users immediately see their net worth and cash flow charts without being pushed down.
 - **Recurring Income Arrivals**:
   - Lists active recurring incomes scheduled for the month (e.g., Salary, House 1 Rent, House 2 Rent).
   - Displays: Label, expected due day, expected amount.

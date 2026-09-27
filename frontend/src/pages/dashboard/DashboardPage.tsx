@@ -28,6 +28,8 @@ import {
   Check,
   Bell,
   Edit3,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -59,6 +61,7 @@ export const DashboardPage: React.FC = () => {
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [processingActionId, setProcessingActionId] = useState<string | null>(null);
   const [showAllReminders, setShowAllReminders] = useState(false);
+  const [isRemindersCollapsed, setIsRemindersCollapsed] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [nwViewMode, setNwViewMode] = useState<'chart' | 'table'>('chart');
   const [cfViewMode, setCfViewMode] = useState<'chart' | 'table'>('chart');
@@ -220,55 +223,55 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         {/* 1. Net Worth */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              <span>Net Worth</span>
-              <Wallet className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <span className="truncate">Net Worth</span>
+              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
             </div>
-            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
               {isLoading ? '...' : formatINR(netWorth)}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px]">
+          <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-400">MoM change</span>
             <span className={`font-semibold flex items-center gap-0.5 ${nwDelta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>{nwDeltaPct >= 0 ? `+${nwDeltaPct}%` : `${nwDeltaPct}%`}</span>
             </span>
           </div>
         </div>
 
         {/* 2. Total Assets */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              <span>Total Assets</span>
-              <Briefcase className="w-4 h-4 text-cyan-500" />
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <span className="truncate">Total Assets</span>
+              <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500 shrink-0" />
             </div>
-            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
               {isLoading ? '...' : formatINR(totalAssets)}
             </div>
           </div>
-          <div className="mt-3 text-[11px] text-slate-400">
-            Bank, FDs, mutual funds, gold
+          <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 truncate">
+            Bank, FDs, gold & more
           </div>
         </div>
 
         {/* 3. Total Liabilities */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              <span>Total Liabilities</span>
-              <CreditCard className="w-4 h-4 text-rose-500" />
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <span className="truncate">Total Debt</span>
+              <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 shrink-0" />
             </div>
-            <div className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">
+            <div className="text-base sm:text-xl xl:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono truncate">
               {isLoading ? '...' : formatINR(totalLiabilities)}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px]">
+          <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-400">Active Debt</span>
             <span className="font-semibold text-slate-700 dark:text-slate-300">
               {analytics?.payoffTimeline?.length || 0} loan{(analytics?.payoffTimeline?.length || 0) === 1 ? '' : 's'}
@@ -277,50 +280,50 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* 4. Monthly Income */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              <span>Monthly Inflow</span>
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <span className="truncate">Monthly Inflow</span>
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
             </div>
-            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
               {isLoading ? '...' : formatINR(monthlyIncome)}
             </div>
           </div>
-          <div className="mt-3 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+          <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
             Active recurring incomes
           </div>
         </div>
 
         {/* 5. Monthly Expenses + EMI */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              <span>Monthly Outflow</span>
-              <ArrowDownRight className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <span className="truncate">Monthly Outflow</span>
+              <ArrowDownRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
             </div>
-            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
               {isLoading ? '...' : formatINR(monthlyExpenses + monthlyEmi)}
             </div>
           </div>
-          <div className="mt-3 text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between truncate">
             <span>Exp: <strong className="font-mono text-slate-600 dark:text-slate-300">{formatINR(monthlyExpenses)}</strong></span>
             <span>EMI: <strong className="font-mono text-rose-500">{formatINR(monthlyEmi)}</strong></span>
           </div>
         </div>
 
         {/* 6. Net Monthly Savings */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              <span>Net Monthly Savings</span>
-              <PiggyBank className="w-4 h-4 text-teal-500" />
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <span className="truncate">Net Savings</span>
+              <PiggyBank className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-500 shrink-0" />
             </div>
-            <div className={`text-xl sm:text-2xl font-black font-mono ${monthlySavings >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600'}`}>
+            <div className={`text-base sm:text-xl xl:text-2xl font-black font-mono truncate ${monthlySavings >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600'}`}>
               {isLoading ? '...' : formatINR(monthlySavings)}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px]">
+          <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-400">Savings Rate</span>
             <span className="font-semibold text-teal-600 dark:text-teal-400">{savingsRatePct}%</span>
           </div>
@@ -329,30 +332,40 @@ export const DashboardPage: React.FC = () => {
 
       {/* Pending Reminders & Monthly Action Queue */}
       {reminders && (reminders.incomes?.length > 0 || reminders.loans?.length > 0) && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  <Bell className="w-5 h-5" />
+        <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all ${
+          isRemindersCollapsed ? 'p-4 sm:p-5' : 'p-5 sm:p-6 space-y-6'
+        }`}>
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+            isRemindersCollapsed ? '' : 'border-b border-slate-100 dark:border-slate-800 pb-4'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                    Monthly Action Queue & Reminders
+                  </h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {reminders.monthName}
+                  </span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                      Monthly Action Queue & Reminders
-                    </h2>
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {reminders.monthName}
-                    </span>
-                  </div>
+                {!isRemindersCollapsed ? (
                   <p className="text-xs text-slate-400 mt-0.5">
                     Verify recurring income arrivals and mark scheduled monthly loan EMIs.
                   </p>
-                </div>
+                ) : (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {reminders.totalPendingCount > 0
+                      ? `${reminders.totalPendingCount} pending task${reminders.totalPendingCount === 1 ? '' : 's'} to verify this month`
+                      : 'All income arrivals & loan EMIs recorded for this month'}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center flex-wrap gap-2.5 sm:gap-3">
               {reminders.totalPendingCount > 0 ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80">
                   <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
@@ -365,17 +378,34 @@ export const DashboardPage: React.FC = () => {
                 </span>
               )}
 
+              {!isRemindersCollapsed && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllReminders(!showAllReminders)}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer mr-1"
+                >
+                  {showAllReminders ? 'Show pending only' : 'View all items'}
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => setShowAllReminders(!showAllReminders)}
-                className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                onClick={() => setIsRemindersCollapsed(!isRemindersCollapsed)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                title={isRemindersCollapsed ? 'Expand reminders' : 'Collapse reminders'}
               >
-                {showAllReminders ? 'Show pending only' : 'View all items'}
+                <span>{isRemindersCollapsed ? 'Show Reminders' : 'Collapse'}</span>
+                {isRemindersCollapsed ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                ) : (
+                  <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                )}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {!isRemindersCollapsed && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Column 1: Recurring Income Arrivals */}
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-1">
@@ -633,6 +663,7 @@ export const DashboardPage: React.FC = () => {
               )}
             </div>
           </div>
+          )}
         </div>
       )}
 

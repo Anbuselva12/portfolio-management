@@ -15,8 +15,11 @@
 - Recurring rows show: Label, Amount/month, Expected Day of Month (e.g. "5th of every month"), Reminders badge (Active / Muted), Start Date, Status badge (Active/Stopped), and actions:
   - **Edit** → opens an "Effective date of this change?" flow. Per SDD §3.2.1, this does not overwrite history: the current entry is closed as of the day before the new effective date, and a new entry begins — so a mid-year rent increase shows correctly in trend charts.
   - **Stop** → asks "Stop as of which date?", sets `end_date`, `status = stopped`.
+  - **Delete** → red trash button triggering confirmation modal: "Delete this income stream? (Can be restored from Audit Trail)". Soft-deletes record and produces audit log.
   - **Toggle Reminders** → turn on/off monthly arrival reminder in the Dashboard queue.
-- One-off rows: simple Edit/Delete in place (direct edit, no supersession needed).
+- One-off rows: Label, Amount, Date, Status, and actions:
+  - **Edit** in place (direct edit drawer).
+  - **Delete** red trash icon triggering confirmation modal to remove the one-off record with audit trail recording.
 - Add flow: Type, Label, Amount, Currency, Recurring toggle.
   - If recurring is ON:
     - Start Date

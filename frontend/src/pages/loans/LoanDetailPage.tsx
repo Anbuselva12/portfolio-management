@@ -726,7 +726,7 @@ export const LoanDetailPage: React.FC = () => {
 
         {/* Schedule Table */}
         <div className="overflow-x-auto max-h-[620px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs min-w-[760px]">
             <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="py-3 px-4 font-semibold uppercase tracking-wider text-[10px] w-12 text-center">#</th>
@@ -809,7 +809,7 @@ export const LoanDetailPage: React.FC = () => {
                     <td className="py-2.5 px-4 text-center font-sans">
                       <button
                         onClick={() => openEditInstallment(inst)}
-                        className="p-1 rounded-lg text-slate-400 hover:text-cyan-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        className="min-h-[36px] min-w-[36px] flex items-center justify-center mx-auto p-1.5 rounded-lg text-slate-400 hover:text-cyan-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                         title="Edit installment details"
                       >
                         <Edit2 className="w-3.5 h-3.5" />

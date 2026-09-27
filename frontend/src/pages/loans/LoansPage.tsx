@@ -20,6 +20,7 @@ import {
   Loader2,
   Calendar,
   Percent,
+  Trash2,
 } from 'lucide-react';
 
 const LOAN_TYPES: { type: LoanType; label: string; icon: any }[] = [
@@ -102,6 +103,17 @@ export const LoansPage: React.FC = () => {
       setFormError(err.response?.data?.message || 'Failed to create loan.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteLoan = async (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete loan "${name}" and its entire schedule? This can be restored from the Audit Trail.`)) return;
+    try {
+      await loansApi.remove(id);
+      await loadLoans();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete loan.');
     }
   };
 
@@ -188,6 +200,14 @@ export const LoansPage: React.FC = () => {
                       <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full uppercase">
                         {emiTypeVal}
                       </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteLoan(e, loan.id, loanName)}
+                        className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors ml-1"
+                        title="Delete loan"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
 
