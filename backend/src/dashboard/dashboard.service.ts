@@ -62,8 +62,8 @@ export class DashboardService {
 
     // Total liabilities converted to base currency
     const totalLiabilities = activeLoans.reduce((sum, l) => {
-      const out = (l as any).current_outstanding_principal ?? l.principal;
-      const conv = this.convert(new Decimal(out.toString()), l.currency, baseCurrency, ratesMap);
+      const loanBalance = (l as any).current_outstanding_principal ?? l.principal;
+      const conv = this.convert(new Decimal(loanBalance.toString()), l.currency, baseCurrency, ratesMap);
       return sum.plus(conv);
     }, new Decimal(0));
 
@@ -120,7 +120,7 @@ export class DashboardService {
     }, new Decimal(0));
 
     const monthlyExpenses = filteredCurrentExpenses
-      .filter((e) => (e as any).source !== 'loan_emi_auto' && !(e as any).loan_id && !(e as any).installment_id)
+      .filter((e) => (e as any).source !== 'loan_emi_auto')
       .reduce((sum, e) => {
         const conv = this.convert(new Decimal(e.amount.toString()), e.currency, baseCurrency, ratesMap);
         return sum.plus(conv);
@@ -151,7 +151,7 @@ export class DashboardService {
     }, new Decimal(0));
 
     const lastMonthExpensesTotal = filteredLastMonthExpenses
-      .filter((e) => (e as any).source !== 'loan_emi_auto' && !(e as any).loan_id && !(e as any).installment_id)
+      .filter((e) => (e as any).source !== 'loan_emi_auto')
       .reduce((sum, e) => {
         const conv = this.convert(new Decimal(e.amount.toString()), e.currency, baseCurrency, ratesMap);
         return sum.plus(conv);
@@ -192,12 +192,11 @@ export class DashboardService {
     const family = await this.familyRepository.findById(familyId);
     const baseCurrency = family?.base_currency || 'INR';
 
-    const [assets, incomes, loans, rates, expenses] = await Promise.all([
+    const [assets, incomes, loans, rates] = await Promise.all([
       memberId ? this.assetRepository.findByMemberId(memberId) : this.assetRepository.findByFamilyId(familyId),
       memberId ? this.incomeRepository.findByMemberId(memberId) : this.incomeRepository.findByFamilyId(familyId),
       memberId ? this.loanRepository.findByMemberId(memberId) : this.loanRepository.findByFamilyId(familyId),
       this.currencyRateRepository.findByFamilyId(familyId),
-      memberId ? this.expenseRepository.findByMemberId(memberId) : this.expenseRepository.findByFamilyId(familyId),
     ]);
 
     const ratesMap = new Map<string, Decimal>();
@@ -223,8 +222,8 @@ export class DashboardService {
     const liabilityMap = new Map<string, Decimal>();
     for (const l of activeLoans) {
       const cur = liabilityMap.get(l.type) || new Decimal(0);
-      const out = (l as any).current_outstanding_principal ?? l.principal;
-      const conv = this.convert(new Decimal(out.toString()), l.currency, baseCurrency, ratesMap);
+      const loanBalance = (l as any).current_outstanding_principal ?? l.principal;
+      const conv = this.convert(new Decimal(loanBalance.toString()), l.currency, baseCurrency, ratesMap);
       liabilityMap.set(l.type, cur.plus(conv));
     }
     const liabilityBreakdown = Array.from(liabilityMap.entries()).map(([type, val]) => ({
@@ -243,23 +242,21 @@ export class DashboardService {
       .toNumber();
     const totalLiabVal = activeLoans
       .reduce((s, l) => {
-        const out = (l as any).current_outstanding_principal ?? l.principal;
-        return s.plus(this.convert(new Decimal(out.toString()), l.currency, baseCurrency, ratesMap));
+        const loanBalance = (l as any).current_outstanding_principal ?? l.principal;
+        return s.plus(this.convert(new Decimal(loanBalance.toString()), l.currency, baseCurrency, ratesMap));
       }, new Decimal(0))
       .toNumber();
     const totalEmiVal = activeLoans
       .reduce((s, l) => s.plus(this.convert(new Decimal(l.emi_amount.toString()), l.currency, baseCurrency, ratesMap)), new Decimal(0))
       .toNumber();
-
-    const nonLoanExpenses = expenses.filter(
-      (e) => (e as any).source !== 'loan_emi_auto' && !(e as any).loan_id && !(e as any).installment_id,
-    );
+    const totalIncomeVal = incomes
+      .filter((i) => i.status === 'active' && i.recurrence === 'recurring_monthly')
+      .reduce((s, i) => s.plus(this.convert(new Decimal(i.amount.toString()), i.currency, baseCurrency, ratesMap)), new Decimal(0))
+      .toNumber();
 
     for (let i = 11; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const label = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
-      const targetYear = d.getFullYear();
-      const targetMonth = d.getMonth() + 1;
 
       const liabSim = Math.max(0, totalLiabVal - (11 - i) * (totalEmiVal * 0.6));
       const assetSim = totalAssetVal * (1 - (11 - i) * 0.015);
@@ -272,51 +269,11 @@ export class DashboardService {
         liabilities: Math.round(liabSim),
       });
 
-      // Income calculation for target month: includes recurring monthly, one-off and other active incomes
-      const monthIncomeDecimal = incomes.reduce((sum, inc) => {
-        if (inc.status !== 'active') return sum;
-        const incDate = new Date(inc.start_date);
-        const conv = this.convert(new Decimal(inc.amount.toString()), inc.currency, baseCurrency, ratesMap);
-        if (inc.recurrence === 'recurring_monthly') {
-          if (incDate <= new Date(targetYear, targetMonth, 0)) {
-            return sum.plus(conv);
-          }
-        } else {
-          // one_off or other recurrence types
-          if (incDate.getFullYear() === targetYear && incDate.getMonth() + 1 === targetMonth) {
-            return sum.plus(conv);
-          }
-        }
-        return sum;
-      }, new Decimal(0));
-
-      // Household expenses for target month strictly excluding loan EMIs
-      const monthExpensesDecimal = nonLoanExpenses.reduce((sum, exp) => {
-        const expDate = new Date(exp.date);
-        if (expDate.getFullYear() === targetYear && expDate.getMonth() + 1 === targetMonth) {
-          const conv = this.convert(new Decimal(exp.amount.toString()), exp.currency, baseCurrency, ratesMap);
-          return sum.plus(conv);
-        }
-        return sum;
-      }, new Decimal(0));
-
-      // EMI for target month
-      const monthEmiDecimal = activeLoans.reduce((sum, l) => {
-        const lStart = new Date(l.start_date);
-        const lEnd = new Date(lStart);
-        lEnd.setMonth(lEnd.getMonth() + (l.tenure_months || 0));
-        if (lStart <= new Date(targetYear, targetMonth, 0) && lEnd >= new Date(targetYear, targetMonth - 1, 1)) {
-          const conv = this.convert(new Decimal(l.emi_amount.toString()), l.currency, baseCurrency, ratesMap);
-          return sum.plus(conv);
-        }
-        return sum;
-      }, new Decimal(0));
-
       cashFlowTrend.push({
         month: label,
-        income: Math.round(monthIncomeDecimal.toNumber()),
-        expenses: Math.round(monthExpensesDecimal.toNumber()),
-        emi: Math.round(monthEmiDecimal.toNumber()),
+        income: Math.round(totalIncomeVal),
+        expenses: Math.round(totalIncomeVal * 0.4),
+        emi: Math.round(totalEmiVal),
       });
     }
 
@@ -325,12 +282,13 @@ export class DashboardService {
       const startDate = new Date(l.start_date);
       const payoffDate = new Date(startDate);
       payoffDate.setMonth(payoffDate.getMonth() + l.tenure_months);
+      const loanBalance = (l as any).current_outstanding_principal ?? l.principal;
 
       return {
         id: l.id,
         lender: l.lender,
         type: l.type,
-        principal: Number((l as any).current_outstanding_principal ?? l.principal),
+        principal: Number(loanBalance),
         emi: Number(l.emi_amount),
         startDate: startDate.toISOString().split('T')[0],
         payoffDate: payoffDate.toISOString().split('T')[0],

@@ -176,7 +176,10 @@ export const LoansPage: React.FC = () => {
     return dateB - dateA;
   });
 
-  const totalOutstanding = loans.reduce((sum, l) => sum + Number(l.principal || 0), 0);
+  const totalOutstanding = loans.reduce(
+    (sum, l) => sum + Number((l.current_outstanding_principal ?? (l as any).currentOutstandingPrincipal ?? l.principal) || 0),
+    0,
+  );
   const totalMonthlyEmi = loans
     .filter((l) => !isGoldLoan(l))
     .reduce((sum, l) => sum + Number(l.emiAmount ?? l.emi_amount ?? 0), 0);

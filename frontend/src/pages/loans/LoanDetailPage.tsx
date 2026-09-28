@@ -391,23 +391,30 @@ export const LoanDetailPage: React.FC = () => {
     } catch {}
   }
 
-  // Paid stats and balances
+  // Paid stats
   const unpaidInstallments = schedule.filter((i) => !(i.isPaid ?? i.is_paid));
+  const earliestUnpaid = unpaidInstallments[0];
   const paidCount = schedule.filter((i) => i.isPaid ?? i.is_paid).length;
-  const actualTenureMonths = schedule.length > 0 ? schedule.length : tenureMonths;
-  const originalTenureMonths = loan.original_tenure_months ?? (loan as any).originalTenureMonths ?? tenureMonths;
-  const remainingMonths = unpaidInstallments.length;
-  const originalPrincipalVal = loan.original_principal ?? (loan as any).originalPrincipal ?? loan.principal;
-
-  const currentOutstandingVal = isGoldLoan && goldLedger
-    ? (goldLedger.scenarios?.scenarioB?.totalCost ?? goldLedger.currentOutstandingToday)
-    : (schedule.length > 0 && unpaidInstallments.length === 0
-      ? '0'
-      : (loan.current_outstanding_principal ?? (loan as any).currentOutstandingPrincipal ?? (unpaidInstallments[0] ? (unpaidInstallments[0].openingBalance || unpaidInstallments[0].opening_balance) : loan.principal)));
-
-  const progressPct = actualTenureMonths > 0 ? Math.round((paidCount / actualTenureMonths) * 100) : 0;
+  const progressPct = schedule.length > 0 ? Math.round((paidCount / schedule.length) * 100) : 0;
   const lastInstallment = schedule[schedule.length - 1];
   const payoffDate = lastInstallment ? lastInstallment.dueDate || lastInstallment.due_date : loan.startDate || loan.start_date;
+
+  // Dynamic live outstanding and original terms
+  let currentOutstandingVal = Number(loan.current_outstanding_principal ?? (loan as any).currentOutstandingPrincipal ?? loan.principal);
+  if (!isGoldLoan && schedule.length > 0) {
+    if (unpaidInstallments.length === 0) {
+      currentOutstandingVal = 0;
+    } else if (earliestUnpaid) {
+      currentOutstandingVal = Number(earliestUnpaid.openingBalance ?? earliestUnpaid.opening_balance ?? currentOutstandingVal);
+    }
+  } else if (isGoldLoan && goldLedger) {
+    currentOutstandingVal = Number(goldLedger.scenarios?.scenarioB?.totalCost ?? goldLedger.currentOutstandingToday ?? currentOutstandingVal);
+  }
+
+  const originalPrincipalVal = Number(loan.original_principal ?? (loan as any).originalPrincipal ?? loan.principal);
+  const originalTenureMonths = loan.original_tenure_months ?? (loan as any).originalTenureMonths ?? loan.tenure_months ?? (loan as any).tenureMonths ?? schedule.length;
+  const actualTenureMonths = schedule.length || tenureMonths;
+  const remainingMonths = unpaidInstallments.length;
 
   if (isGoldLoan) {
     return (
@@ -721,7 +728,7 @@ export const LoanDetailPage: React.FC = () => {
                 onClick={handleSyncBalance}
                 disabled={isSyncing}
                 title="Sync & recalculate outstanding balance"
-                className="text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 p-0.5 rounded transition-colors disabled:opacity-50"
+                className="text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 p-0.5 rounded transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
               </button>
@@ -773,31 +780,36 @@ export const LoanDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm col-span-2 md:col-span-1">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-            {isGoldLoan ? 'Payoff Today' : 'Tenure Progress'}
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm col-span-2 md:col-span-1 flex flex-col justify-between">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              {isGoldLoan ? 'Payoff Today' : 'Tenure Progress'}
+            </div>
+            {isGoldLoan && goldLedger ? (
+              <>
+                <div className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                  {formatINR(goldLedger.payoffQuoteToday)}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  Full closure today
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
+                  Paid {paidCount} <span className="text-sm font-medium text-slate-400">/ {actualTenureMonths} mos</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
+                  <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${progressPct}%` }} />
+                </div>
+              </>
+            )}
           </div>
-          {isGoldLoan && goldLedger ? (
-            <>
-              <div className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
-                {formatINR(goldLedger.payoffQuoteToday)}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-1">
-                Full closure today
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
-                {paidCount} <span className="text-sm font-medium text-slate-400">/ {actualTenureMonths} mos</span>
-              </div>
-              <div className="text-[11px] text-slate-400 mt-1">
-                Remaining: {remainingMonths} mos • Orig: {originalTenureMonths} mos
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
-                <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${progressPct}%` }} />
-              </div>
-            </>
+          {!isGoldLoan && (
+            <div className="text-[11px] text-slate-400 mt-2 flex items-center justify-between">
+              <span>Remaining: <strong className="text-slate-700 dark:text-slate-300 font-mono">{remainingMonths}</strong> mos</span>
+              <span>Orig: <strong className="text-slate-700 dark:text-slate-300 font-mono">{originalTenureMonths}</strong> mos</span>
+            </div>
           )}
         </div>
       </div>
@@ -896,7 +908,7 @@ export const LoanDetailPage: React.FC = () => {
                           onClick={() => handleDeleteRateRevision(rev.id)}
                           disabled={deletingRevId === rev.id}
                           title="Delete rate revision"
-                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -955,7 +967,7 @@ export const LoanDetailPage: React.FC = () => {
                             onClick={() => handleDeletePrepayment(prep.id)}
                             disabled={deletingPrepId === prep.id}
                             title="Delete part-payment"
-                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

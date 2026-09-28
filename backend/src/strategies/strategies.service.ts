@@ -55,11 +55,7 @@ export class StrategiesService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentExpenses = expenses.filter(
-      (e) =>
-        new Date(e.date) >= thirtyDaysAgo &&
-        (e as any).source !== 'loan_emi_auto' &&
-        !(e as any).loan_id &&
-        !(e as any).installment_id,
+      (e) => new Date(e.date) >= thirtyDaysAgo && (e as any).source !== 'loan_emi_auto',
     );
     const monthlyExpenses = recentExpenses.reduce((sum, e) => sum.plus(new Decimal(e.amount.toString())), new Decimal(0));
 
@@ -88,17 +84,28 @@ export class StrategiesService {
     // 2. Prepare strategy loan inputs with remaining balances from schedule
     const loanInputs: StrategyLoanInput[] = [];
     for (const l of activeLoans) {
-      const schedule = await this.scheduleRepository.findByLoanId(l.id);
-      const unpaid = schedule.filter((i) => !i.is_paid);
+      const isGold = l.type === 'jewel' || l.type === 'gold';
       let currentBal: Decimal;
-      if ((l as any).current_outstanding_principal != null) {
-        currentBal = new Decimal((l as any).current_outstanding_principal.toString());
-      } else if (unpaid[0]) {
-        currentBal = new Decimal(unpaid[0].opening_balance.toString());
+      let remainingTenure = l.tenure_months;
+
+      if (isGold) {
+        currentBal = (l as any).current_outstanding_principal
+          ? new Decimal((l as any).current_outstanding_principal.toString())
+          : new Decimal(l.principal.toString());
       } else {
-        currentBal = new Decimal(l.principal.toString());
+        const schedule = await this.scheduleRepository.findByLoanId(l.id);
+        const unpaid = schedule.filter((i) => !i.is_paid);
+        if (schedule.length > 0 && unpaid.length === 0) {
+          currentBal = new Decimal(0);
+        } else if (unpaid[0]) {
+          currentBal = new Decimal(unpaid[0].opening_balance.toString());
+        } else {
+          currentBal = (l as any).current_outstanding_principal
+            ? new Decimal((l as any).current_outstanding_principal.toString())
+            : new Decimal(l.principal.toString());
+        }
+        remainingTenure = unpaid.length > 0 ? unpaid.length : l.tenure_months;
       }
-      const remainingTenure = unpaid.length > 0 ? unpaid.length : l.tenure_months;
 
       if (currentBal.greaterThan(0)) {
         const isGold = l.type === 'jewel' || l.type === 'gold';
