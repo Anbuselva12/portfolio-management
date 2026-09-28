@@ -21,6 +21,7 @@ import {
   Calendar,
   Percent,
   Trash2,
+  ArrowUpDown,
 } from 'lucide-react';
 
 const LOAN_TYPES: { type: LoanType; label: string; icon: any }[] = [
@@ -117,8 +118,53 @@ export const LoansPage: React.FC = () => {
     }
   };
 
+  type SortOption = 'highest' | 'lowest' | 'newest' | 'oldest';
+  const [sortBy, setSortBy] = useState<SortOption>('highest');
+
+  const isGoldLoan = (l: Loan) => {
+    const t = (l.type || '').toLowerCase();
+    return t === 'jewel' || t === 'gold' || t.includes('gold') || t.includes('jewel');
+  };
+
+  const getRemainingTenure = (l: Loan) => {
+    const totalTenure = Number(l.tenureMonths ?? l.tenure_months ?? 0);
+    if ((l as any).remaining_tenure_months != null) {
+      return Math.max(0, Number((l as any).remaining_tenure_months));
+    }
+    if ((l as any).remainingTenureMonths != null) {
+      return Math.max(0, Number((l as any).remainingTenureMonths));
+    }
+    const startRaw = l.startDate || l.start_date;
+    if (!startRaw) return totalTenure;
+    const start = new Date(startRaw);
+    const now = new Date();
+    const elapsedMonths = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
+    return Math.max(0, totalTenure - elapsedMonths);
+  };
+
+  const sortedLoans = [...loans].sort((a, b) => {
+    const principalA = Number(a.principal || 0);
+    const principalB = Number(b.principal || 0);
+    const dateA = new Date((a as any).createdAt || (a as any).created_at || a.startDate || a.start_date || 0).getTime();
+    const dateB = new Date((b as any).createdAt || (b as any).created_at || b.startDate || b.start_date || 0).getTime();
+
+    if (sortBy === 'highest') {
+      return principalB - principalA;
+    }
+    if (sortBy === 'lowest') {
+      return principalA - principalB;
+    }
+    if (sortBy === 'oldest') {
+      return dateA - dateB;
+    }
+    // 'newest'
+    return dateB - dateA;
+  });
+
   const totalOutstanding = loans.reduce((sum, l) => sum + Number(l.principal || 0), 0);
-  const totalMonthlyEmi = loans.reduce((sum, l) => sum + Number(l.emiAmount ?? l.emi_amount ?? 0), 0);
+  const totalMonthlyEmi = loans
+    .filter((l) => !isGoldLoan(l))
+    .reduce((sum, l) => sum + Number(l.emiAmount ?? l.emi_amount ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -132,16 +178,34 @@ export const LoansPage: React.FC = () => {
             Total active debt: <span className="font-semibold text-rose-600 dark:text-rose-400 font-mono">{formatINR(totalOutstanding)}</span> • Monthly EMI obligation: <span className="font-semibold text-slate-900 dark:text-white font-mono">{formatINR(totalMonthlyEmi)}/mo</span>
           </p>
         </div>
-        <button
-          onClick={() => {
-            setFormError(null);
-            setIsDrawerOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Loan</span>
-        </button>
+        <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+          {loans.length > 1 && (
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="highest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Highest Loan</option>
+                <option value="lowest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Lowest Loan</option>
+                <option value="newest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Recently Created</option>
+                <option value="oldest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Oldest</option>
+              </select>
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setFormError(null);
+              setIsDrawerOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Loan</span>
+          </button>
+        </div>
       </div>
 
       {/* Loans Grid */}
@@ -168,10 +232,12 @@ export const LoansPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loans.map((loan) => {
+          {sortedLoans.map((loan) => {
             const typeObj = LOAN_TYPES.find((t) => t.type === loan.type);
             const Icon = typeObj?.icon || CreditCard;
-            const isNearPayoff = (loan.tenureMonths || loan.tenure_months || 0) <= 3;
+            const isGold = isGoldLoan(loan);
+            const remainingMonths = getRemainingTenure(loan);
+            const isNearPayoff = remainingMonths <= 3 && remainingMonths > 0;
 
             const loanName = (loan as any).name || loan.lender;
             const loanPlace = (loan as any).place_or_purpose || (loan as any).placeOrPurpose;
@@ -188,7 +254,7 @@ export const LoansPage: React.FC = () => {
               >
                 <div>
                   <div className="flex items-start justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isGold ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400' : 'bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400'}`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -197,9 +263,15 @@ export const LoansPage: React.FC = () => {
                           Almost there 🎉
                         </span>
                       )}
-                      <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full uppercase">
-                        {emiTypeVal}
-                      </span>
+                      {isGold ? (
+                        <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          BULLET (NO EMI)
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full uppercase">
+                          {emiTypeVal}
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => handleDeleteLoan(e, loan.id, loanName)}
@@ -237,17 +309,33 @@ export const LoansPage: React.FC = () => {
                       </span>
                     </div>
 
+                    {isGold ? (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 dark:text-slate-400">Repayment Mode:</span>
+                        <span className="font-bold text-amber-600 dark:text-amber-400">
+                          Bullet (No EMI)
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 dark:text-slate-400">Monthly EMI:</span>
+                        <span className="font-bold font-mono text-slate-900 dark:text-white">
+                          {formatINR(emiAmountVal)}/mo
+                        </span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-500 dark:text-slate-400">Monthly EMI:</span>
-                      <span className="font-bold font-mono text-slate-900 dark:text-white">
-                        {formatINR(emiAmountVal)}/mo
+                      <span className="text-slate-500 dark:text-slate-400">Tenure (Total):</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {tenureVal} months
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-500 dark:text-slate-400">Tenure:</span>
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {tenureVal} months
+                      <span className="text-slate-500 dark:text-slate-400">Remaining Tenure:</span>
+                      <span className={`font-semibold font-mono ${remainingMonths <= 3 ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-900 dark:text-white'}`}>
+                        {remainingMonths === 0 ? (isGold ? 'Due for Payoff' : 'Matures this month') : `${remainingMonths} ${remainingMonths === 1 ? 'month' : 'months'} left`}
                       </span>
                     </div>
                   </div>
@@ -261,7 +349,7 @@ export const LoansPage: React.FC = () => {
                 </div>
 
                 <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-cyan-600 dark:text-cyan-400 font-semibold group-hover:translate-x-0.5 transition-transform">
-                  <span>View Schedule & Calculator</span>
+                  <span>{isGold ? 'View Statement & Ledger' : 'View Schedule & Calculator'}</span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
               </div>
