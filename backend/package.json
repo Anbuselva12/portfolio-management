@@ -6,8 +6,11 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "postinstall": "prisma generate",
-    "build": "prisma generate && nest build",
+    "postinstall": "node scripts/prepare-prisma.js && prisma generate",
+    "build": "node scripts/prepare-prisma.js && prisma generate && nest build",
+    "db:use-sqlite": "node scripts/switch-db.js sqlite",
+    "db:use-postgres": "node scripts/switch-db.js postgres",
+    "db:status": "node scripts/switch-db.js status",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
