@@ -2,13 +2,92 @@ import { describe, it, expect } from 'vitest';
 import { GoldLoanCalculator } from '../src/loans/engine/gold-loan.calculator';
 
 describe('Story 4 — Gold Loan Logic & Verification Table', () => {
-  it('reproduces the reference test case from Story 4 §4 within Rs 1', () => {
+  it('reproduces reference test case 1 (4,00,000 @ 11%) matching user screenshots to exact Rupee', () => {
+    const summary = GoldLoanCalculator.calculateLedger(
+      {
+        principal: 400000,
+        annualRatePercent: 11,
+        disbursalDate: '2026-09-28',
+        maturityDate: '2027-09-28',
+        paidUpfrontFees: true,
+        transactions: [
+          {
+            date: '2026-10-28',
+            type: 'PAYMENT',
+            amount: 5000,
+            note: 'Festival bonus',
+          },
+        ],
+      },
+      '2026-09-28',
+    );
+
+    const { monthByMonth, totals, scenarios, chartData, paymentsWithSavings } = summary;
+
+    // Check month rows count = 13 (Sep 26 to Sep 27 maturity)
+    expect(monthByMonth.length).toBe(13);
+
+    // Month 1: 30 Sept 2026, 3 days, Interest 361, Closing 400,361
+    const m1 = monthByMonth[0];
+    expect(m1.days).toBe(3);
+    expect(m1.interest).toBe(361);
+    expect(m1.closingYours).toBe(400361);
+    expect(m1.closingNoPay).toBe(400361);
+
+    // Month 2: 31 Oct 2026, 31 days, Payment 5000, Interest 3734, Closing Yours 399,095, Closing No Pay 404,101
+    const m2 = monthByMonth[1];
+    expect(m2.days).toBe(31);
+    expect(m2.payment).toBe(5000);
+    expect(m2.interest).toBe(3734);
+    expect(m2.closingYours).toBe(399095);
+    expect(m2.closingNoPay).toBe(404101);
+
+    // Month 13: 27 Sept 2027 (maturity), 27 days, Interest 3558, Closing Yours 440,760, Closing No Pay 446,290
+    const m13 = monthByMonth[12];
+    expect(m13.days).toBe(27);
+    expect(m13.interest).toBe(3558);
+    expect(m13.closingYours).toBe(440760);
+    expect(m13.closingNoPay).toBe(446290);
+
+    // Totals
+    expect(totals.totalDays).toBe(365);
+    expect(totals.totalPayments).toBe(5000);
+    expect(totals.totalInterestYours).toBe(45760);
+    expect(totals.totalInterestNoPay).toBe(46290);
+    expect(totals.finalClosingYours).toBe(440760);
+    expect(totals.finalClosingNoPay).toBe(446290);
+
+    // Scenario A: Pay nothing till maturity
+    expect(scenarios.scenarioA.finalDueAtMaturity).toBe(446290);
+    expect(scenarios.scenarioA.totalInterest).toBe(46290);
+
+    // Scenario B: Your payments
+    expect(scenarios.scenarioB.totalPaidAlongWay).toBe(5000);
+    expect(scenarios.scenarioB.finalDueAtMaturity).toBe(440760);
+    expect(scenarios.scenarioB.totalCost).toBe(445760);
+    expect(scenarios.scenarioB.interestSavedVsA).toBe(530);
+
+    // Scenario C: Pay each month's interest
+    expect(scenarios.scenarioC.principalDueAtMaturity).toBe(400000);
+    expect(scenarios.scenarioC.totalCost).toBe(443998);
+    expect(scenarios.scenarioC.interestSavedVsA).toBe(2292);
+
+    // Payments with savings
+    expect(paymentsWithSavings.length).toBe(1);
+    expect(paymentsWithSavings[0].amount).toBe(5000);
+    expect(paymentsWithSavings[0].interestSavedByMaturity).toBe(530);
+
+    // Chart data
+    expect(chartData.length).toBe(14); // Start + 13 months
+  });
+
+  it('reproduces reference test case 2 (3,90,000 @ 11%) within Rs 1', () => {
     const summary = GoldLoanCalculator.calculateLedger(
       {
         principal: 390000,
         annualRatePercent: 11,
         disbursalDate: '2025-12-16',
-        maturityDate: '2026-08-31',
+        maturityDate: '2026-12-16',
         paidUpfrontFees: true,
         transactions: [
           {
@@ -65,7 +144,7 @@ describe('Story 4 — Gold Loan Logic & Verification Table', () => {
     expect(mayPayment.amount).toBe(5000);
     expect(mayPayment.balanceAfter).toBe(401246);
 
-    // 7. 31/05/2026: Interest 3770 (14 days on 406,246 + 17 days on 401,246), Balance 405,016
+    // 7. 31/05/2026: Interest 3770, Balance 405,016
     const may2026 = ledger.find((e) => e.date === '2026-05-31' && e.type === 'INTEREST_POSTED')!;
     expect(may2026).toBeDefined();
     expect(may2026.amount).toBe(3770);
@@ -88,5 +167,8 @@ describe('Story 4 — Gold Loan Logic & Verification Table', () => {
     expect(aug2026).toBeDefined();
     expect(aug2026.amount).toBe(3854);
     expect(aug2026.balanceAfter).toBe(416350);
+
+    // Top card as of 2026-08-31
+    expect(summary.asOfStats.postedBalance).toBe(416350);
   });
 });

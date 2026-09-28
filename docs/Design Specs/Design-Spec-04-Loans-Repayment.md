@@ -99,34 +99,53 @@ Allows one-click alignment of an existing active loan with live bank statements 
 
 ---
 
-## 7. Gold / Jewel Loan Running-Balance Ledger & Bullet Repayment View
-When `loan_type` is **Gold / Jewel Loan** (`jewel` / `gold`):
-- **Form Differences (Creation / Edit)**:
-  - Disables fixed-EMI fields (no "Actual Bank EMI", no monthly principal amortisation).
-  - Prompts for: Disbursal Date, Principal Amount, Annual Interest Rate (% p.a.), Maturity Tenure (default 12 months), and Upfront Fees (Processing fee, GST, and "Paid Upfront" toggle).
-  - Day-count convention: Actual/365.
-- **Dedicated Ledger View (Statement Style)**:
-  - Replaces fixed monthly schedule with an interactive **Running-Balance Transaction Ledger**:
-    - Columns: Date, Event / Type (`DISBURSAL`, `PAYMENT`, `INTEREST_POSTED`, `FEE`), Inflow / Outflow Amount, Running Outstanding Balance.
-    - Each row reflects the exact balance following payments and monthly capitalised interest debited on the last calendar day of the month.
-  - **Live Balances**:
-    - **Current Posted Balance**: Last month-end balance after capitalisation.
-    - **Unposted Accrued Interest**: Daily interest accrued so far in the current month ($\text{Balance} \times \frac{R}{365} \times \text{Days}$).
-    - **Total Payoff Quote Today**: Posted Balance + Current Unposted Accrued Interest.
-  - **"+ Add Payment" Action**:
-    - Records manual payments of any amount on any date.
-    - Payments immediately take effect from their payment date, segmenting the month's daily interest calculation.
-  - **Monthly Schedule & Compounding Principal Accumulation**:
-    - For borrowers who do not service monthly interest, the monthly repayment schedule displays **EMI = ₹0.00**.
-    - Each month's accrued interest is capitalized into the running principal (`Opening Balance + Interest Component = Closing Balance`), clearly displaying how the outstanding principal accumulates month-over-month.
-    - If any payment is made in any month, it immediately reduces the principal on that date and all downstream monthly interest and accumulated balances adjust dynamically.
-    - At month 12 (maturity), the final bullet payment reflects the entire accumulated balance.
-  - **Bullet Repayment Projection**:
-    - Projects future month-end interest additions and final payoff due at maturity assuming no further payments.
-  - **Compounding Cost Analysis**:
-    - Compares total capitalised interest vs true simple interest ($\text{Principal} \times R \times T$) and highlights the compounding penalty.
-  - **Smart Advisory Banner**:
-    - "Pay at least ₹X (this month's accrued interest) before month-end to stop your gold loan balance from compounding."
+## 7. Gold / Jewel Loan Running-Balance Ledger & Dedicated Summary Page
+When `loan_type` is **Gold / Jewel Loan** (`jewel` / `gold`), the loan operates purely as a running-balance account with bullet maturity payoff, completely replacing the fixed installment / monthly EMI interface.
+
+### 7.1 Key Calculation Rules (Single Shared Engine)
+1. **Daily Accrual Formula**:
+   $$\text{Daily Interest} = \text{Balance} \times \frac{\text{Annual Rate}}{100} \times \frac{1}{365}$$
+2. **Monthly Capitalization**:
+   - Accrued interest is posted on the **last calendar day of each month** (`INTEREST_POSTED`) and added to the balance (monthly compounding).
+3. **First Month Truncation**:
+   - First partial period counts the disbursal day itself (e.g. 28 Sep to 30 Sep = 3 days). First month's interest is truncated (floor) to the rupee, matching bank convention. Round all other months to the nearest rupee.
+4. **Maturity Period**:
+   - The final period ends the day **before** maturity, ensuring a standard 12-month loan is exactly 365 calendar days.
+5. **No Fixed EMI / No Installments**:
+   - Remove Monthly EMI card, auto EMI queue, due dates on arbitrary days, and paid/unpaid installment status.
+
+### 7.2 UI Layout & Sections (Unified Shared Calculation)
+1. **Header & Context Strip**:
+   - Title: `Gold Loan Summary`
+   - Subtitle: `[Disbursal Date] to [Maturity Date] | [Rate]% p.a. | Bullet payoff, no EMI`
+   - Interactive `As of date` selector (defaults to today).
+   - Parameter strip: Loan amount, Rate % p.a., Disbursal date, Maturity date.
+2. **Top 4 Stat Cards**:
+   - **Payoff as of Date**: Posted balance + current unposted accrued daily interest.
+   - **Interest Charged So Far**: Sum of posted interest + unposted accrued to date.
+   - **Paid by You So Far**: Sum of all manual ad-hoc payments (`Manual payments only`).
+   - **Days to Maturity**: Remaining days to maturity date.
+3. **Smart Tip Banner**:
+   - `"Tip: pay at least this month's interest (about ₹X) before [Month End] to stop the balance from growing."`
+4. **"What You Will Pay by Maturity" (3 Core Scenarios)**:
+   - **Scenario A (Pay Nothing Till Maturity)**: Full compounding balance due in one go at maturity ($\text{Principal} + \text{Total Compounded Interest}$).
+   - **Scenario B (Your Payments)**: Total paid along the way + final amount due at maturity, with green badge indicating **Interest Saved vs Scenario A: ₹X**.
+   - **Scenario C (Pay Each Month's Interest)**: Total simple interest servicing cost, with badge indicating **Saved vs Scenario A: ₹Y** (balance never compounds).
+5. **Outstanding Balance Over Time Chart**:
+   - Visual trend line comparing two series from disbursal to maturity:
+     - **Red line**: `No payments` (compounding accumulation).
+     - **Green line**: `Your payments` (actual trajectory taking effect from each payment date).
+6. **"Your Payments" Management & Real-Time Simulation**:
+   - Inline payment logger: Date picker, Amount input, Note.
+   - Live pre-submission saving preview: `"Paying ₹X on this date saves ₹Y interest by maturity"`.
+   - Payment history list: displays logged payment date, amount, note, and green tag `saves ₹Z` with edit and remove actions.
+7. **Month-by-Month Compounding Ledger Table**:
+   - Columns: `MONTH END`, `DAYS`, `OPENING`, `PAYMENT`, `INTEREST`, `CLOSING (YOURS)`, `CLOSING (NO PAY)`.
+   - Footer totals: Total Days (365), Total Payments, Total Interest, Final Due (Yours), Final Due (No Pay).
+   - Explanatory footnote detailing daily calculation, truncation, and segmentation rules.
+8. **Passbook Statement & Compounding Cost**:
+   - Passbook transaction view detailing all disbursals, payments, and interest postings.
+   - Compounding cost analysis comparing total interest charged against simple interest ($\text{Principal} \times R \times T$).
 
 ---
 

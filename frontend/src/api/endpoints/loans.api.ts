@@ -27,5 +27,9 @@ export const loansApi = {
     (await api.get(`/loans/${loanId}/ledger`, { params: asOfDate ? { asOfDate } : undefined })).data,
   addGoldLoanPayment: async (loanId: string, data: { paymentDate: string; amount: string; notes?: string }) =>
     (await api.post(`/loans/${loanId}/gold-payment`, data)).data,
+  previewGoldLoanPayment: async (loanId: string, data: { paymentDate: string; amount: string }) =>
+    (await api.post(`/loans/${loanId}/gold-payment/preview`, data)).data,
+  deleteGoldLoanPayment: async (loanId: string, paymentId: string) =>
+    (await api.delete(`/loans/${loanId}/gold-payment/${paymentId}`)).data,
 };
 

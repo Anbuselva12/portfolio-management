@@ -51,8 +51,9 @@ export class LoansService {
     let hasDiscrepancy = reconciliation.hasDiscrepancy;
 
     if (isGoldLoan) {
-      // For gold loans, default monthly EMI is 0 (bullet repayment at maturity)
-      effectiveEmi = userEmi ?? new Decimal(0);
+      // For gold loans, default monthly servicing is monthly interest
+      const monthlyServicing = principal.times(rate).dividedBy(1200).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+      effectiveEmi = userEmi ?? monthlyServicing;
       hasDiscrepancy = false; // Gold loans have no bank amortization formula discrepancy
     }
 
@@ -149,10 +150,7 @@ export class LoansService {
   }
 
   async getSchedule(loanId: string, familyId: string) {
-    const loan = await this.getLoanById(loanId, familyId);
-    if (loan.type === 'jewel' || loan.type === 'gold') {
-      await this.regenerateGoldLoanSchedule(loan);
-    }
+    await this.getLoanById(loanId, familyId);
     return this.scheduleRepository.findByLoanId(loanId);
   }
 
@@ -701,15 +699,16 @@ export class LoansService {
 
     return {
       entries: summary.ledger,
-      currentOutstandingToday: summary.currentPostedBalance + summary.unpostedAccruedInterest,
-      postedBalance: summary.currentPostedBalance,
-      accruedInterestUnposted: summary.unpostedAccruedInterest,
-      payoffQuoteToday: summary.totalPayoffQuoteToday,
-      totalInterestCharged: summary.totalProjectedInterest,
-      compoundingCost: summary.compoundingPenalty,
-      simpleInterest: summary.simpleInterestComparison,
-      smartTip: `Pay at least this month's interest (about ₹${Math.round(summary.smartAdviceMonthlyInterest).toLocaleString('en-IN')}) before month-end to stop the balance from growing.`,
+      currentOutstandingToday: summary.asOfStats.payoffAsOfDate,
+      postedBalance: summary.asOfStats.postedBalance,
+      accruedInterestUnposted: summary.asOfStats.unpostedAccrued,
+      payoffQuoteToday: summary.asOfStats.payoffAsOfDate,
+      totalInterestCharged: summary.totals.totalInterestYours,
+      compoundingCost: summary.compoundingCost.compoundingPenalty,
+      simpleInterest: summary.compoundingCost.simpleInterest,
+      smartTip: summary.smartTip,
       asOfDate: targetDate,
+      summary,
     };
   }
 
@@ -739,12 +738,6 @@ export class LoansService {
       notes: dto.notes || 'Gold Loan Payment',
     });
 
-    // Update remaining principal on loan
-    const newPrincipal = Decimal.max(0, new Decimal(loan.principal.toString()).minus(payAmt));
-    await this.loanRepository.update(loan.id, {
-      principal: newPrincipal as any,
-    });
-
     await this.auditRepository.create({
       member_id: memberId,
       family_id: familyId,
@@ -754,52 +747,67 @@ export class LoansService {
       field_changes: JSON.stringify({ amount: dto.amount, paymentDate: dto.paymentDate }),
     });
 
-    await this.regenerateGoldLoanSchedule(loan);
-
     return prepayment;
   }
 
   /**
-   * Regenerates a gold loan schedule where monthly EMI = 0, interest capitalizes into principal,
-   * and any manual payments made in any month reduce the compounding balance accordingly.
+   * Deletes a gold loan payment.
    */
-  private async regenerateGoldLoanSchedule(loan: any) {
-    const prepayments = await this.prepaymentRepository.findByLoanId(loan.id);
-    const startDate = new Date(loan.start_date);
-    const tenureMonths = loan.tenure_months || 12;
-
-    const paymentsByMonth = new Map<number, Decimal>();
-    for (const p of prepayments) {
-      const pDate = new Date(p.date);
-      const monthsDiff = (pDate.getFullYear() - startDate.getFullYear()) * 12 + (pDate.getMonth() - startDate.getMonth()) + 1;
-      const targetMonth = Math.min(Math.max(1, monthsDiff), tenureMonths);
-      const existing = paymentsByMonth.get(targetMonth) || new Decimal(0);
-      paymentsByMonth.set(targetMonth, existing.plus(new Decimal(p.amount.toString())));
+  async deleteGoldLoanPayment(loanId: string, familyId: string, memberId: string, paymentId: string) {
+    await this.getLoanById(loanId, familyId);
+    if (this.prepaymentRepository.delete) {
+      await this.prepaymentRepository.delete(paymentId);
     }
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'loan',
+      entity_id: loanId,
+      action: 'delete_payment',
+      field_changes: JSON.stringify({ paymentId }),
+    });
+    return { success: true };
+  }
 
-    await this.scheduleRepository.deleteFutureInstallments(loan.id, 1);
-
-    const newSchedule = LoanEngine.generateGoldLoanSchedule(
-      new Decimal(loan.principal.toString()),
-      new Decimal(loan.interest_rate.toString()),
-      tenureMonths,
-      startDate,
-      paymentsByMonth,
-    );
-
-    const dbInstallments = newSchedule.map((inst) => ({
-      loan_id: loan.id,
-      installment_number: inst.installment_number,
-      due_date: inst.due_date,
-      opening_balance: inst.opening_balance.toString(),
-      emi_amount: inst.emi_amount.toString(),
-      principal_component: inst.principal_component.toString(),
-      interest_component: inst.interest_component.toString(),
-      closing_balance: inst.closing_balance.toString(),
-      is_paid: false,
-      is_manually_edited: false,
+  /**
+   * Previews interest saving for a prospective gold loan payment.
+   */
+  async previewGoldLoanPayment(
+    loanId: string,
+    familyId: string,
+    dto: { paymentDate: string; amount: string },
+  ) {
+    const loan = await this.getLoanById(loanId, familyId);
+    const prepayments = await this.prepaymentRepository.findByLoanId(loanId);
+    const transactions = prepayments.map((p) => ({
+      id: p.id,
+      date: new Date(p.date).toISOString().split('T')[0],
+      type: 'PAYMENT' as const,
+      amount: Number(p.amount),
+      note: p.notes || 'Gold Loan Payment',
     }));
 
-    await this.scheduleRepository.createMany(dbInstallments);
+    const maturityDate = loan.tenure_months
+      ? new Date(new Date(loan.start_date).setMonth(new Date(loan.start_date).getMonth() + loan.tenure_months))
+          .toISOString()
+          .split('T')[0]
+      : undefined;
+
+    const saved = GoldLoanCalculator.previewPaymentSaving(
+      {
+        principal: Number(loan.principal),
+        annualRatePercent: Number(loan.interest_rate),
+        disbursalDate: new Date(loan.start_date).toISOString().split('T')[0],
+        maturityDate,
+        dayCountBasis: 365,
+        compounding: 'MONTHLY_CAPITALISATION',
+        roundingMode: 'ROUND',
+        transactions,
+      },
+      dto.paymentDate,
+      dto.amount,
+    );
+
+    return { interestSaved: saved };
   }
 }

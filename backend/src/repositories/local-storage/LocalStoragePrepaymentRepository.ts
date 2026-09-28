@@ -37,5 +37,12 @@ export class LocalStoragePrepaymentRepository implements IPrepaymentRepository {
     this.items.push(record);
     return { ...record };
   }
+
+  async delete(id: string): Promise<void> {
+    const idx = this.items.findIndex((p) => p.id === id);
+    if (idx !== -1) {
+      this.items.splice(idx, 1);
+    }
+  }
 }
 

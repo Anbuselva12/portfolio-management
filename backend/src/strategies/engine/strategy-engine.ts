@@ -76,18 +76,22 @@ export class StrategyEngine {
       totalInterestPaid: totalInterestPaid.toFixed(2),
       totalInterestSaved: '0.00',
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
-      allocations: active.map((l) => ({
-        loanId: l.id,
-        name: l.name || l.lender,
-        placeOrPurpose: l.placeOrPurpose,
-        lender: l.lender,
-        type: l.type,
-        currentPrincipal: l.principal.toFixed(2),
-        interestRate: l.interestRate.toFixed(2),
-        minimumEmi: l.emiAmount.toFixed(2),
-        extraAmount: '0.00',
-        totalMonthlyPayment: l.emiAmount.toFixed(2),
-      })),
+      allocations: active.map((l) => {
+        const isGold = l.type === 'jewel' || l.type === 'gold';
+        const minEmi = isGold ? new Decimal(0) : l.emiAmount;
+        return {
+          loanId: l.id,
+          name: l.name || l.lender,
+          placeOrPurpose: l.placeOrPurpose,
+          lender: l.lender,
+          type: l.type,
+          currentPrincipal: l.principal.toFixed(2),
+          interestRate: l.interestRate.toFixed(2),
+          minimumEmi: minEmi.toFixed(2),
+          extraAmount: '0.00',
+          totalMonthlyPayment: minEmi.toFixed(2),
+        };
+      }),
       timeline,
     };
   }
@@ -180,6 +184,8 @@ export class StrategyEngine {
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
       allocations: active.map((l) => {
         const extra = initialCascade[l.id] || new Decimal(0);
+        const isGold = l.type === 'jewel' || l.type === 'gold';
+        const minEmi = isGold ? new Decimal(0) : l.emiAmount;
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -188,9 +194,9 @@ export class StrategyEngine {
           type: l.type,
           currentPrincipal: l.principal.toFixed(2),
           interestRate: l.interestRate.toFixed(2),
-          minimumEmi: l.emiAmount.toFixed(2),
+          minimumEmi: minEmi.toFixed(2),
           extraAmount: extra.toFixed(2),
-          totalMonthlyPayment: l.emiAmount.plus(extra).toFixed(2),
+          totalMonthlyPayment: minEmi.plus(extra).toFixed(2),
         };
       }),
       timeline,
@@ -258,6 +264,8 @@ export class StrategyEngine {
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
       allocations: active.map((l) => {
         const extra = initialCascade[l.id] || new Decimal(0);
+        const isGold = l.type === 'jewel' || l.type === 'gold';
+        const minEmi = isGold ? new Decimal(0) : l.emiAmount;
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -266,9 +274,9 @@ export class StrategyEngine {
           type: l.type,
           currentPrincipal: l.principal.toFixed(2),
           interestRate: l.interestRate.toFixed(2),
-          minimumEmi: l.emiAmount.toFixed(2),
+          minimumEmi: minEmi.toFixed(2),
           extraAmount: extra.toFixed(2),
-          totalMonthlyPayment: l.emiAmount.plus(extra).toFixed(2),
+          totalMonthlyPayment: minEmi.plus(extra).toFixed(2),
         };
       }),
       timeline,
@@ -414,6 +422,8 @@ export class StrategyEngine {
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
       allocations: active.map((l) => {
         const extra = initialAllocs[l.id] || new Decimal(0);
+        const isGold = l.type === 'jewel' || l.type === 'gold';
+        const minEmi = isGold ? new Decimal(0) : l.emiAmount;
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -422,9 +432,9 @@ export class StrategyEngine {
           type: l.type,
           currentPrincipal: l.principal.toFixed(2),
           interestRate: l.interestRate.toFixed(2),
-          minimumEmi: l.emiAmount.toFixed(2),
+          minimumEmi: minEmi.toFixed(2),
           extraAmount: extra.toFixed(2),
-          totalMonthlyPayment: l.emiAmount.plus(extra).toFixed(2),
+          totalMonthlyPayment: minEmi.plus(extra).toFixed(2),
         };
       }),
       timeline,
@@ -492,6 +502,8 @@ export class StrategyEngine {
       payoffDate: this.calculatePayoffDate(monthsToDebtFree),
       allocations: active.map((l) => {
         const extra = allocMap.get(l.id) || new Decimal(0);
+        const isGold = l.type === 'jewel' || l.type === 'gold';
+        const minEmi = isGold ? new Decimal(0) : l.emiAmount;
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -500,9 +512,9 @@ export class StrategyEngine {
           type: l.type,
           currentPrincipal: l.principal.toFixed(2),
           interestRate: l.interestRate.toFixed(2),
-          minimumEmi: l.emiAmount.toFixed(2),
+          minimumEmi: minEmi.toFixed(2),
           extraAmount: extra.toFixed(2),
-          totalMonthlyPayment: l.emiAmount.plus(extra).toFixed(2),
+          totalMonthlyPayment: minEmi.plus(extra).toFixed(2),
         };
       }),
       timeline,
@@ -557,40 +569,58 @@ export class StrategyEngine {
         totalInterestPaid = totalInterestPaid.plus(interest);
 
         const isGold = loan.type === 'jewel' || loan.type === 'gold';
-        // Required regular EMI: for amortizing loans it is fixed EMI; for gold loans it is monthly interest servicing
-        const regularEmi = isGold ? interest : originalEmis.get(loan.id)!;
         const extraPayment = extraAllocs[loan.id] || new Decimal(0);
-        const totalPayment = isGold ? extraPayment : regularEmi.plus(extraPayment);
 
-        const principalReduction = isGold ? extraPayment : totalPayment.minus(interest);
+        if (isGold) {
+          // Gold loan: no regular EMI is paid in baseline, monthly interest capitalizes into balance
+          bal = bal.plus(interest);
+          const reachedBulletMaturity = month >= (loan.tenureMonths || 12);
 
-        // Check if surplus paid off loan OR if gold loan reached bullet maturity
-        const reachedBulletMaturity = isGold && month >= (loan.tenureMonths || 12);
-
-        if (principalReduction.greaterThanOrEqualTo(bal) || reachedBulletMaturity) {
-          // Loan paid off this month!
-          const unspentRemainder = reachedBulletMaturity
-            ? principalReduction
-            : principalReduction.minus(bal);
-          balances.set(loan.id, new Decimal(0));
-          if (!payoffMonths.has(loan.id)) {
-            payoffMonths.set(loan.id, month);
-            // Freed up EMI joins the rolling surplus cascade ONLY in recurring mode!
-            if (prepaymentMode === 'recurring_monthly' && !isGold) {
-              rollingSurplus = rollingSurplus.plus(regularEmi);
+          if (extraPayment.greaterThanOrEqualTo(bal) || reachedBulletMaturity) {
+            const unspentRemainder = reachedBulletMaturity
+              ? Decimal.max(0, extraPayment.minus(bal))
+              : extraPayment.minus(bal);
+            balances.set(loan.id, new Decimal(0));
+            if (!payoffMonths.has(loan.id)) {
+              payoffMonths.set(loan.id, month);
             }
-          }
-          // If any surplus remainder was unspent, cascade immediately to the next active loan
-          if (unspentRemainder.greaterThan(0)) {
-            const nextLoan = activeLoans.find(
-              (other) => other.id !== loan.id && (balances.get(other.id) || new Decimal(0)).greaterThan(0),
-            );
-            if (nextLoan) {
-              extraAllocs[nextLoan.id] = (extraAllocs[nextLoan.id] || new Decimal(0)).plus(unspentRemainder);
+            if (unspentRemainder.greaterThan(0)) {
+              const nextLoan = activeLoans.find(
+                (other) => other.id !== loan.id && (balances.get(other.id) || new Decimal(0)).greaterThan(0),
+              );
+              if (nextLoan) {
+                extraAllocs[nextLoan.id] = (extraAllocs[nextLoan.id] || new Decimal(0)).plus(unspentRemainder);
+              }
             }
+          } else {
+            balances.set(loan.id, Decimal.max(0, bal.minus(extraPayment)));
           }
         } else {
-          balances.set(loan.id, bal.minus(principalReduction));
+          // Standard amortizing loan
+          const regularEmi = originalEmis.get(loan.id)!;
+          const totalPayment = regularEmi.plus(extraPayment);
+          const principalReduction = totalPayment.minus(interest);
+
+          if (principalReduction.greaterThanOrEqualTo(bal)) {
+            const unspentRemainder = principalReduction.minus(bal);
+            balances.set(loan.id, new Decimal(0));
+            if (!payoffMonths.has(loan.id)) {
+              payoffMonths.set(loan.id, month);
+              if (prepaymentMode === 'recurring_monthly') {
+                rollingSurplus = rollingSurplus.plus(regularEmi);
+              }
+            }
+            if (unspentRemainder.greaterThan(0)) {
+              const nextLoan = activeLoans.find(
+                (other) => other.id !== loan.id && (balances.get(other.id) || new Decimal(0)).greaterThan(0),
+              );
+              if (nextLoan) {
+                extraAllocs[nextLoan.id] = (extraAllocs[nextLoan.id] || new Decimal(0)).plus(unspentRemainder);
+              }
+            }
+          } else {
+            balances.set(loan.id, bal.minus(principalReduction));
+          }
         }
       }
     }

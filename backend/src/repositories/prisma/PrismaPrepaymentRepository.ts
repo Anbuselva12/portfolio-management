@@ -17,5 +17,8 @@ export class PrismaPrepaymentRepository implements IPrepaymentRepository {
   async create(data: any): Promise<PrepaymentRecord> {
     return this.prisma.prepaymentRecord.create({ data });
   }
-}
 
+  async delete(id: string): Promise<void> {
+    await this.prisma.prepaymentRecord.delete({ where: { id } });
+  }
+}

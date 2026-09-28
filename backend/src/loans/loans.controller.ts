@@ -138,5 +138,23 @@ export class LoansController {
   ) {
     return this.loansService.addGoldLoanPayment(id, user.familyId, user.sub, dto);
   }
+
+  @Post(':id/gold-payment/preview')
+  async previewGoldLoanPayment(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: { paymentDate: string; amount: string },
+  ) {
+    return this.loansService.previewGoldLoanPayment(id, user.familyId, dto);
+  }
+
+  @Delete(':id/gold-payment/:paymentId')
+  async deleteGoldLoanPayment(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Param('paymentId') paymentId: string,
+  ) {
+    return this.loansService.deleteGoldLoanPayment(id, user.familyId, user.sub, paymentId);
+  }
 }
 

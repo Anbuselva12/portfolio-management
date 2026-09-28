@@ -9,6 +9,7 @@ import { PrepaymentCalculatorModal } from '../../components/loans/PrepaymentCalc
 import { RateRevisionModal } from '../../components/loans/RateRevisionModal';
 import { PartPaymentModal } from '../../components/loans/PartPaymentModal';
 import { CalibrateLoanModal } from '../../components/loans/CalibrateLoanModal';
+import { GoldLoanDetailView } from '../../components/loans/GoldLoanDetailView';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import {
   ArrowLeft,
@@ -349,6 +350,133 @@ export const LoanDetailPage: React.FC = () => {
   const lastInstallment = schedule[schedule.length - 1];
   const payoffDate = lastInstallment ? lastInstallment.dueDate || lastInstallment.due_date : loan.startDate || loan.start_date;
 
+  if (isGoldLoan) {
+    return (
+      <>
+        <GoldLoanDetailView
+          loan={loan}
+          prepayments={prepayments}
+          onRefresh={loadLoanData}
+          onEditTerms={() => setIsEditLoanOpen(true)}
+          onDeleteLoan={handleDeleteLoan}
+          onBack={() => navigate('/loans')}
+        />
+
+        {/* Edit Terms Slide Drawer */}
+        <SlideDrawer
+          isOpen={isEditLoanOpen}
+          onClose={() => setIsEditLoanOpen(false)}
+          title="Edit Gold Loan Terms"
+        >
+          <form onSubmit={handleUpdateTerms} className="space-y-4">
+            <p className="text-xs text-slate-500">
+              Modifying loan parameters will update the gold loan settings and recalibrate interest calculations.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Loan Name / Label
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Gold Loan"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Place / Purpose
+                </label>
+                <input
+                  type="text"
+                  value={editPlace}
+                  onChange={(e) => setEditPlace(e.target.value)}
+                  placeholder="e.g. Branch / Lockers"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Personal Notes
+              </label>
+              <textarea
+                rows={2}
+                value={editComments}
+                onChange={(e) => setEditComments(e.target.value)}
+                placeholder="Any notes about this loan..."
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Lender Name
+              </label>
+              <input
+                type="text"
+                required
+                value={editLender}
+                onChange={(e) => setEditLender(e.target.value)}
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Interest Rate (% p.a.)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={editRate}
+                  onChange={(e) => setEditRate(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Tenure (Months)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={editTenure}
+                  onChange={(e) => setEditTenure(Number(e.target.value))}
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsEditLoanOpen(false)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSavingTerms}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {isSavingTerms ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </SlideDrawer>
+      </>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Top Bar Navigation */}
@@ -526,13 +654,13 @@ export const LoanDetailPage: React.FC = () => {
 
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-            Monthly EMI
+            {isGoldLoan ? 'Monthly Servicing' : 'Monthly EMI'}
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
-            {isGoldLoan ? '₹0.00' : formatINR(emiAmount)}
+            {formatINR(emiAmount)}
           </div>
           <div className="text-[11px] text-slate-400 mt-1 capitalize">
-            {isGoldLoan ? 'Zero EMI (Bullet Payoff)' : `Mode: ${loan.emiType || loan.emi_type}`}
+            {isGoldLoan ? 'Manual payments' : `Mode: ${loan.emiType || loan.emi_type}`}
           </div>
         </div>
 
@@ -965,12 +1093,10 @@ export const LoanDetailPage: React.FC = () => {
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-cyan-600" />
-              <span>{isGoldLoan ? 'Monthly Compounding & Principal Accumulation' : 'Full Amortization Schedule'}</span>
+              <span>Full Amortization Schedule</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {isGoldLoan
-                ? 'Monthly EMI is ₹0. Unpaid interest capitalizes into principal each month, accumulating the outstanding balance until bullet maturity or manual payment.'
-                : 'Installment-by-installment balance reduction. Click any row to record actual payments or adjust splits.'}
+              Installment-by-installment balance reduction. Click any row to record actual payments or adjust splits.
             </p>
           </div>
 

@@ -245,62 +245,39 @@ export class LoanEngine {
   }
 
   /**
-   * Generates a Gold Loan schedule: monthly EMI = 0, accrued interest capitalizes into principal,
-   * showing how the total principal gets accumulated each month until maturity bullet payoff.
-   * If payments were made in any month, they reduce the balance accordingly.
+   * Generates a Gold Loan schedule: monthly interest payments + bullet principal payoff at maturity.
    */
   static generateGoldLoanSchedule(
     principal: Decimal,
     annualRatePct: Decimal,
     tenureMonths: number = 12,
     startDate: Date,
-    paymentsByMonth: Map<number, Decimal> = new Map(),
   ): GeneratedInstallment[] {
     const schedule: GeneratedInstallment[] = [];
     const monthlyRate = annualRatePct.dividedBy(12).dividedBy(100);
-    let runningBalance = new Decimal(principal);
+    const monthlyInterest = principal.times(monthlyRate).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 
     for (let i = 1; i <= tenureMonths; i++) {
       const dueDate = new Date(startDate);
       dueDate.setMonth(dueDate.getMonth() + i);
 
-      const openingBalance = runningBalance;
-      const interestComponent = openingBalance.times(monthlyRate).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
-      const paymentInMonth = paymentsByMonth.get(i) || new Decimal(0);
-
       const isMaturity = i === tenureMonths;
-      if (isMaturity) {
-        // Bullet closure: full accumulated principal + final month's interest minus payment
-        const bulletPayoff = openingBalance.plus(interestComponent).minus(paymentInMonth);
-        schedule.push({
-          installment_number: i,
-          due_date: dueDate,
-          opening_balance: openingBalance,
-          emi_amount: Decimal.max(0, bulletPayoff),
-          principal_component: Decimal.max(0, openingBalance.minus(paymentInMonth)),
-          interest_component: interestComponent,
-          closing_balance: new Decimal(0),
-          is_paid: false,
-          is_manually_edited: false,
-        });
-        runningBalance = new Decimal(0);
-      } else {
-        // Non-payment month: EMI = 0 (or payment amount if payment made in this month)
-        // Closing balance accumulates the capitalized interest
-        const closingBalance = openingBalance.plus(interestComponent).minus(paymentInMonth);
-        schedule.push({
-          installment_number: i,
-          due_date: dueDate,
-          opening_balance: openingBalance,
-          emi_amount: paymentInMonth,
-          principal_component: paymentInMonth.greaterThan(interestComponent) ? paymentInMonth.minus(interestComponent) : new Decimal(0),
-          interest_component: interestComponent,
-          closing_balance: Decimal.max(0, closingBalance),
-          is_paid: false,
-          is_manually_edited: false,
-        });
-        runningBalance = Decimal.max(0, closingBalance);
-      }
+      const principalComponent = isMaturity ? principal : new Decimal(0);
+      const interestComponent = monthlyInterest;
+      const emiAmount = isMaturity ? principal.plus(monthlyInterest) : monthlyInterest;
+      const closingBalance = isMaturity ? new Decimal(0) : principal;
+
+      schedule.push({
+        installment_number: i,
+        due_date: dueDate,
+        opening_balance: principal,
+        emi_amount: emiAmount,
+        principal_component: principalComponent,
+        interest_component: interestComponent,
+        closing_balance: closingBalance,
+        is_paid: false,
+        is_manually_edited: false,
+      });
     }
 
     return schedule;
