@@ -329,7 +329,8 @@ export const LoanDetailPage: React.FC = () => {
     );
   }
 
-  const isGoldLoan = loan.type === 'jewel' || loan.type === 'gold';
+  const loanTypeLower = (loan.type || '').toLowerCase().trim();
+  const isGoldLoan = loanTypeLower === 'jewel' || loanTypeLower === 'gold' || loanTypeLower.includes('gold') || loanTypeLower.includes('jewel');
   const interestRate = loan.interestRate || loan.interest_rate || '0';
   const emiAmount = loan.emiAmount || loan.emi_amount || '0';
   const tenureMonths = loan.tenureMonths || loan.tenure_months || 0;

@@ -729,12 +729,11 @@ export class LoansService {
 
     const prepayment = await this.prepaymentRepository.create({
       loan_id: loan.id,
-      member_id: memberId,
       date: new Date(dto.paymentDate),
-      amount: payAmt as any,
+      amount: payAmt.toString(),
       mode: 'reduce_tenure',
-      penalty_amount: new Decimal(0) as any,
-      accrued_interest: new Decimal(0) as any,
+      penalty_amount: '0',
+      accrued_interest: '0',
       notes: dto.notes || 'Gold Loan Payment',
     });
 
