@@ -526,13 +526,13 @@ export const LoanDetailPage: React.FC = () => {
 
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-            {isGoldLoan ? 'Monthly Servicing' : 'Monthly EMI'}
+            Monthly EMI
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
-            {formatINR(emiAmount)}
+            {isGoldLoan ? '₹0.00' : formatINR(emiAmount)}
           </div>
           <div className="text-[11px] text-slate-400 mt-1 capitalize">
-            {isGoldLoan ? 'Manual payments' : `Mode: ${loan.emiType || loan.emi_type}`}
+            {isGoldLoan ? 'Zero EMI (Bullet Payoff)' : `Mode: ${loan.emiType || loan.emi_type}`}
           </div>
         </div>
 
@@ -965,10 +965,12 @@ export const LoanDetailPage: React.FC = () => {
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-cyan-600" />
-              <span>Full Amortization Schedule</span>
+              <span>{isGoldLoan ? 'Monthly Compounding & Principal Accumulation' : 'Full Amortization Schedule'}</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Installment-by-installment balance reduction. Click any row to record actual payments or adjust splits.
+              {isGoldLoan
+                ? 'Monthly EMI is ₹0. Unpaid interest capitalizes into principal each month, accumulating the outstanding balance until bullet maturity or manual payment.'
+                : 'Installment-by-installment balance reduction. Click any row to record actual payments or adjust splits.'}
             </p>
           </div>
 

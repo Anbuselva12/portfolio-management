@@ -628,12 +628,18 @@ Gold/Jewel loans (`loan_type == 'jewel'` or `'gold'`) operate as running-balance
      - Segment 2: from payment date to month end on the reduced balance.
    - Payments take effect immediately on their payment date.
 
-3. **Bullet Payoff & Debt Strategy Integration**:
-   - The entire principal + remaining accrued interest is due at maturity (default 12 months from disbursal) or closure.
+3. **Bullet Payoff & Compounding Balance Accumulation Schedule**:
+   - Because borrowers do not make fixed monthly EMI payments on Gold Loans, the scheduled monthly EMI is set to **₹0.00**.
+   - In the monthly projection / repayment schedule:
+     - For months $1$ to $N - 1$: Scheduled EMI = ₹0.00, Principal Component = ₹0.00, Interest Component = Month's Accrued Interest.
+     - The Closing Balance accumulates month-over-month:
+       $$\text{Closing Balance}_m = \text{Opening Balance}_m + \text{Interest}_m$$
+     - Next month's Opening Balance begins with the accumulated figure ($\text{Opening Balance}_{m+1} = \text{Closing Balance}_m$).
+     - At final maturity month $N$, the full accumulated balance is due as a bullet payoff ($\text{EMI}_N = \text{Closing Balance}_{N-1} + \text{Interest}_N$, $\text{Closing Balance}_N = 0$).
+   - If the borrower records an ad-hoc payment on any date in any month, the balance is segmented and reduced immediately, and all subsequent monthly interest and accumulated balances are dynamically recalculated.
    - **Debt Strategy Engine Integration**:
-     - The baseline monthly obligation for a Gold Loan is defined as the monthly accrued interest (servicing the interest prevents the balance from compounding).
-     - Extra surplus allocation directly reduces the principal balance, lowering all subsequent daily interest charges and future capitalized amounts.
-     - Final month requires full bullet payoff of remaining balance.
+     - In debt strategy simulations (Avalanche, Snowball, Custom-Weighted, AI), the baseline monthly mandatory payment is ₹0.00 (or optional servicing interest).
+     - Extra surplus allocated under a payoff strategy directly pays down the accumulated gold principal, stopping future compounding and accelerating early debt-free closure before maturity.
 
 ---
 

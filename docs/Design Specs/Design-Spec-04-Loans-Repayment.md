@@ -116,6 +116,11 @@ When `loan_type` is **Gold / Jewel Loan** (`jewel` / `gold`):
   - **"+ Add Payment" Action**:
     - Records manual payments of any amount on any date.
     - Payments immediately take effect from their payment date, segmenting the month's daily interest calculation.
+  - **Monthly Schedule & Compounding Principal Accumulation**:
+    - For borrowers who do not service monthly interest, the monthly repayment schedule displays **EMI = ₹0.00**.
+    - Each month's accrued interest is capitalized into the running principal (`Opening Balance + Interest Component = Closing Balance`), clearly displaying how the outstanding principal accumulates month-over-month.
+    - If any payment is made in any month, it immediately reduces the principal on that date and all downstream monthly interest and accumulated balances adjust dynamically.
+    - At month 12 (maturity), the final bullet payment reflects the entire accumulated balance.
   - **Bullet Repayment Projection**:
     - Projects future month-end interest additions and final payoff due at maturity assuming no further payments.
   - **Compounding Cost Analysis**:
