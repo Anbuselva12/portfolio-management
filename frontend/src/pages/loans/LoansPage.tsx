@@ -290,7 +290,13 @@ export const LoansPage: React.FC = () => {
             </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as LoanType)}
+              onChange={(e) => {
+                const nextType = e.target.value as LoanType;
+                setType(nextType);
+                if (nextType === 'jewel') {
+                  setTenureMonths(12);
+                }
+              }}
               className="mt-1 block w-full px-3 py-2.5 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
             >
               {LOAN_TYPES.map((t) => (
@@ -376,7 +382,7 @@ export const LoansPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Tenure (Months) *
+                {type === 'jewel' ? 'Maturity (Months) *' : 'Tenure (Months) *'}
               </label>
               <input
                 type="number"
@@ -384,13 +390,13 @@ export const LoansPage: React.FC = () => {
                 min={1}
                 value={tenureMonths}
                 onChange={(e) => setTenureMonths(Number(e.target.value))}
-                placeholder="120"
+                placeholder={type === 'jewel' ? '12' : '120'}
                 className="mt-1 block w-full px-3 py-2 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                First EMI Date *
+                {type === 'jewel' ? 'Disbursal Date *' : 'First EMI Date *'}
               </label>
               <input
                 type="date"
@@ -402,24 +408,36 @@ export const LoansPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Your Actual Bank EMI (Optional)
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={userEmiInput}
-                onChange={(e) => setUserEmiInput(e.target.value)}
-                placeholder="Leave blank to auto-calculate"
-                className="mt-1 block w-full px-3 py-1.5 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
-              />
+          {type === 'jewel' ? (
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800/80 space-y-1.5">
+              <div className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>Gold Loan Overdraft & Bullet Payoff</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
+                Gold loans accrue interest daily on outstanding balance and post monthly. There is no auto-debit fixed EMI. You can make ad-hoc payments anytime to reduce principal, with full bullet closure at maturity.
+              </p>
             </div>
-            <p className="text-[11px] text-slate-400">
-              If your bank charges a slightly different EMI due to hidden fees or day-count conventions, provide it here. Our Newton-Raphson solver will automatically calibrate your repayment schedule.
-            </p>
-          </div>
+          ) : (
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Your Actual Bank EMI (Optional)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={userEmiInput}
+                  onChange={(e) => setUserEmiInput(e.target.value)}
+                  placeholder="Leave blank to auto-calculate"
+                  className="mt-1 block w-full px-3 py-1.5 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                If your bank charges a slightly different EMI due to hidden fees or day-count conventions, provide it here. Our Newton-Raphson solver will automatically calibrate your repayment schedule.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">

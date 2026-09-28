@@ -23,6 +23,7 @@ import {
   CalibrateLoanDto,
 } from './dto';
 import { LoanEngine } from './engine/loan-engine';
+import { GoldLoanCalculator } from './engine/gold-loan.calculator';
 import Decimal from 'decimal.js';
 
 @Injectable()
@@ -42,9 +43,19 @@ export class LoansService {
     const tenure = dto.tenureMonths;
     const userEmi = dto.userEmiInput ? new Decimal(dto.userEmiInput) : null;
     const interestType = dto.interestType || 'reducing_compound';
+    const isGoldLoan = dto.type === 'jewel' || dto.type === 'gold';
 
     // 1. Reconcile EMI
     const reconciliation = LoanEngine.reconcileEmi(principal, rate, tenure, userEmi);
+    let effectiveEmi = reconciliation.effectiveEmi;
+    let hasDiscrepancy = reconciliation.hasDiscrepancy;
+
+    if (isGoldLoan) {
+      // For gold loans, default monthly servicing is monthly interest
+      const monthlyServicing = principal.times(rate).dividedBy(1200).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+      effectiveEmi = userEmi ?? monthlyServicing;
+      hasDiscrepancy = false; // Gold loans have no bank amortization formula discrepancy
+    }
 
     // 2. Create Loan entity
     const loan = await this.loanRepository.create({
@@ -63,15 +74,15 @@ export class LoansService {
       interest_rate: rate.toString(),
       tenure_months: tenure,
       start_date: new Date(dto.startDate),
-      emi_amount: reconciliation.effectiveEmi.toString(),
+      emi_amount: effectiveEmi.toString(),
       user_emi_input: userEmi ? userEmi.toString() : null,
       emi_type: dto.emiType || 'fixed',
       prepayment_penalty_type: dto.prepaymentPenaltyType || 'none',
       prepayment_penalty_value: dto.prepaymentPenaltyValue ? new Decimal(dto.prepaymentPenaltyValue).toString() : null,
       country_rule_set: 'IN', // Snapshotted from country at creation
       status: 'active',
-      discrepancy_flag: reconciliation.hasDiscrepancy,
-      discrepancy_details: reconciliation.hasDiscrepancy ? JSON.stringify({
+      discrepancy_flag: hasDiscrepancy,
+      discrepancy_details: hasDiscrepancy ? JSON.stringify({
         calculatedEmi: reconciliation.calculatedEmi.toString(),
         userEmi: userEmi?.toString(),
         diffPct: reconciliation.diffPct,
@@ -80,14 +91,21 @@ export class LoansService {
     });
 
     // 3. Generate and persist initial amortization schedule
-    const schedule = LoanEngine.generateAmortizationSchedule(
-      principal,
-      rate,
-      tenure,
-      new Date(dto.startDate),
-      reconciliation.effectiveEmi,
-      interestType,
-    );
+    const schedule = isGoldLoan
+      ? LoanEngine.generateGoldLoanSchedule(
+          principal,
+          rate,
+          tenure || 12,
+          new Date(dto.startDate),
+        )
+      : LoanEngine.generateAmortizationSchedule(
+          principal,
+          rate,
+          tenure,
+          new Date(dto.startDate),
+          effectiveEmi,
+          interestType,
+        );
 
     const dbInstallments = schedule.map((inst) => ({
       loan_id: loan.id,
@@ -641,5 +659,99 @@ export class LoansService {
     }));
 
     await this.scheduleRepository.createMany(dbInstallments);
+  }
+
+  /**
+   * Calculates the full running-balance statement ledger for a gold loan.
+   */
+  async getGoldLoanLedger(loanId: string, familyId: string, asOfDate?: string) {
+    const loan = await this.getLoanById(loanId, familyId);
+    const prepayments = await this.prepaymentRepository.findByLoanId(loanId);
+
+    const transactions = prepayments.map((p) => ({
+      date: new Date(p.date).toISOString().split('T')[0],
+      type: 'PAYMENT' as const,
+      amount: Number(p.amount),
+      note: p.notes || 'Gold Loan Payment',
+    }));
+
+    const targetDate = asOfDate || new Date().toISOString().split('T')[0];
+
+    const maturityDate = loan.tenure_months
+      ? new Date(new Date(loan.start_date).setMonth(new Date(loan.start_date).getMonth() + loan.tenure_months))
+          .toISOString()
+          .split('T')[0]
+      : undefined;
+
+    const summary = GoldLoanCalculator.calculateLedger(
+      {
+        principal: Number(loan.principal),
+        annualRatePercent: Number(loan.interest_rate),
+        disbursalDate: new Date(loan.start_date).toISOString().split('T')[0],
+        maturityDate,
+        dayCountBasis: 365,
+        compounding: 'MONTHLY_CAPITALISATION',
+        roundingMode: 'ROUND',
+        transactions,
+      },
+      targetDate,
+    );
+
+    return {
+      entries: summary.ledger,
+      currentOutstandingToday: summary.currentPostedBalance + summary.unpostedAccruedInterest,
+      postedBalance: summary.currentPostedBalance,
+      accruedInterestUnposted: summary.unpostedAccruedInterest,
+      payoffQuoteToday: summary.totalPayoffQuoteToday,
+      totalInterestCharged: summary.totalProjectedInterest,
+      compoundingCost: summary.compoundingPenalty,
+      simpleInterest: summary.simpleInterestComparison,
+      smartTip: `Pay at least this month's interest (about ₹${Math.round(summary.smartAdviceMonthlyInterest).toLocaleString('en-IN')}) before month-end to stop the balance from growing.`,
+      asOfDate: targetDate,
+    };
+  }
+
+  /**
+   * Records an ad-hoc payment for a gold loan.
+   */
+  async addGoldLoanPayment(
+    loanId: string,
+    familyId: string,
+    memberId: string,
+    dto: { paymentDate: string; amount: string; notes?: string },
+  ) {
+    const loan = await this.getLoanById(loanId, familyId);
+    const payAmt = new Decimal(dto.amount);
+    if (payAmt.lessThanOrEqualTo(0)) {
+      throw new BadRequestException('Payment amount must be greater than zero');
+    }
+
+    const prepayment = await this.prepaymentRepository.create({
+      loan_id: loan.id,
+      member_id: memberId,
+      date: new Date(dto.paymentDate),
+      amount: payAmt as any,
+      mode: 'reduce_tenure',
+      penalty_amount: new Decimal(0) as any,
+      accrued_interest: new Decimal(0) as any,
+      notes: dto.notes || 'Gold Loan Payment',
+    });
+
+    // Update remaining principal on loan
+    const newPrincipal = Decimal.max(0, new Decimal(loan.principal.toString()).minus(payAmt));
+    await this.loanRepository.update(loan.id, {
+      principal: newPrincipal as any,
+    });
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'loan',
+      entity_id: loan.id,
+      action: 'payment',
+      field_changes: JSON.stringify({ amount: dto.amount, paymentDate: dto.paymentDate }),
+    });
+
+    return prepayment;
   }
 }

@@ -37,6 +37,10 @@
     - In cascade mode: cascades to highest composite scored loan.
     - In split mode / optimal split: suggests optimal percentage distribution (e.g. 50% / 30% / 20%) across loans to balance interest savings and psychological milestones.
   - **AI Suggestion card (when enabled)**: short rationale paragraph (from Gemini) tailored to the chosen mode (one-off vs recurring) + a clearly labeled disclaimer chip: "AI-generated — for guidance only."
+- **Multi-Loan Type Support (Home, Personal, Vehicle, Gold / Jewel Loans)**:
+  - The strategy engine supports all retail loan categories simultaneously:
+    - Standard amortising loans (Home, Vehicle, Personal) have fixed monthly contractual EMIs.
+    - **Gold / Jewel Loans** (`jewel` / `gold`): baseline monthly obligation is defined as the monthly accrued interest ($P \times \frac{R}{12 \times 100}$) to halt monthly balance capitalisation. When surplus is allocated to a Gold Loan (e.g. under Avalanche for high-interest gold debt), principal is paid down directly, eliminating future compounding and shrinking the final bullet obligation at maturity.
 - **"Compare on Timeline"** toggle: select any two strategy cards to overlay on the Debt Payoff Timeline chart (reuses the Dashboard's `GanttTimeline` component) — this is how the "close all in one-go vs take-one-loan-first" comparison is made visual.
 - **"Mark as My Plan"** button on a card stores the choice (SuggestionSnapshot) for the user's own tracking; it does **not** auto-apply any prepayment — the user still goes to the specific Loan's Prepayment Calculator (Design-Spec-04) to actually execute it. This reinforces the reversible-confidence principle: recommendations and commitments are always separate steps.
 

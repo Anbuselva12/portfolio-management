@@ -10,12 +10,17 @@
   - **Header**: Loan Type icon, **Loan Name** (bold, e.g. "Home Loan Top Up"), **Place / Purpose** tag (e.g. "Chennai Home"), Lender (e.g. "HDFC Bank"), EMI badge (Fixed/Flexible), and **EMI Reminder Indicator** (Active / Off).
   - **Metrics Grid**: Outstanding Principal (large font, formatted currency), Interest Rate (`X.XX% p.a.`), Monthly EMI (`₹XX,XXX/mo`), and Remaining Tenure (`XX months`).
   - Progress bar (paid installments vs remaining tenure). Click → Loan Detail.
-- **Top Summary Metrics**: Total active debt sum and Total monthly EMI obligation sum (correctly formatted with camelCase/snake_case safety fallbacks).
-
+- **Top Summary Metrics**: Total active debt sum, Total monthly EMI obligation sum, and **Total Lifetime Interest** across loans (correctly formatted with camelCase/snake_case safety fallbacks).
+ 
 ## 2. Screen: Loan Detail
-- **Header**:
+- **Header & Top Summary**:
   - **Loan Name** (h1, prominent), Loan Type badge, Status badge.
   - Sub-details: Lender, **Place / Property / Purpose**, Origin Date, and Projected Payoff Date.
+  - **Top Summary Stat Cards**:
+    - **Outstanding Principal**: Current balance remaining to be paid.
+    - **Total Interest Payable**: Overall accumulated interest scheduled across the loan's lifetime.
+    - **Monthly EMI / Minimum Obligation**: Active monthly payment.
+    - **Interest Rate**: Current annual rate (e.g. 8.50% p.a.).
   - **EMI Reminder Toggle Switch**: "Auto-Add Monthly EMI to Expenses" (allows enabling/disabling automatic monthly expense queuing at any time).
   - **Personal Notes Card**: Displays user comments and notes for themselves, editable inline.
 - **Discrepancy banner** (`DiscrepancyBanner`, amber): shown when a reconciliation occurred (SDD §7.3) — "Your entered EMI (₹X) differs from the calculated EMI (₹Y) by Z%. We've adjusted the schedule to match your real-world EMI. [Details]"
@@ -27,6 +32,11 @@
   - **"View in Strategy Comparison"** (Secondary) → Navigates to Debt Strategy Comparison (Design-Spec-05).
 - **Repayment Schedule table** (core requirement):
   - Columns: #, Due Date, Opening Balance, EMI, Principal, Interest, Closing Balance, Status (`Paid` / `Unpaid`), and Action.
+  - **Table Footer Summary Row (Accumulated Totals)**:
+    - Rendered directly below the grid on the respective columns:
+      - Under **EMI**: Total Scheduled Outflow ($\sum \text{EMI}$).
+      - Under **PRINCIPAL**: Total Accumulated Principal ($\sum \text{Principal}$).
+      - Under **INTEREST**: Total Accumulated Interest ($\sum \text{Interest}$).
   - **1-Click Mark as Paid Action**: Users can directly click "Mark as Paid" on any active installment. This immediately marks the installment paid, records the payment date, recalculates outstanding principal, and synchronizes with the Monthly Expense Queue.
   - Inline row correction (click edit → adjust actual amount paid). Virtualized scroll + jump-to-month control.
 - **History Cards**:
@@ -87,7 +97,35 @@ Allows one-click alignment of an existing active loan with live bank statements 
 
 ---
 
-## 6. States
+---
+
+## 7. Gold / Jewel Loan Running-Balance Ledger & Bullet Repayment View
+When `loan_type` is **Gold / Jewel Loan** (`jewel` / `gold`):
+- **Form Differences (Creation / Edit)**:
+  - Disables fixed-EMI fields (no "Actual Bank EMI", no monthly principal amortisation).
+  - Prompts for: Disbursal Date, Principal Amount, Annual Interest Rate (% p.a.), Maturity Tenure (default 12 months), and Upfront Fees (Processing fee, GST, and "Paid Upfront" toggle).
+  - Day-count convention: Actual/365.
+- **Dedicated Ledger View (Statement Style)**:
+  - Replaces fixed monthly schedule with an interactive **Running-Balance Transaction Ledger**:
+    - Columns: Date, Event / Type (`DISBURSAL`, `PAYMENT`, `INTEREST_POSTED`, `FEE`), Inflow / Outflow Amount, Running Outstanding Balance.
+    - Each row reflects the exact balance following payments and monthly capitalised interest debited on the last calendar day of the month.
+  - **Live Balances**:
+    - **Current Posted Balance**: Last month-end balance after capitalisation.
+    - **Unposted Accrued Interest**: Daily interest accrued so far in the current month ($\text{Balance} \times \frac{R}{365} \times \text{Days}$).
+    - **Total Payoff Quote Today**: Posted Balance + Current Unposted Accrued Interest.
+  - **"+ Add Payment" Action**:
+    - Records manual payments of any amount on any date.
+    - Payments immediately take effect from their payment date, segmenting the month's daily interest calculation.
+  - **Bullet Repayment Projection**:
+    - Projects future month-end interest additions and final payoff due at maturity assuming no further payments.
+  - **Compounding Cost Analysis**:
+    - Compares total capitalised interest vs true simple interest ($\text{Principal} \times R \times T$) and highlights the compounding penalty.
+  - **Smart Advisory Banner**:
+    - "Pay at least ₹X (this month's accrued interest) before month-end to stop your gold loan balance from compounding."
+
+---
+
+## 8. States
 - **Empty state** (no loans yet): "No loans tracked yet — add your first loan to see its repayment schedule and payoff calculator."
 - **Loan nearing payoff** (< 3 installments left): small "Almost there 🎉" badge on the card, purely informational.
 - **Loan in `defaulted` status**: red badge, schedule still viewable/editable but Prepayment/Rate Revision disabled with explanatory tooltip.

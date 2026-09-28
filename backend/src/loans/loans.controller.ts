@@ -120,5 +120,23 @@ export class LoansController {
   ) {
     return this.loansService.calibrateLoan(id, user.familyId, user.sub, dto);
   }
+
+  @Get(':id/ledger')
+  async getGoldLoanLedger(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Query('asOfDate') asOfDate?: string,
+  ) {
+    return this.loansService.getGoldLoanLedger(id, user.familyId, asOfDate);
+  }
+
+  @Post(':id/gold-payment')
+  async addGoldLoanPayment(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: { paymentDate: string; amount: string; notes?: string },
+  ) {
+    return this.loansService.addGoldLoanPayment(id, user.familyId, user.sub, dto);
+  }
 }
 

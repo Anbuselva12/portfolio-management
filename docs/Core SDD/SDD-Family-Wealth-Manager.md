@@ -390,9 +390,17 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
   - If within tolerance (configurable, default ±1%), accept user's EMI as authoritative and use it for schedule generation.
   - If outside tolerance, system **auto-adjusts**: it recomputes the effective outstanding/rate implied by the user's EMI and flags the loan with a "reconciled" badge + audit note showing both the system-calculated and user-provided EMI, so the user can see the discrepancy and confirm which is correct. This resolves the "input EMI → auto-adjust" requirement without silently discarding user data.
 - FR-23: Loan detail view shows full repayment schedule (installment-by-installment): due date, opening balance, EMI, principal/interest split, closing balance, paid status.
+  - The schedule table features an **accumulated summary footer row** directly under the grid displaying the sum of **Principal** and the sum of **Interest** under their respective columns, alongside total outflows under EMI.
+  - The top summary cards on the Loan Detail page prominently display **Total Lifetime Interest** alongside Outstanding Principal, Current Rate, and Monthly Obligation.
 - FR-24: Any schedule row can be manually corrected (e.g., wrong value entered); correction is captured in AuditLogEntry and triggers schedule regeneration downstream of that row per the regeneration rule (§3.2, LoanScheduleEntry note).
 - FR-25: **Prepayment Calculator ("what-if")**: given a hypothetical extra amount and a chosen mode (reduce tenure vs reduce EMI), system shows: new schedule preview, months saved OR new EMI, total interest saved, any penalty deducted — without committing the change until user confirms "Apply."
 - FR-26: On "Apply," a PrepaymentRecord is created, and the loan's live schedule is regenerated from the current date forward.
+- FR-27: **Gold / Jewel Loan Running-Balance & Bullet Repayment Engine**:
+  - If `loan_type = jewel` or `gold`: Loan operates as a running-balance ledger with bullet repayment (not a fixed amortisation schedule).
+  - Daily interest accrues as $\text{balance} \times \frac{\text{rate}}{365}$ and capitalises on the last calendar day of each month.
+  - Users can record manual payments on any date; payments split the calendar month into segments.
+  - The full outstanding balance is due at maturity (default 12 months from disbursal) or upon one-go payoff.
+  - Isolated calculation module ensuring all other loan types (Home, Car, Personal, etc.) remain strictly on their standard amortisation logic.
 
 ### 4.4 Debt Repayment Suggestion Engine
 - FR-30: Given a family's available surplus and selected **prepayment mode** (`one_off_lump_sum` or `recurring_monthly`), the engine computes and displays **multiple strategies side-by-side**:
@@ -601,6 +609,31 @@ To give families complete real-time control over variable cash flows (e.g. fluct
    - Action: **"Mark EMI Paid"** executes bi-directional synchronization with both the Loan Repayment Schedule and the Expense ledger.
 
    - If an installment is edited or corrected, the linked expense record amount updates to reflect the authoritative figure.
+
+### 7.13 Gold / Jewel Loan Running-Balance & Bullet Repayment Engine (Story 4)
+Gold/Jewel loans (`loan_type == 'jewel'` or `'gold'`) operate as running-balance ledger accounts with bullet repayment at maturity, rather than fixed amortization schedules.
+
+1. **Daily Accrual & Monthly Capitalization Formula**:
+   - Interest accrues daily on the current outstanding balance:
+     $$\text{Daily Interest} = \text{Balance} \times \frac{\text{Annual Rate}}{100} \times \frac{1}{365}$$
+   - Accrued interest is posted on the **last calendar day of each month** (`INTEREST_POSTED`) and added to the balance (monthly compounding):
+     $$\text{Balance}_{\text{new}} = \text{Balance}_{\text{old}} + \sum_{\text{days in month}} \text{Daily Interest}$$
+   - In the first partial month, the disbursal date is counted as Day 1 (e.g. 16 Dec to 31 Dec = 16 days). First partial period interest uses bank floor truncation matching commercial bank conventions.
+   - Days count uses exact calendar days per month (e.g. Feb = 28 or 29 days).
+
+2. **Transaction Segmentation on Manual Payments**:
+   - Users can make manual payments of any amount on any date.
+   - When a payment occurs on date $D$, the month is segmented:
+     - Segment 1: from month start to payment date (exclusive) on the pre-payment balance.
+     - Segment 2: from payment date to month end on the reduced balance.
+   - Payments take effect immediately on their payment date.
+
+3. **Bullet Payoff & Debt Strategy Integration**:
+   - The entire principal + remaining accrued interest is due at maturity (default 12 months from disbursal) or closure.
+   - **Debt Strategy Engine Integration**:
+     - The baseline monthly obligation for a Gold Loan is defined as the monthly accrued interest (servicing the interest prevents the balance from compounding).
+     - Extra surplus allocation directly reduces the principal balance, lowering all subsequent daily interest charges and future capitalized amounts.
+     - Final month requires full bullet payoff of remaining balance.
 
 ---
 

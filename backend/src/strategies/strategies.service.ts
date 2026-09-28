@@ -85,6 +85,12 @@ export class StrategiesService {
       const remainingTenure = unpaid.length > 0 ? unpaid.length : l.tenure_months;
 
       if (currentBal.greaterThan(0)) {
+        const isGold = l.type === 'jewel' || l.type === 'gold';
+        const defaultGoldMonthlyInterest = currentBal.times(new Decimal(l.interest_rate.toString())).dividedBy(1200).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+        const effectiveEmi = isGold
+          ? (l.emi_amount && Number(l.emi_amount) > 0 ? new Decimal(l.emi_amount.toString()) : defaultGoldMonthlyInterest)
+          : new Decimal(l.emi_amount ? l.emi_amount.toString() : '0');
+
         loanInputs.push({
           id: l.id,
           name: (l as any).name || l.lender,
@@ -93,7 +99,7 @@ export class StrategiesService {
           type: l.type,
           principal: currentBal,
           interestRate: new Decimal(l.interest_rate.toString()),
-          emiAmount: new Decimal(l.emi_amount.toString()),
+          emiAmount: effectiveEmi,
           tenureMonths: remainingTenure,
           prepaymentPenaltyType: l.prepayment_penalty_type,
           prepaymentPenaltyValue: l.prepayment_penalty_value ? new Decimal(l.prepayment_penalty_value.toString()) : null,

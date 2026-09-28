@@ -245,6 +245,45 @@ export class LoanEngine {
   }
 
   /**
+   * Generates a Gold Loan schedule: monthly interest payments + bullet principal payoff at maturity.
+   */
+  static generateGoldLoanSchedule(
+    principal: Decimal,
+    annualRatePct: Decimal,
+    tenureMonths: number = 12,
+    startDate: Date,
+  ): GeneratedInstallment[] {
+    const schedule: GeneratedInstallment[] = [];
+    const monthlyRate = annualRatePct.dividedBy(12).dividedBy(100);
+    const monthlyInterest = principal.times(monthlyRate).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+
+    for (let i = 1; i <= tenureMonths; i++) {
+      const dueDate = new Date(startDate);
+      dueDate.setMonth(dueDate.getMonth() + i);
+
+      const isMaturity = i === tenureMonths;
+      const principalComponent = isMaturity ? principal : new Decimal(0);
+      const interestComponent = monthlyInterest;
+      const emiAmount = isMaturity ? principal.plus(monthlyInterest) : monthlyInterest;
+      const closingBalance = isMaturity ? new Decimal(0) : principal;
+
+      schedule.push({
+        installment_number: i,
+        due_date: dueDate,
+        opening_balance: principal,
+        emi_amount: emiAmount,
+        principal_component: principalComponent,
+        interest_component: interestComponent,
+        closing_balance: closingBalance,
+        is_paid: false,
+        is_manually_edited: false,
+      });
+    }
+
+    return schedule;
+  }
+
+  /**
    * Calculates the what-if impact of a prepayment.
    * Option A (Reduce Tenure): Keep EMI, calculate n' = -ln(1 - (r * (P - X)) / EMI) / ln(1 + r)
     * Option B (Reduce EMI): Keep tenure, calculate new EMI = (P - X) * r * (1+r)^n / ((1+r)^n - 1)

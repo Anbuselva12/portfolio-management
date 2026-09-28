@@ -79,6 +79,17 @@ export const LoanDetailPage: React.FC = () => {
   const [jumpMonth, setJumpMonth] = useState('');
   const [activeTab, setActiveTab] = useState<'schedule' | 'events'>('schedule');
 
+  // Gold Loan State & Modals
+  const [goldLedger, setGoldLedger] = useState<any>(null);
+  const [isAddGoldPaymentOpen, setIsAddGoldPaymentOpen] = useState(false);
+  const [goldPayDate, setGoldPayDate] = useState(new Date().toISOString().split('T')[0]);
+  const [goldPayAmount, setGoldPayAmount] = useState('');
+  const [goldPayNotes, setGoldPayNotes] = useState('');
+  const [isSubmittingGoldPayment, setIsSubmittingGoldPayment] = useState(false);
+  const [quoteDate, setQuoteDate] = useState('');
+  const [quoteResult, setQuoteResult] = useState<any>(null);
+  const [isCalculatingQuote, setIsCalculatingQuote] = useState(false);
+
   useEffect(() => {
     if (id) {
       loadLoanData();
@@ -101,6 +112,15 @@ export const LoanDetailPage: React.FC = () => {
       setRateRevisions(revisionsData || []);
       setPrepayments(prepaymentsData || []);
 
+      if (loanData.type === 'jewel' || loanData.type === 'gold') {
+        try {
+          const ledger = await loansApi.getGoldLoanLedger(id);
+          setGoldLedger(ledger);
+        } catch (e) {
+          console.error('Failed to load gold loan ledger', e);
+        }
+      }
+
       // Prep edit terms form
       setEditName((loanData as any).name || loanData.lender || '');
       setEditPlace((loanData as any).place_or_purpose || (loanData as any).placeOrPurpose || '');
@@ -114,6 +134,41 @@ export const LoanDetailPage: React.FC = () => {
       setError(err.response?.data?.message || 'Failed to load loan details.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddGoldPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !goldPayAmount || Number(goldPayAmount) <= 0) return;
+    setIsSubmittingGoldPayment(true);
+    try {
+      await loansApi.addGoldLoanPayment(id, {
+        paymentDate: goldPayDate,
+        amount: goldPayAmount,
+        notes: goldPayNotes.trim() || undefined,
+      });
+      setIsAddGoldPaymentOpen(false);
+      setGoldPayAmount('');
+      setGoldPayNotes('');
+      await loadLoanData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to record gold loan payment.');
+    } finally {
+      setIsSubmittingGoldPayment(false);
+    }
+  };
+
+  const handleCalculateQuote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !quoteDate) return;
+    setIsCalculatingQuote(true);
+    try {
+      const res = await loansApi.getGoldLoanLedger(id, quoteDate);
+      setQuoteResult(res);
+    } catch {
+      alert('Failed to calculate payoff quote for date.');
+    } finally {
+      setIsCalculatingQuote(false);
     }
   };
 
@@ -206,6 +261,34 @@ export const LoanDetailPage: React.FC = () => {
     });
   }, [schedule, filterMode]);
 
+  // Accumulated totals across entire schedule
+  const scheduleTotals = useMemo(() => {
+    let totalEmi = 0;
+    let totalPrincipal = 0;
+    let totalInterest = 0;
+
+    for (const inst of schedule) {
+      totalEmi += Number(inst.emiAmount ?? inst.emi_amount ?? 0);
+      totalPrincipal += Number(inst.principalComponent ?? inst.principal_component ?? 0);
+      totalInterest += Number(inst.interestComponent ?? inst.interest_component ?? 0);
+    }
+    return { totalEmi, totalPrincipal, totalInterest };
+  }, [schedule]);
+
+  // Accumulated totals across currently filtered rows
+  const filteredTotals = useMemo(() => {
+    let totalEmi = 0;
+    let totalPrincipal = 0;
+    let totalInterest = 0;
+
+    for (const inst of filteredSchedule) {
+      totalEmi += Number(inst.emiAmount ?? inst.emi_amount ?? 0);
+      totalPrincipal += Number(inst.principalComponent ?? inst.principal_component ?? 0);
+      totalInterest += Number(inst.interestComponent ?? inst.interest_component ?? 0);
+    }
+    return { totalEmi, totalPrincipal, totalInterest };
+  }, [filteredSchedule]);
+
   // Jump to specific installment
   const handleJump = (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,6 +328,7 @@ export const LoanDetailPage: React.FC = () => {
     );
   }
 
+  const isGoldLoan = loan.type === 'jewel' || loan.type === 'gold';
   const interestRate = loan.interestRate || loan.interest_rate || '0';
   const emiAmount = loan.emiAmount || loan.emi_amount || '0';
   const tenureMonths = loan.tenureMonths || loan.tenure_months || 0;
@@ -427,28 +511,40 @@ export const LoanDetailPage: React.FC = () => {
       )}
 
       {/* KPI Cards Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
             Current Outstanding
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-rose-600 dark:text-rose-400">
-            {formatINR(loan.principal)}
+            {formatINR(isGoldLoan && goldLedger ? goldLedger.currentOutstandingToday : loan.principal)}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            Type: <span className="capitalize text-slate-600 dark:text-slate-300 font-semibold">{loan.interestType || loan.interest_type || 'Reducing'}</span>
+            Type: <span className="capitalize text-slate-600 dark:text-slate-300 font-semibold">{isGoldLoan ? 'Gold Overdraft' : (loan.interestType || loan.interest_type || 'Reducing')}</span>
           </div>
         </div>
 
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-            Monthly EMI
+            {isGoldLoan ? 'Monthly Servicing' : 'Monthly EMI'}
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
             {formatINR(emiAmount)}
           </div>
           <div className="text-[11px] text-slate-400 mt-1 capitalize">
-            Payment Mode: <span className="font-semibold text-slate-600 dark:text-slate-300">{loan.emiType || loan.emi_type}</span>
+            {isGoldLoan ? 'Manual payments' : `Mode: ${loan.emiType || loan.emi_type}`}
+          </div>
+        </div>
+
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+            Overall Interest
+          </div>
+          <div className="text-xl sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+            {formatINR(isGoldLoan && goldLedger ? goldLedger.totalInterestCharged : scheduleTotals.totalInterest)}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1">
+            Total Lifetime Cost
           </div>
         </div>
 
@@ -464,16 +560,29 @@ export const LoanDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm col-span-2 md:col-span-1">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-            Tenure Progress
+            {isGoldLoan ? 'Payoff Today' : 'Tenure Progress'}
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
-            {paidCount} <span className="text-sm font-medium text-slate-400">/ {schedule.length || tenureMonths} mos</span>
-          </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
-            <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${progressPct}%` }} />
-          </div>
+          {isGoldLoan && goldLedger ? (
+            <>
+              <div className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                {formatINR(goldLedger.payoffQuoteToday)}
+              </div>
+              <div className="text-[11px] text-slate-400 mt-1">
+                Full closure today
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
+                {paidCount} <span className="text-sm font-medium text-slate-400">/ {schedule.length || tenureMonths} mos</span>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
+                <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${progressPct}%` }} />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -653,6 +762,202 @@ export const LoanDetailPage: React.FC = () => {
         </div>
       )}
 
+      {/* Gold Loan Overdraft & Statement Ledger Card */}
+      {isGoldLoan && goldLedger && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-2xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Gold Loan Running Balance Overdraft</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
+                      Bullet Payoff
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Interest accrues daily on outstanding balance and capitalizes on the last day of each month.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddGoldPaymentOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 shadow-sm shadow-amber-600/20 cursor-pointer"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>+ Record Payment</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Smart Tip Alert */}
+            {goldLedger.smartTip && (
+              <div className="p-3 bg-amber-100/70 dark:bg-amber-950/60 rounded-xl text-xs font-medium text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>{goldLedger.smartTip}</span>
+              </div>
+            )}
+
+            {/* Breakdown cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+              <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-200/60 dark:border-slate-800">
+                <div className="text-[10px] font-semibold uppercase text-slate-400">Posted Month-End Bal</div>
+                <div className="text-lg font-black font-mono text-slate-900 dark:text-white">
+                  {formatINR(goldLedger.postedBalance)}
+                </div>
+                <div className="text-[10px] text-slate-400">Last capitalized</div>
+              </div>
+
+              <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-200/60 dark:border-slate-800">
+                <div className="text-[10px] font-semibold uppercase text-slate-400">Unposted Daily Accrued</div>
+                <div className="text-lg font-black font-mono text-rose-600 dark:text-rose-400">
+                  {formatINR(goldLedger.accruedInterestUnposted)}
+                </div>
+                <div className="text-[10px] text-slate-400">Current open month</div>
+              </div>
+
+              <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-200/60 dark:border-slate-800">
+                <div className="text-[10px] font-semibold uppercase text-slate-400">Payoff Quote (Today)</div>
+                <div className="text-lg font-black font-mono text-amber-600 dark:text-amber-400">
+                  {formatINR(goldLedger.payoffQuoteToday)}
+                </div>
+                <div className="text-[10px] text-slate-400">Total to close today</div>
+              </div>
+
+              <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-200/60 dark:border-slate-800">
+                <div className="text-[10px] font-semibold uppercase text-slate-400">Compounding Cost</div>
+                <div className="text-lg font-black font-mono text-purple-600 dark:text-purple-400">
+                  {formatINR(goldLedger.compoundingCost)}
+                </div>
+                <div className="text-[10px] text-slate-400">Over simple interest</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Running Statement Ledger Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <History className="w-4 h-4 text-amber-600" />
+                  <span>Statement Ledger (Bank Passbook)</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Actual passbook transactions with interest postings, manual payments, and running balance.
+                </p>
+              </div>
+
+              {/* Payoff Quote Calculator form */}
+              <form onSubmit={handleCalculateQuote} className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={quoteDate}
+                  onChange={(e) => setQuoteDate(e.target.value)}
+                  className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+                <button
+                  type="submit"
+                  disabled={isCalculatingQuote || !quoteDate}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 cursor-pointer"
+                >
+                  {isCalculatingQuote ? 'Calculating...' : 'Get Payoff Quote'}
+                </button>
+              </form>
+            </div>
+
+            {/* Quote Result display if available */}
+            {quoteResult && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 text-xs flex items-center justify-between">
+                <div>
+                  Payoff Quote as of <strong>{formatDate(quoteResult.asOfDate)}</strong>:
+                  <span className="ml-2 font-mono font-bold text-amber-700 dark:text-amber-300">
+                    {formatINR(quoteResult.payoffQuoteToday)}
+                  </span>
+                  <span className="ml-2 text-slate-400">
+                    (Posted: {formatINR(quoteResult.postedBalance)} + Accrued: {formatINR(quoteResult.accruedInterestUnposted)})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setQuoteResult(null)}
+                  className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
+                <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px]">Date</th>
+                    <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px]">Event / Type</th>
+                    <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-center">Days</th>
+                    <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right">Debit / Credit</th>
+                    <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right">Running Balance</th>
+                    <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px]">Note</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  {goldLedger.entries && goldLedger.entries.map((entry: any, idx: number) => {
+                    const isPayment = entry.type === 'PAYMENT';
+                    const isInterest = entry.type === 'INTEREST_POSTED';
+
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                        <td className="py-2 px-4 font-sans text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                          {formatDate(entry.date)}
+                        </td>
+                        <td className="py-2 px-4 font-sans font-medium">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] ${
+                              isPayment
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                : isInterest
+                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                : 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300'
+                            }`}
+                          >
+                            {entry.type}
+                          </span>
+                        </td>
+                        <td className="py-2 px-4 text-center text-slate-400">
+                          {entry.days ? `${entry.days} d` : '-'}
+                        </td>
+                        <td
+                          className={`py-2 px-4 text-right font-bold ${
+                            isPayment
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : isInterest
+                              ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-slate-900 dark:text-white'
+                          }`}
+                        >
+                          {isPayment ? `-${formatINR(entry.amount)}` : `+${formatINR(entry.amount)}`}
+                        </td>
+                        <td className="py-2 px-4 text-right font-black text-slate-900 dark:text-white">
+                          {formatINR(entry.balanceAfter)}
+                        </td>
+                        <td className="py-2 px-4 font-sans text-slate-400 text-[11px]">
+                          {entry.note || '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Repayment Schedule Card */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         {/* Schedule Controls Bar */}
@@ -819,6 +1124,25 @@ export const LoanDetailPage: React.FC = () => {
                 );
               })}
             </tbody>
+            <tfoot className="bg-slate-100 dark:bg-slate-800 font-mono font-bold border-t-2 border-slate-300 dark:border-slate-700 sticky bottom-0 z-10 shadow-sm">
+              <tr>
+                <td colSpan={3} className="py-3 px-4 text-right uppercase text-[11px] font-sans font-bold text-slate-700 dark:text-slate-300">
+                  {filterMode === 'all' ? 'Accumulated Total:' : `Filtered (${filterMode}) Total:`}
+                </td>
+                <td className="py-3 px-4 text-right text-slate-900 dark:text-white font-black">
+                  {formatINR(filteredTotals.totalEmi)}
+                </td>
+                <td className="py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-black">
+                  {formatINR(filteredTotals.totalPrincipal)}
+                </td>
+                <td className="py-3 px-4 text-right text-rose-600 dark:text-rose-400 font-black">
+                  {formatINR(filteredTotals.totalInterest)}
+                </td>
+                <td colSpan={3} className="py-3 px-4 text-xs font-sans font-normal text-slate-400 text-center">
+                  {filteredSchedule.length} installment{filteredSchedule.length === 1 ? '' : 's'}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -1110,6 +1434,91 @@ export const LoanDetailPage: React.FC = () => {
           defaultEmi={emiAmount}
           onSuccess={loadLoanData}
         />
+      )}
+
+      {/* Record Gold Loan Payment Modal */}
+      {isAddGoldPaymentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 text-amber-600" />
+                <span>Record Gold Loan Payment</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddGoldPaymentOpen(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddGoldPayment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Payment Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={goldPayDate}
+                  onChange={(e) => setGoldPayDate(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Payment Amount (₹) *
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  min="1"
+                  value={goldPayAmount}
+                  onChange={(e) => setGoldPayAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                  className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Payments take effect from their exact date, segmenting the month and immediately reducing interest.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Notes / Reference
+                </label>
+                <input
+                  type="text"
+                  value={goldPayNotes}
+                  onChange={(e) => setGoldPayNotes(e.target.value)}
+                  placeholder="e.g. Part payment via Net Banking"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddGoldPaymentOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingGoldPayment}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 shadow-sm cursor-pointer"
+                >
+                  {isSubmittingGoldPayment ? 'Recording...' : 'Record Payment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

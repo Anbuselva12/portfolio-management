@@ -556,21 +556,27 @@ export class StrategyEngine {
         const interest = bal.times(r).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
         totalInterestPaid = totalInterestPaid.plus(interest);
 
-        // Required regular EMI
-        const regularEmi = originalEmis.get(loan.id)!;
+        const isGold = loan.type === 'jewel' || loan.type === 'gold';
+        // Required regular EMI: for amortizing loans it is fixed EMI; for gold loans it is monthly interest servicing
+        const regularEmi = isGold ? interest : originalEmis.get(loan.id)!;
         const extraPayment = extraAllocs[loan.id] || new Decimal(0);
-        const totalPayment = regularEmi.plus(extraPayment);
+        const totalPayment = isGold ? extraPayment : regularEmi.plus(extraPayment);
 
-        const principalReduction = totalPayment.minus(interest);
+        const principalReduction = isGold ? extraPayment : totalPayment.minus(interest);
 
-        if (principalReduction.greaterThanOrEqualTo(bal)) {
+        // Check if surplus paid off loan OR if gold loan reached bullet maturity
+        const reachedBulletMaturity = isGold && month >= (loan.tenureMonths || 12);
+
+        if (principalReduction.greaterThanOrEqualTo(bal) || reachedBulletMaturity) {
           // Loan paid off this month!
-          const unspentRemainder = principalReduction.minus(bal);
+          const unspentRemainder = reachedBulletMaturity
+            ? principalReduction
+            : principalReduction.minus(bal);
           balances.set(loan.id, new Decimal(0));
           if (!payoffMonths.has(loan.id)) {
             payoffMonths.set(loan.id, month);
             // Freed up EMI joins the rolling surplus cascade ONLY in recurring mode!
-            if (prepaymentMode === 'recurring_monthly') {
+            if (prepaymentMode === 'recurring_monthly' && !isGold) {
               rollingSurplus = rollingSurplus.plus(regularEmi);
             }
           }
