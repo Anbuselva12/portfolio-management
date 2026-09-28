@@ -9,5 +9,8 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.spec.ts'],
+    env: {
+      DATABASE_URL: 'file:./test.db',
+    },
   },
 });

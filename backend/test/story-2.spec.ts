@@ -32,6 +32,9 @@ describe('Story 2 — Loan Engine, Amortization, Prepayments & Storage Parity', 
   const prisma = new PrismaService();
 
   beforeEach(async () => {
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres')) {
+      throw new Error('Safety guard: Tests are strictly forbidden from connecting to PostgreSQL! Tests must run only against local SQLite.');
+    }
     LocalStorageStore.clear();
     await prisma.rateRevisionRecord.deleteMany();
     await prisma.prepaymentRecord.deleteMany();

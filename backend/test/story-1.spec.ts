@@ -28,8 +28,11 @@ describe('Story 1 — Foundation, Family Onboarding & Core Portfolio Data', () =
   const prisma = new PrismaService();
 
   beforeEach(async () => {
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres')) {
+      throw new Error('Safety guard: Tests are strictly forbidden from connecting to PostgreSQL! Tests must run only against local SQLite.');
+    }
     LocalStorageStore.clear();
-    // Clean Prisma DB
+    // Clean local test DB
     await prisma.rateRevisionRecord.deleteMany();
     await prisma.prepaymentRecord.deleteMany();
     await prisma.repaymentInstallment.deleteMany();
