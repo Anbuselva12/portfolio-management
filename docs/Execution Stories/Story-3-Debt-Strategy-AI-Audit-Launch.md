@@ -34,7 +34,7 @@
 - Mode switcher ("One-Off Lump Sum" vs "Recurring Monthly") and surplus amount input with presets
 - AI Advisor On-Demand toggle
 - Strategy cards side by side: target loan highlights, multi-loan allocation table, months-to-debt-free, total interest saved, rationale (AI card only), direct link to execute prepayment on target loan
-- "Compare on Timeline" — overlay any two strategies on the Debt Payoff Timeline chart (extends Story 2's single-strategy chart to multi-strategy overlay)
+- **Loan Portfolio Breakdown by Debt Type**: interactive chart categorizing all loans across Personal, Home, Gold/Jewel, Vehicle, and other debt categories, with balance metrics, APRs, and "View as Table" toggle
 - "Mark as My Plan" — stores the chosen SuggestionSnapshot for tracking only; does not auto-apply any prepayment (user still uses Story 2's Prepayment Calculator to execute)
 
 ### Dashboard Pending Reminders & Monthly Action Queue

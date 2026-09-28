@@ -10,11 +10,9 @@ import {
 } from '../../types';
 import { formatINR } from '../../utils/currency';
 import { StrategyCard } from '../../components/strategies/StrategyCard';
-import { CustomWeightsModal } from '../../components/strategies/CustomWeightsModal';
-import { StrategyTimelineOverlay } from '../../components/strategies/StrategyTimelineOverlay';
+import { LoanTypeBreakdownChart } from '../../components/strategies/LoanTypeBreakdownChart';
 import {
   Zap,
-  Sliders,
   Sparkles,
   Info,
   CreditCard,
@@ -53,11 +51,6 @@ export const StrategyComparisonPage: React.FC = () => {
     weightTenure: 10,
     mode: 'cascade',
   });
-  const [isWeightsModalOpen, setIsWeightsModalOpen] = useState(false);
-
-  // Selected Strategies for Timeline Overlay
-  const [timelineStrategyAName, setTimelineStrategyAName] = useState<string>('avalanche');
-  const [timelineStrategyBName, setTimelineStrategyBName] = useState<string>('snowball');
 
   // Custom loan percentages slider state
   const [customLoanPercentages, setCustomLoanPercentages] = useState<Record<string, number>>({});
@@ -206,16 +199,6 @@ export const StrategyComparisonPage: React.FC = () => {
     handleRecalculate(undefined, undefined, undefined, undefined, resetPcts);
   };
 
-  const handleSaveWeights = async (newWeights: CustomWeights, saveAsDefault: boolean) => {
-    setCustomWeights(newWeights);
-    if (saveAsDefault) {
-      try {
-        await familyApi.updateSettings({ strategyWeights: newWeights });
-      } catch {}
-    }
-    await handleRecalculate(undefined, newWeights);
-  };
-
   const handleMarkAsMyPlan = async (strategy: StrategySimulationResult) => {
     if (!data) return;
     try {
@@ -267,8 +250,6 @@ export const StrategyComparisonPage: React.FC = () => {
   }
 
   const allAvailableStrategies = data.strategies.filter((s) => s.strategyName !== 'baseline');
-  const strategyA = allAvailableStrategies.find((s) => s.strategyName === timelineStrategyAName) || allAvailableStrategies[0];
-  const strategyB = allAvailableStrategies.find((s) => s.strategyName === timelineStrategyBName) || allAvailableStrategies[1] || allAvailableStrategies[0];
   const isSurplusZero = Number(data.activeSurplus) <= 0;
 
   return (
@@ -518,20 +499,7 @@ export const StrategyComparisonPage: React.FC = () => {
             strategy={strat}
             prepaymentMode={prepaymentMode}
             isMyPlan={activePlan?.strategy_name === strat.strategyName}
-            isSelectedForTimeline={
-              timelineStrategyAName === strat.strategyName || timelineStrategyBName === strat.strategyName
-            }
             onMarkMyPlan={() => handleMarkAsMyPlan(strat)}
-            onToggleTimeline={() => {
-              if (timelineStrategyAName === strat.strategyName) {
-                setTimelineStrategyAName(allAvailableStrategies[0]?.strategyName || 'avalanche');
-              } else if (timelineStrategyBName === strat.strategyName) {
-                setTimelineStrategyBName(allAvailableStrategies[1]?.strategyName || 'snowball');
-              } else {
-                setTimelineStrategyBName(strat.strategyName);
-              }
-            }}
-            onOpenWeights={strat.strategyName === 'custom_weighted' ? () => setIsWeightsModalOpen(true) : undefined}
             isSurplusZero={isSurplusZero}
             onPercentageChange={strat.strategyName === 'custom_weighted' ? handleLoanPercentageChange : undefined}
             onSaveCustomConfig={strat.strategyName === 'custom_weighted' ? handleSaveCustomConfiguration : undefined}
@@ -542,22 +510,13 @@ export const StrategyComparisonPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Timeline Comparison Overlay Section */}
-      <StrategyTimelineOverlay
-        strategyA={strategyA}
-        strategyB={strategyB}
-        allStrategies={allAvailableStrategies}
-        onSelectA={setTimelineStrategyAName}
-        onSelectB={setTimelineStrategyBName}
-      />
-
-      {/* Custom Weights Tuning Modal */}
-      <CustomWeightsModal
-        isOpen={isWeightsModalOpen}
-        onClose={() => setIsWeightsModalOpen(false)}
-        weights={customWeights}
-        onSave={handleSaveWeights}
-      />
+      {/* Loan Portfolio Breakdown by Debt Type */}
+      {data.strategies.length > 0 && data.strategies[0].allocations && (
+        <LoanTypeBreakdownChart
+          allocations={data.strategies[0].allocations}
+          totalDebt={data.totalDebt}
+        />
+      )}
     </div>
   );
 };

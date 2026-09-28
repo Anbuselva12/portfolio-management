@@ -580,7 +580,7 @@ All strategies run against a parameterized simulation core supporting two distin
      - **Quickest Milestone Closure**: Identifies loans that can be completely extinguished today with this lump sum (e.g. "Instant Milestone: Fully eliminate Insurance Premium (₹69,881) today to remove 1 monthly EMI obligation").
      - **Actionable Verdict**: Practical recommendation synthesizing interest savings and psychological cash-flow relief.
 
-All strategies output identical card formats with target loan highlights, direct links to `/loans/:id` for execution, interest saved, and payoff timeline overlay.
+All strategies output consistent card formats with target loan highlights, direct links to `/loans/:id` for execution, and interest saved. The screen features a dedicated Loan Portfolio Breakdown chart categorizing debts across Personal, Home, Gold/Jewel, and other retail liabilities.
 
 ### 7.11 Household Expenses & Loan EMI Separation
 To keep household cash flows clean and avoid double-counting debt obligations with daily living costs:

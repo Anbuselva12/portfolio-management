@@ -39,14 +39,22 @@
     - **Default Allocation**: By default, 100% is allocated to the highest outstanding principal loan, and 0% to all remaining loans.
     - **Automatic 100% Balancing**: Adjusting any loan slider automatically adjusts the highest loan (or other loans) so that the sum of all percentages strictly equals 100% at all times (e.g., setting a second loan to 10% automatically lowers the highest loan from 100% to 90%).
     - **Per-Loan & Overall Interest Savings**: Dynamically displays each loan's allocated extra amount (e.g. ₹5,000 for 10% of ₹50,000 surplus), each loan's individual lifetime interest savings (e.g. "Saves ₹8,200"), and the combined household total interest saved and accelerated debt-free horizon.
-    - **Configuration Persistence**: A "Save Configuration" button saves the custom percentage allocation to family settings (`strategy_weights.loanPercentages`). This configuration persists on future visits until the selected loans are closed or the user chooses to reconfigure.
-    - **Reset to Default**: A "Reset" button returns allocation to 100% on the highest principal loan.
+    - **Clean Typography (Anti-Overlap)**: Total Interest Saved metric uses single-line responsive font scaling (`text-lg sm:text-xl whitespace-nowrap`) ensuring the `+` prefix and currency amount never wrap to multiple lines or overlap the baseline comparison label.
+    - **No Scoring Weights Link**: The legacy "Adjust scoring weights & mode" modal link is omitted; allocations are configured directly and transparently via the inline percentage sliders.
+    - **Configuration Persistence**: A "Save Config" button saves the custom percentage allocation to family settings (`strategy_weights.loanPercentages`). This configuration persists on future visits until the selected loans are closed or the user chooses to reconfigure.
+    - **Reset to Default**: A "Reset Default" button returns allocation to 100% on the highest principal loan.
   - **AI Suggestion card (when enabled)**: short rationale paragraph (from Gemini) tailored to the chosen mode (one-off vs recurring) + a clearly labeled disclaimer chip: "AI-generated — for guidance only."
 - **Multi-Loan Type Support (Home, Personal, Vehicle, Gold / Jewel Loans)**:
   - The strategy engine supports all retail loan categories simultaneously:
     - Standard amortising loans (Home, Vehicle, Personal) have fixed monthly contractual EMIs.
     - **Gold / Jewel Loans** (`jewel` / `gold`): operates with **₹0.00 mandatory monthly payment**. In the baseline simulation, interest capitalizes monthly into the principal, leading to the full compounding bullet balance at maturity (Scenario A: Pay nothing till maturity). When surplus is allocated to a Gold Loan (e.g. under Avalanche for high-interest debt), extra funds pay down the accumulated gold principal directly, eliminating future compounding and accelerating early debt-free closure before maturity.
-- **"Compare on Timeline"** toggle: select any two strategy cards to overlay on the Debt Payoff Timeline chart (reuses the Dashboard's `GanttTimeline` component) — this is how the "close all in one-go vs take-one-loan-first" comparison is made visual.
+- **Loan Portfolio Breakdown by Debt Type (Replacing Timeline Comparison)**:
+  - The legacy Dual-Strategy Payoff Timeline Comparison section is replaced with a comprehensive **Loan Portfolio Breakdown by Debt Type** visualization.
+  - Groups all household debts by loan type (e.g., Personal Loan, Home Loan, Gold / Jewel Loan, Vehicle Loan, Education Loan).
+  - Displays:
+    - Visual Donut / Bar chart showing categorical distribution of total debt.
+    - Metric cards per category showing aggregate outstanding balance, share of total debt, active loan count, and average APR.
+    - Accessible "View as Table" toggle providing full tabular data.
 - **"Mark as My Plan"** button on a card stores the choice (SuggestionSnapshot) for the user's own tracking; it does **not** auto-apply any prepayment — the user still goes to the specific Loan's Prepayment Calculator (Design-Spec-04) to actually execute it. This reinforces the reversible-confidence principle: recommendations and commitments are always separate steps.
 
 ## Custom-Weighted Strategy — Slider Allocation & Persistence

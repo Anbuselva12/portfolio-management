@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { StrategySimulationResult } from '../../types';
-import { formatINR } from '../../utils/currency';
+import { formatINR, formatKpiINR } from '../../utils/currency';
 import { formatDate } from '../../utils/date';
 import {
   Sparkles,
@@ -21,10 +21,7 @@ import {
 interface StrategyCardProps {
   strategy: StrategySimulationResult;
   isMyPlan: boolean;
-  isSelectedForTimeline: boolean;
   onMarkMyPlan: () => void;
-  onToggleTimeline: () => void;
-  onOpenWeights?: () => void;
   isSurplusZero?: boolean;
   prepaymentMode?: 'one_off_lump_sum' | 'recurring_monthly';
   onPercentageChange?: (loanId: string, newPercentage: number) => void;
@@ -37,10 +34,7 @@ interface StrategyCardProps {
 export const StrategyCard: React.FC<StrategyCardProps> = ({
   strategy,
   isMyPlan,
-  isSelectedForTimeline,
   onMarkMyPlan,
-  onToggleTimeline,
-  onOpenWeights,
   isSurplusZero = false,
   prepaymentMode = 'one_off_lump_sum',
   onPercentageChange,
@@ -60,8 +54,6 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
       className={`rounded-2xl border transition-all flex flex-col justify-between overflow-hidden shadow-sm ${
         isMyPlan
           ? 'border-cyan-500 bg-white dark:bg-slate-900 ring-2 ring-cyan-500/20 shadow-md'
-          : isSelectedForTimeline
-          ? 'border-teal-500 bg-white dark:bg-slate-900 ring-1 ring-teal-500'
           : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
     >
@@ -105,17 +97,6 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
             {strategy.description}
           </p>
 
-          {isCustom && onOpenWeights && (
-            <button
-              type="button"
-              onClick={onOpenWeights}
-              className="mt-2 text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <Sliders className="w-3 h-3" />
-              <span>Adjust scoring weights & mode</span>
-            </button>
-          )}
-
           {/* AI Rationale Paragraph */}
           {isAi && strategy.rationale && (
             <div className="mt-3 p-3 bg-purple-50/60 dark:bg-purple-950/30 rounded-xl border border-purple-200/60 dark:border-purple-900/40 text-xs text-purple-900 dark:text-purple-200 leading-relaxed">
@@ -127,27 +108,30 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
 
         {/* Primary Benefit Metric Strip */}
         <div className="p-5 grid grid-cols-2 gap-3 bg-slate-50/50 dark:bg-slate-850/30 border-b border-slate-100 dark:border-slate-800">
-          <div>
+          <div className="min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Months to Debt-Free
             </div>
-            <div className="text-2xl font-black font-mono text-slate-900 dark:text-white mt-0.5">
+            <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white mt-0.5 whitespace-nowrap">
               {strategy.monthsToDebtFree}{' '}
               <span className="text-xs font-normal text-slate-400 font-sans">mos</span>
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">
+            <div className="text-[10px] text-slate-400 mt-0.5 truncate">
               Payoff: {formatDate(strategy.payoffDate)}
             </div>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Total Interest Saved
             </div>
-            <div className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
-              +{formatINR(interestSaved)}
+            <div
+              className="text-lg sm:text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap tracking-tight truncate"
+              title={'+' + formatINR(interestSaved)}
+            >
+              +{formatKpiINR(interestSaved)}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">
+            <div className="text-[10px] text-slate-400 mt-0.5 truncate">
               vs. minimum payments
             </div>
           </div>
@@ -338,24 +322,14 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
       </div>
 
       {/* Card Action Footer */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-850/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-        <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-600 dark:text-slate-300">
-          <input
-            type="checkbox"
-            checked={isSelectedForTimeline}
-            onChange={onToggleTimeline}
-            className="w-4 h-4 rounded text-cyan-600 focus:ring-cyan-500"
-          />
-          <span>Overlay on Timeline</span>
-        </label>
-
+      <div className="p-4 bg-slate-50 dark:bg-slate-850/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
         <button
           type="button"
           onClick={onMarkMyPlan}
           className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             isMyPlan
               ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100'
+              : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
           }`}
         >
           <Bookmark className="w-3.5 h-3.5" />
