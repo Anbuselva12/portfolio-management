@@ -69,6 +69,9 @@ export class LoansService {
       lender: dto.lender,
       currency: dto.currency || 'INR',
       principal: principal.toString(),
+      original_principal: principal.toString(),
+      original_tenure_months: tenure,
+      current_outstanding_principal: principal.toString(),
       interest_type: interestType,
       compounding_frequency: dto.compoundingFrequency || 'monthly',
       interest_rate: rate.toString(),
@@ -131,20 +134,112 @@ export class LoansService {
       action: 'create',
     });
 
+    if (isGoldLoan) {
+      await this.recalculateLoanOutstanding(loan.id);
+      const refreshed = await this.loanRepository.findById(loan.id);
+      if (refreshed) return refreshed;
+    }
+
     return loan;
   }
 
-  async getLoans(familyId: string, memberId?: string) {
-    if (memberId && memberId !== 'all') {
-      return this.loanRepository.findByMemberId(memberId);
+  async recalculateLoanOutstanding(loanId: string): Promise<Decimal> {
+    const loan = await this.loanRepository.findById(loanId);
+    if (!loan) throw new NotFoundException('Loan not found');
+
+    const isGoldLoan = loan.type === 'jewel' || loan.type === 'gold';
+    let outstanding: Decimal;
+
+    if (isGoldLoan) {
+      const prepayments = await this.prepaymentRepository.findByLoanId(loanId);
+      const transactions = prepayments.map((p) => ({
+        date: new Date(p.date).toISOString().split('T')[0],
+        type: 'PAYMENT' as const,
+        amount: Number(p.amount),
+        note: p.notes || 'Gold Loan Payment',
+      }));
+
+      const targetDate = new Date().toISOString().split('T')[0];
+      const maturityDate = loan.tenure_months
+        ? new Date(new Date(loan.start_date).setMonth(new Date(loan.start_date).getMonth() + loan.tenure_months))
+            .toISOString()
+            .split('T')[0]
+        : undefined;
+
+      const summary = GoldLoanCalculator.calculateLedger(
+        {
+          principal: Number(loan.principal),
+          annualRatePercent: Number(loan.interest_rate),
+          disbursalDate: new Date(loan.start_date).toISOString().split('T')[0],
+          maturityDate,
+          dayCountBasis: 365,
+          compounding: 'MONTHLY_CAPITALISATION',
+          roundingMode: 'ROUND',
+        },
+        targetDate,
+      );
+
+      outstanding = new Decimal(summary.scenarios.scenarioB.totalCost);
+    } else {
+      const schedule = await this.scheduleRepository.findByLoanId(loanId);
+      const unpaid = schedule.filter((i) => !i.is_paid);
+      if (schedule.length > 0 && unpaid.length === 0) {
+        outstanding = new Decimal(0);
+      } else if (unpaid.length > 0) {
+        outstanding = new Decimal(unpaid[0].opening_balance.toString());
+      } else {
+        outstanding = new Decimal(loan.principal.toString());
+      }
+    }
+
+    const updatePayload: any = {
+      current_outstanding_principal: outstanding.toString(),
+    };
+    if (loan.original_principal === null || loan.original_principal === undefined) {
+      updatePayload.original_principal = loan.principal.toString();
+    }
+    if (loan.original_tenure_months === null || loan.original_tenure_months === undefined) {
+      updatePayload.original_tenure_months = loan.tenure_months;
+    }
+
+    await this.loanRepository.update(loanId, updatePayload);
+    return outstanding;
+  }
+
+  async recalculateAllLoans(familyId: string) {
+    const loans = await this.loanRepository.findByFamilyId(familyId);
+    for (const loan of loans) {
+      if (loan.status === 'active') {
+        await this.recalculateLoanOutstanding(loan.id);
+      }
     }
     return this.loanRepository.findByFamilyId(familyId);
   }
 
+  async getLoans(familyId: string, memberId?: string) {
+    const loans = (memberId && memberId !== 'all')
+      ? await this.loanRepository.findByMemberId(memberId)
+      : await this.loanRepository.findByFamilyId(familyId);
+
+    for (let i = 0; i < loans.length; i++) {
+      if (loans[i].current_outstanding_principal == null || loans[i].original_principal == null) {
+        await this.recalculateLoanOutstanding(loans[i].id);
+        const refreshed = await this.loanRepository.findById(loans[i].id);
+        if (refreshed) loans[i] = refreshed;
+      }
+    }
+    return loans;
+  }
+
   async getLoanById(id: string, familyId: string) {
-    const loan = await this.loanRepository.findById(id);
+    let loan = await this.loanRepository.findById(id);
     if (!loan || loan.family_id !== familyId) {
       throw new NotFoundException('Loan not found');
+    }
+    if (loan.current_outstanding_principal == null || loan.original_principal == null) {
+      await this.recalculateLoanOutstanding(loan.id);
+      loan = await this.loanRepository.findById(id);
+      if (!loan) throw new NotFoundException('Loan not found');
     }
     return loan;
   }
@@ -249,6 +344,7 @@ export class LoansService {
       }
     }
 
+    await this.recalculateLoanOutstanding(loanId);
     return updated;
   }
 
@@ -404,6 +500,7 @@ export class LoansService {
       }),
     });
 
+    await this.recalculateLoanOutstanding(loanId);
     return record;
   }
 
@@ -513,6 +610,7 @@ export class LoansService {
       }),
     });
 
+    await this.recalculateLoanOutstanding(loanId);
     return revision;
   }
 
@@ -576,6 +674,7 @@ export class LoansService {
       }),
     });
 
+    await this.recalculateLoanOutstanding(loanId);
     return { message: 'Loan calibrated to statement successfully' };
   }
 
@@ -746,6 +845,7 @@ export class LoansService {
       field_changes: JSON.stringify({ amount: dto.amount, paymentDate: dto.paymentDate }),
     });
 
+    await this.recalculateLoanOutstanding(loan.id);
     return prepayment;
   }
 
@@ -754,9 +854,7 @@ export class LoansService {
    */
   async deleteGoldLoanPayment(loanId: string, familyId: string, memberId: string, paymentId: string) {
     await this.getLoanById(loanId, familyId);
-    if (this.prepaymentRepository.delete) {
-      await this.prepaymentRepository.delete(paymentId);
-    }
+    await this.prepaymentRepository.delete(paymentId);
     await this.auditRepository.create({
       member_id: memberId,
       family_id: familyId,
@@ -765,6 +863,187 @@ export class LoansService {
       action: 'delete_payment',
       field_changes: JSON.stringify({ paymentId }),
     });
+    await this.recalculateLoanOutstanding(loanId);
+    return { success: true };
+  }
+
+  /**
+   * Deletes a prepayment record with conflict check, balance restoration, and schedule regeneration.
+   */
+  async deletePrepayment(loanId: string, familyId: string, memberId: string, prepaymentId: string) {
+    const loan = await this.getLoanById(loanId, familyId);
+    const prepayment = await this.prepaymentRepository.findById(prepaymentId);
+    if (!prepayment || prepayment.loan_id !== loanId) {
+      throw new NotFoundException('Prepayment record not found');
+    }
+
+    const schedule = await this.scheduleRepository.findByLoanId(loanId);
+    const prepDate = new Date(prepayment.date);
+    const conflictingPaid = schedule.find((inst) => inst.is_paid && new Date(inst.due_date) >= prepDate);
+    if (conflictingPaid) {
+      throw new BadRequestException(
+        `Cannot delete part-payment: Installment #${conflictingPaid.installment_number} due on ${new Date(conflictingPaid.due_date).toLocaleDateString()} after the payment date has already been marked as paid. Please unmark it first.`,
+      );
+    }
+
+    const unpaid = schedule.filter((i) => !i.is_paid);
+    const nextInst = unpaid[0];
+    if (nextInst) {
+      const restoredBalance = new Decimal(nextInst.opening_balance.toString()).plus(new Decimal(prepayment.amount.toString()));
+
+      let restoredEmi = new Decimal(loan.emi_amount.toString());
+      let restoredRemainingTenure = unpaid.length;
+
+      if (prepayment.mode === 'reduce_emi') {
+        restoredEmi = prepayment.previous_emi ? new Decimal(prepayment.previous_emi.toString()) : restoredEmi;
+        await this.loanRepository.update(loanId, { emi_amount: restoredEmi.toString() as any });
+      } else if (prepayment.mode === 'reduce_tenure') {
+        const r = new Decimal(loan.interest_rate.toString()).dividedBy(12).dividedBy(100);
+        const numeratorInner = new Decimal(1).minus(r.times(restoredBalance).dividedBy(restoredEmi));
+        if (numeratorInner.greaterThan(0)) {
+          const lnNumerator = Decimal.ln(numeratorInner);
+          const lnDenominator = Decimal.ln(new Decimal(1).plus(r));
+          restoredRemainingTenure = Math.ceil(lnNumerator.negated().dividedBy(lnDenominator).toNumber());
+        }
+        const paidCount = schedule.filter((i) => i.is_paid).length;
+        await this.loanRepository.update(loanId, { tenure_months: paidCount + restoredRemainingTenure });
+      }
+
+      await this.scheduleRepository.deleteFutureInstallments(loanId, nextInst.installment_number);
+
+      const newFutureSchedule = LoanEngine.generateAmortizationSchedule(
+        restoredBalance,
+        new Decimal(loan.interest_rate.toString()),
+        restoredRemainingTenure,
+        nextInst.due_date,
+        restoredEmi,
+        loan.interest_type,
+      );
+
+      const dbInstallments = newFutureSchedule.map((inst, index) => ({
+        loan_id: loanId,
+        installment_number: nextInst.installment_number + index,
+        due_date: inst.due_date,
+        opening_balance: inst.opening_balance.toString(),
+        emi_amount: inst.emi_amount.toString(),
+        principal_component: inst.principal_component.toString(),
+        interest_component: inst.interest_component.toString(),
+        closing_balance: inst.closing_balance.toString(),
+        is_paid: false,
+        is_manually_edited: false,
+      }));
+
+      await this.scheduleRepository.createMany(dbInstallments);
+    }
+
+    await this.prepaymentRepository.delete(prepaymentId);
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'loan',
+      entity_id: loanId,
+      action: 'delete_prepayment',
+      field_changes: JSON.stringify({
+        prepaymentId,
+        amount: prepayment.amount.toString(),
+        mode: prepayment.mode,
+      }),
+    });
+
+    await this.recalculateLoanOutstanding(loanId);
+
+    return { success: true };
+  }
+
+  /**
+   * Deletes a rate revision record with conflict check and schedule regeneration.
+   */
+  async deleteRateRevision(loanId: string, familyId: string, memberId: string, revisionId: string) {
+    const loan = await this.getLoanById(loanId, familyId);
+    const revision = await this.rateRevisionRepository.findById(revisionId);
+    if (!revision || revision.loan_id !== loanId) {
+      throw new NotFoundException('Rate revision record not found');
+    }
+
+    const schedule = await this.scheduleRepository.findByLoanId(loanId);
+    const effDate = new Date(revision.effective_date);
+    const conflictingPaid = schedule.find((inst) => inst.is_paid && new Date(inst.due_date) >= effDate);
+    if (conflictingPaid) {
+      throw new BadRequestException(
+        `Cannot delete rate revision: Installment #${conflictingPaid.installment_number} due on ${new Date(conflictingPaid.due_date).toLocaleDateString()} after the effective date has already been marked as paid. Please unmark it first.`,
+      );
+    }
+
+    const unpaid = schedule.filter((i) => !i.is_paid);
+    const nextInst = unpaid[0];
+    if (nextInst) {
+      const currentOutstanding = new Decimal(nextInst.opening_balance.toString());
+      const oldRate = new Decimal(revision.old_rate.toString());
+      const oldEmi = new Decimal(revision.old_emi.toString());
+      let restoredRemainingTenure = unpaid.length;
+
+      if (revision.policy === 'keep_emi') {
+        const r = oldRate.dividedBy(12).dividedBy(100);
+        const numeratorInner = new Decimal(1).minus(r.times(currentOutstanding).dividedBy(oldEmi));
+        if (numeratorInner.greaterThan(0)) {
+          const lnNum = Decimal.ln(numeratorInner);
+          const lnDen = Decimal.ln(new Decimal(1).plus(r));
+          restoredRemainingTenure = Math.ceil(lnNum.negated().dividedBy(lnDen).toNumber());
+        }
+      }
+
+      const paidCount = schedule.filter((i) => i.is_paid).length;
+      await this.loanRepository.update(loanId, {
+        interest_rate: oldRate.toString() as any,
+        emi_amount: oldEmi.toString() as any,
+        tenure_months: paidCount + restoredRemainingTenure,
+      });
+
+      await this.scheduleRepository.deleteFutureInstallments(loanId, nextInst.installment_number);
+
+      const newFutureSchedule = LoanEngine.generateAmortizationSchedule(
+        currentOutstanding,
+        oldRate,
+        restoredRemainingTenure,
+        nextInst.due_date,
+        oldEmi,
+        loan.interest_type,
+      );
+
+      const dbInstallments = newFutureSchedule.map((inst, index) => ({
+        loan_id: loanId,
+        installment_number: nextInst.installment_number + index,
+        due_date: inst.due_date,
+        opening_balance: inst.opening_balance.toString(),
+        emi_amount: inst.emi_amount.toString(),
+        principal_component: inst.principal_component.toString(),
+        interest_component: inst.interest_component.toString(),
+        closing_balance: inst.closing_balance.toString(),
+        is_paid: false,
+        is_manually_edited: false,
+      }));
+
+      await this.scheduleRepository.createMany(dbInstallments);
+    }
+
+    await this.rateRevisionRepository.delete(revisionId);
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'loan',
+      entity_id: loanId,
+      action: 'delete_rate_revision',
+      field_changes: JSON.stringify({
+        revisionId,
+        revertedToRate: revision.old_rate.toString(),
+        revertedToEmi: revision.old_emi.toString(),
+      }),
+    });
+
+    await this.recalculateLoanOutstanding(loanId);
+
     return { success: true };
   }
 

@@ -7,6 +7,10 @@ import { IPrepaymentRepository } from '../interfaces';
 export class PrismaPrepaymentRepository implements IPrepaymentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findById(id: string): Promise<PrepaymentRecord | null> {
+    return this.prisma.prepaymentRecord.findUnique({ where: { id } });
+  }
+
   async findByLoanId(loanId: string): Promise<PrepaymentRecord[]> {
     return this.prisma.prepaymentRecord.findMany({
       where: { loan_id: loanId },

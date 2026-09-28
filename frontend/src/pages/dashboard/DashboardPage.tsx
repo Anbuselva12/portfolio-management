@@ -113,12 +113,14 @@ export const DashboardPage: React.FC = () => {
         receivedDate: new Date().toISOString().split('T')[0],
       });
       setEditingIncomeId(null);
-      const [remData, sumData] = await Promise.all([
+      const [remData, sumData, anaData] = await Promise.all([
         dashboardApi.getReminders(scope === 'me' ? 'me' : undefined),
         dashboardApi.getSummary(scope === 'me' ? 'me' : undefined),
+        dashboardApi.getAnalytics(scope === 'me' ? 'me' : undefined),
       ]);
       setReminders(remData);
       setSummary(sumData);
+      setAnalytics(anaData);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to record income arrival.');
     } finally {
@@ -132,12 +134,14 @@ export const DashboardPage: React.FC = () => {
       await loansApi.updateInstallment(loanItem.id, loanItem.installmentId, {
         isPaid: !loanItem.isPaid,
       });
-      const [remData, sumData] = await Promise.all([
+      const [remData, sumData, anaData] = await Promise.all([
         dashboardApi.getReminders(scope === 'me' ? 'me' : undefined),
         dashboardApi.getSummary(scope === 'me' ? 'me' : undefined),
+        dashboardApi.getAnalytics(scope === 'me' ? 'me' : undefined),
       ]);
       setReminders(remData);
       setSummary(sumData);
+      setAnalytics(anaData);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to update loan EMI payment status.');
     } finally {

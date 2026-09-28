@@ -31,6 +31,11 @@ export class LoansController {
     return this.loansService.createLoan(user.sub, user.familyId, dto);
   }
 
+  @Post('recalculate-all')
+  async recalculateAllLoans(@CurrentUser() user: any) {
+    return this.loansService.recalculateAllLoans(user.familyId);
+  }
+
   @Get(':id')
   async getLoan(@CurrentUser() user: any, @Param('id') id: string) {
     return this.loansService.getLoanById(id, user.familyId);
@@ -89,6 +94,15 @@ export class LoansController {
     return this.loansService.applyPrepayment(id, user.familyId, user.sub, dto);
   }
 
+  @Delete(':id/prepayments/:prepaymentId')
+  async deletePrepayment(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Param('prepaymentId') prepaymentId: string,
+  ) {
+    return this.loansService.deletePrepayment(id, user.familyId, user.sub, prepaymentId);
+  }
+
   @Get(':id/rate-revisions')
   async getRateRevisions(@CurrentUser() user: any, @Param('id') id: string) {
     return this.loansService.getRateRevisions(id, user.familyId);
@@ -110,6 +124,22 @@ export class LoansController {
     @Body() dto: RateRevisionDto,
   ) {
     return this.loansService.applyRateRevision(id, user.familyId, user.sub, dto);
+  }
+
+  @Delete(':id/rate-revisions/:revisionId')
+  async deleteRateRevision(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.loansService.deleteRateRevision(id, user.familyId, user.sub, revisionId);
+  }
+
+  @Post(':id/recalculate')
+  async recalculateLoan(@CurrentUser() user: any, @Param('id') id: string) {
+    await this.loansService.getLoanById(id, user.familyId);
+    await this.loansService.recalculateLoanOutstanding(id);
+    return this.loansService.getLoanById(id, user.familyId);
   }
 
   @Post(':id/calibrate')
@@ -157,4 +187,3 @@ export class LoansController {
     return this.loansService.deleteGoldLoanPayment(id, user.familyId, user.sub, paymentId);
   }
 }
-

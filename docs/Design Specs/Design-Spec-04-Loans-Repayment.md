@@ -54,8 +54,11 @@
   - **1-Click Mark as Paid Action**: Users can directly click "Mark as Paid" on any active installment. This immediately marks the installment paid, records the payment date, recalculates outstanding principal, and synchronizes with the Monthly Expense Queue.
   - Inline row correction (click edit → adjust actual amount paid). Virtualized scroll + jump-to-month control.
 - **History Cards**:
-  - **Rate Revision History**: chronological ledger of repo/EBLR resets (Effective Date, Rate change `8.65% → 8.40%`, Mode, Tenure Impact, Interest Saved).
-  - **Part-Payment Ledger**: record of extra payments (Date, Principal Prepaid, Accrued Broken-Period Interest, Total Paid, Mode Chosen, Net Benefit).
+  - **Rate Revision History**: chronological ledger of repo/EBLR resets (Effective Date, Rate change `8.65% → 8.40%`, Mode, Tenure Impact, Interest Saved). Includes delete action to reverse rate revision, restore original rate/tenure, check for paid installment conflicts, and regenerate downstream schedule.
+  - **Part-Payment Ledger**: record of extra payments (Date, Principal Prepaid, Accrued Broken-Period Interest, Total Paid, Mode Chosen, Net Benefit). Includes delete action to reverse part-payment, restore principal balance, check for paid installment conflicts, and regenerate downstream schedule.
+- **Original Terms & Live Sync**:
+  - Original principal and original tenure are preserved at loan creation as immutable reference values displayed alongside live figures (e.g. `Orig: ₹...`, `Orig: XX mos`).
+  - "Sync Balance" triggers manual full re-synchronization of loan outstanding against the schedule opening balance (or gold loan scenario B ledger total cost) across single loans and portfolio-wide.
 
 ---
 

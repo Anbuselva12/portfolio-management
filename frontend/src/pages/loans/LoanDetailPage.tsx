@@ -35,6 +35,7 @@ import {
   History,
   FileText,
   BadgePercent,
+  RefreshCw,
 } from 'lucide-react';
 
 export const LoanDetailPage: React.FC = () => {
@@ -135,6 +136,51 @@ export const LoanDetailPage: React.FC = () => {
       setError(err.response?.data?.message || 'Failed to load loan details.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [deletingRevId, setDeletingRevId] = useState<string | null>(null);
+  const [deletingPrepId, setDeletingPrepId] = useState<string | null>(null);
+
+  const handleSyncBalance = async () => {
+    if (!id) return;
+    setIsSyncing(true);
+    try {
+      await loansApi.recalculate(id);
+      await loadLoanData();
+    } catch (err) {
+      console.error('Failed to sync loan balance', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleDeleteRateRevision = async (revId: string) => {
+    if (!id) return;
+    if (!confirm('Are you sure you want to delete this rate revision? It will restore the previous interest rate and regenerate subsequent schedule installments.')) return;
+    setDeletingRevId(revId);
+    try {
+      await loansApi.deleteRateRevision(id, revId);
+      await loadLoanData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete rate revision.');
+    } finally {
+      setDeletingRevId(null);
+    }
+  };
+
+  const handleDeletePrepayment = async (prepId: string) => {
+    if (!id) return;
+    if (!confirm('Are you sure you want to delete this part-payment? It will restore the principal balance and regenerate future schedule installments.')) return;
+    setDeletingPrepId(prepId);
+    try {
+      await loansApi.deletePrepayment(id, prepId);
+      await loadLoanData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete part-payment.');
+    } finally {
+      setDeletingPrepId(null);
     }
   };
 
@@ -345,9 +391,21 @@ export const LoanDetailPage: React.FC = () => {
     } catch {}
   }
 
-  // Paid stats
+  // Paid stats and balances
+  const unpaidInstallments = schedule.filter((i) => !(i.isPaid ?? i.is_paid));
   const paidCount = schedule.filter((i) => i.isPaid ?? i.is_paid).length;
-  const progressPct = schedule.length > 0 ? Math.round((paidCount / schedule.length) * 100) : 0;
+  const actualTenureMonths = schedule.length > 0 ? schedule.length : tenureMonths;
+  const originalTenureMonths = loan.original_tenure_months ?? (loan as any).originalTenureMonths ?? tenureMonths;
+  const remainingMonths = unpaidInstallments.length;
+  const originalPrincipalVal = loan.original_principal ?? (loan as any).originalPrincipal ?? loan.principal;
+
+  const currentOutstandingVal = isGoldLoan && goldLedger
+    ? (goldLedger.scenarios?.scenarioB?.totalCost ?? goldLedger.currentOutstandingToday)
+    : (schedule.length > 0 && unpaidInstallments.length === 0
+      ? '0'
+      : (loan.current_outstanding_principal ?? (loan as any).currentOutstandingPrincipal ?? (unpaidInstallments[0] ? (unpaidInstallments[0].openingBalance || unpaidInstallments[0].opening_balance) : loan.principal)));
+
+  const progressPct = actualTenureMonths > 0 ? Math.round((paidCount / actualTenureMonths) * 100) : 0;
   const lastInstallment = schedule[schedule.length - 1];
   const payoffDate = lastInstallment ? lastInstallment.dueDate || lastInstallment.due_date : loan.startDate || loan.start_date;
 
@@ -519,6 +577,17 @@ export const LoanDetailPage: React.FC = () => {
           </button>
 
           <button
+            type="button"
+            onClick={handleSyncBalance}
+            disabled={isSyncing}
+            title="Recalculate and sync outstanding balance"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Syncing...' : 'Sync Balance'}</span>
+          </button>
+
+          <button
             onClick={() => setIsEditLoanOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer shadow-sm"
           >
@@ -641,15 +710,30 @@ export const LoanDetailPage: React.FC = () => {
 
       {/* KPI Cards Strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-            Current Outstanding
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Current Outstanding
+              </span>
+              <button
+                type="button"
+                onClick={handleSyncBalance}
+                disabled={isSyncing}
+                title="Sync & recalculate outstanding balance"
+                className="text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 p-0.5 rounded transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            <div className="text-xl sm:text-2xl font-black font-mono text-rose-600 dark:text-rose-400">
+              {formatINR(currentOutstandingVal)}
+            </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-rose-600 dark:text-rose-400">
-            {formatINR(isGoldLoan && goldLedger ? goldLedger.currentOutstandingToday : loan.principal)}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">
-            Type: <span className="capitalize text-slate-600 dark:text-slate-300 font-semibold">{isGoldLoan ? 'Gold Overdraft' : (loan.interestType || loan.interest_type || 'Reducing')}</span>
+          <div className="text-[11px] text-slate-400 mt-2 flex flex-wrap items-center gap-x-2">
+            <span>Orig: {formatINR(originalPrincipalVal)}</span>
+            <span>•</span>
+            <span className="capitalize text-slate-600 dark:text-slate-300 font-semibold">{isGoldLoan ? 'Gold Overdraft' : (loan.interestType || loan.interest_type || 'Reducing')}</span>
           </div>
         </div>
 
@@ -705,7 +789,10 @@ export const LoanDetailPage: React.FC = () => {
           ) : (
             <>
               <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
-                {paidCount} <span className="text-sm font-medium text-slate-400">/ {schedule.length || tenureMonths} mos</span>
+                {paidCount} <span className="text-sm font-medium text-slate-400">/ {actualTenureMonths} mos</span>
+              </div>
+              <div className="text-[11px] text-slate-400 mt-1">
+                Remaining: {remainingMonths} mos • Orig: {originalTenureMonths} mos
               </div>
               <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
                 <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${progressPct}%` }} />
@@ -793,15 +880,26 @@ export const LoanDetailPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        {Number(rev.interestSaved || rev.interest_saved) > 0 && (
-                          <div className="font-bold text-emerald-600 font-mono text-[11px]">
-                            Saved {formatINR(Number(rev.interestSaved || rev.interest_saved))}
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          {Number(rev.interestSaved || rev.interest_saved) > 0 && (
+                            <div className="font-bold text-emerald-600 font-mono text-[11px]">
+                              Saved {formatINR(Number(rev.interestSaved || rev.interest_saved))}
+                            </div>
+                          )}
+                          <div className="text-[11px] text-slate-500 font-mono">
+                            Tenure: {rev.newTenureMonths || rev.new_tenure_months} mos
                           </div>
-                        )}
-                        <div className="text-[11px] text-slate-500 font-mono">
-                          Tenure: {rev.newTenureMonths || rev.new_tenure_months} mos
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRateRevision(rev.id)}
+                          disabled={deletingRevId === rev.id}
+                          title="Delete rate revision"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -843,13 +941,24 @@ export const LoanDetailPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <div className="font-bold text-emerald-600 font-mono text-[11px]">
-                            Saved {formatINR(Number(prep.interestSaved || prep.interest_saved || 0))}
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="font-bold text-emerald-600 font-mono text-[11px]">
+                              Saved {formatINR(Number(prep.interestSaved || prep.interest_saved || 0))}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              Outflow: {formatINR(Number(prep.totalPaid || prep.total_paid || prep.amount))}
+                            </div>
                           </div>
-                          <div className="text-[10px] text-slate-400">
-                            Outflow: {formatINR(Number(prep.totalPaid || prep.total_paid || prep.amount))}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePrepayment(prep.id)}
+                            disabled={deletingPrepId === prep.id}
+                            title="Delete part-payment"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     );

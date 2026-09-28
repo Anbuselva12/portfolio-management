@@ -9,6 +9,11 @@ export class LocalStoragePrepaymentRepository implements IPrepaymentRepository {
     return LocalStorageStore.getCollection<PrepaymentRecord>('prepayment_records');
   }
 
+  async findById(id: string): Promise<PrepaymentRecord | null> {
+    const item = this.items.find((p) => p.id === id);
+    return item ? { ...item } : null;
+  }
+
   async findByLoanId(loanId: string): Promise<PrepaymentRecord[]> {
     return this.items
       .filter((p) => p.loan_id === loanId)

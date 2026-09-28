@@ -53,7 +53,7 @@ A dedicated, prominent action widget for the current month tracking incoming rev
 
 ### Chart Row 2
 - **Liability Breakdown** — donut/bar by loan type, with a Debt-to-Income Ratio gauge/badge alongside.
-- **Income vs Expense vs EMI** — stacked bar, trailing 12 months, income as a line overlay against stacked expense+EMI bars, so surplus/deficit months are visually obvious.
+- **Income vs Expense vs EMI** — stacked bar, trailing 12 months, income as a line overlay against stacked expense+EMI bars, so surplus/deficit months are visually obvious. Household expenses strictly exclude loan EMIs to prevent double-counting against scheduled loan repayments. Monthly income includes all active recurring incomes, one-off inflows, and other income sources for each month.
 
 ### Chart Row 3 (full width)
 - **Debt Payoff Timeline** — Gantt-style horizontal timeline, one row per active loan, bar length = months to payoff under the currently selected strategy (dropdown: Minimum Payments / Avalanche / Snowball / Custom-Weighted / AI Suggestion), with a toggle to overlay 2 strategies at once for direct comparison.

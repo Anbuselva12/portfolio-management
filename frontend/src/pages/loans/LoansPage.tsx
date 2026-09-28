@@ -22,6 +22,7 @@ import {
   Percent,
   Trash2,
   ArrowUpDown,
+  RefreshCw,
 } from 'lucide-react';
 
 const LOAN_TYPES: { type: LoanType; label: string; icon: any }[] = [
@@ -61,6 +62,8 @@ export const LoansPage: React.FC = () => {
     loadLoans();
   }, []);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const loadLoans = async () => {
     setIsLoading(true);
     try {
@@ -70,6 +73,18 @@ export const LoansPage: React.FC = () => {
       setLoans([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSyncAll = async () => {
+    setIsSyncing(true);
+    try {
+      await loansApi.recalculateAll();
+      await loadLoans();
+    } catch (err) {
+      console.error('Failed to sync loan balances', err);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -143,8 +158,8 @@ export const LoansPage: React.FC = () => {
   };
 
   const sortedLoans = [...loans].sort((a, b) => {
-    const principalA = Number(a.principal || 0);
-    const principalB = Number(b.principal || 0);
+    const principalA = Number((a.current_outstanding_principal ?? (a as any).currentOutstandingPrincipal ?? a.principal) || 0);
+    const principalB = Number((b.current_outstanding_principal ?? (b as any).currentOutstandingPrincipal ?? b.principal) || 0);
     const dateA = new Date((a as any).createdAt || (a as any).created_at || a.startDate || a.start_date || 0).getTime();
     const dateB = new Date((b as any).createdAt || (b as any).created_at || b.startDate || b.start_date || 0).getTime();
 
@@ -195,6 +210,16 @@ export const LoansPage: React.FC = () => {
               </select>
             </div>
           )}
+          <button
+            type="button"
+            onClick={handleSyncAll}
+            disabled={isSyncing || isLoading}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            title="Sync and recalculate current outstanding balances for all loans"
+          >
+            <RefreshCw className={`w-4 h-4 text-slate-500 dark:text-slate-400 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : 'Sync Balances'}</span>
+          </button>
           <button
             onClick={() => {
               setFormError(null);
@@ -296,10 +321,17 @@ export const LoansPage: React.FC = () => {
 
                   <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
                     <div>
-                      <div className="text-[11px] text-slate-400 uppercase font-semibold">Outstanding Principal</div>
-                      <div className="text-xl font-bold font-mono text-rose-600 dark:text-rose-400">
-                        {formatINR(loan.principal)}
+                      <div className="text-[11px] text-slate-400 uppercase font-semibold">
+                        {isGold ? 'Current Debt (with Interest)' : 'Outstanding Principal'}
                       </div>
+                      <div className="text-xl font-bold font-mono text-rose-600 dark:text-rose-400">
+                        {formatINR(loan.current_outstanding_principal ?? (loan as any).currentOutstandingPrincipal ?? loan.principal)}
+                      </div>
+                      {(loan.original_principal || (loan as any).originalPrincipal) && (
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                          Original: {formatINR(loan.original_principal || (loan as any).originalPrincipal)}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex justify-between items-center text-xs">
@@ -329,6 +361,9 @@ export const LoansPage: React.FC = () => {
                       <span className="text-slate-500 dark:text-slate-400">Tenure (Total):</span>
                       <span className="font-semibold text-slate-900 dark:text-white">
                         {tenureVal} months
+                        {(loan.original_tenure_months || (loan as any).originalTenureMonths) && (loan.original_tenure_months || (loan as any).originalTenureMonths) !== tenureVal && (
+                          <span className="text-slate-400 ml-1 font-normal">(Orig: {loan.original_tenure_months || (loan as any).originalTenureMonths}m)</span>
+                        )}
                       </span>
                     </div>
 

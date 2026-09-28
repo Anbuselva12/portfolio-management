@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 // ─── Family ──────────────────────────────────────────────────────────────────
@@ -193,8 +192,11 @@ model Loan {
   type                      String    // home | car | personal | jewel | education | business | gold | other
   lender                    String
   currency                  String    @default("INR")
-  principal                 Decimal
-  interest_type             String    @default("reducing_compound") // reducing_compound | flat_simple
+  principal                     Decimal
+  original_principal            Decimal?
+  original_tenure_months        Int?
+  current_outstanding_principal Decimal?
+  interest_type                 String    @default("reducing_compound") // reducing_compound | flat_simple
   compounding_frequency     String    @default("monthly") // monthly | daily
   interest_rate             Decimal   // annual percentage e.g. 8.5
   tenure_months             Int

@@ -39,6 +39,9 @@ export class LocalStorageLoanRepository implements ILoanRepository {
       lender: data.lender,
       currency: data.currency || 'INR',
       principal: new Prisma.Decimal(data.principal),
+      original_principal: data.original_principal ? new Prisma.Decimal(data.original_principal) : new Prisma.Decimal(data.principal),
+      original_tenure_months: data.original_tenure_months ?? data.tenure_months,
+      current_outstanding_principal: data.current_outstanding_principal ? new Prisma.Decimal(data.current_outstanding_principal) : new Prisma.Decimal(data.principal),
       interest_type: data.interest_type || 'reducing_compound',
       compounding_frequency: data.compounding_frequency || 'monthly',
       interest_rate: new Prisma.Decimal(data.interest_rate),
@@ -68,6 +71,8 @@ export class LocalStorageLoanRepository implements ILoanRepository {
       ...this.items[index],
       ...data,
       principal: data.principal ? new Prisma.Decimal(data.principal as any) : this.items[index].principal,
+      original_principal: (data as any).original_principal ? new Prisma.Decimal((data as any).original_principal as any) : this.items[index].original_principal,
+      current_outstanding_principal: (data as any).current_outstanding_principal ? new Prisma.Decimal((data as any).current_outstanding_principal as any) : this.items[index].current_outstanding_principal,
       emi_amount: data.emi_amount ? new Prisma.Decimal(data.emi_amount as any) : this.items[index].emi_amount,
       updated_at: new Date(),
     };

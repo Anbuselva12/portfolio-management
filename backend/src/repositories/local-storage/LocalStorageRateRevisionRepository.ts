@@ -9,6 +9,11 @@ export class LocalStorageRateRevisionRepository implements IRateRevisionReposito
     return LocalStorageStore.getCollection<RateRevisionRecord>('rate_revision_records');
   }
 
+  async findById(id: string): Promise<RateRevisionRecord | null> {
+    const item = this.items.find((r) => r.id === id);
+    return item ? { ...item } : null;
+  }
+
   async findByLoanId(loanId: string): Promise<RateRevisionRecord[]> {
     return this.items
       .filter((r) => r.loan_id === loanId)
@@ -34,6 +39,13 @@ export class LocalStorageRateRevisionRepository implements IRateRevisionReposito
     };
     this.items.push(record);
     return { ...record };
+  }
+
+  async delete(id: string): Promise<void> {
+    const idx = this.items.findIndex((r) => r.id === id);
+    if (idx !== -1) {
+      this.items.splice(idx, 1);
+    }
   }
 }
 

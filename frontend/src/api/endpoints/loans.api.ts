@@ -31,5 +31,13 @@ export const loansApi = {
     (await api.post(`/loans/${loanId}/gold-payment/preview`, data)).data,
   deleteGoldLoanPayment: async (loanId: string, paymentId: string) =>
     (await api.delete(`/loans/${loanId}/gold-payment/${paymentId}`)).data,
+  deletePrepayment: async (loanId: string, prepaymentId: string) =>
+    (await api.delete(`/loans/${loanId}/prepayments/${prepaymentId}`)).data,
+  deleteRateRevision: async (loanId: string, revisionId: string) =>
+    (await api.delete(`/loans/${loanId}/rate-revisions/${revisionId}`)).data,
+  recalculate: async (loanId: string) =>
+    (await api.post(`/loans/${loanId}/recalculate`)).data,
+  recalculateAll: async () =>
+    (await api.post('/loans/recalculate-all')).data,
 };
 

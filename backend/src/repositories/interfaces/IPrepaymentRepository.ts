@@ -1,9 +1,10 @@
 import { PrepaymentRecord } from '@prisma/client';
 
 export interface IPrepaymentRepository {
+  findById(id: string): Promise<PrepaymentRecord | null>;
   findByLoanId(loanId: string): Promise<PrepaymentRecord[]>;
   create(data: any): Promise<PrepaymentRecord>;
-  delete?(id: string): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 
 export const I_PREPAYMENT_REPOSITORY = 'IPrepaymentRepository';

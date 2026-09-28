@@ -124,6 +124,12 @@ export interface Loan {
   lender: string;
   currency: string;
   principal: string;
+  original_principal?: string | null;
+  originalPrincipal?: string | null;
+  original_tenure_months?: number | null;
+  originalTenureMonths?: number | null;
+  current_outstanding_principal?: string | null;
+  currentOutstandingPrincipal?: string | null;
   interestType?: InterestType;
   interest_type?: InterestType;
   compoundingFrequency?: string;
