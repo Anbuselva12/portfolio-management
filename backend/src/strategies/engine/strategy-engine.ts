@@ -347,6 +347,43 @@ export class StrategyEngine {
         const currentHighest = effectivePercentages[highestLoan.id] ?? 0;
         effectivePercentages[highestLoan.id] = Math.max(0, Math.min(100, currentHighest + diff));
       }
+    } else if (weights && weights.mode === 'split') {
+      const maxRate = Decimal.max(...active.map((l) => l.interestRate), new Decimal(1));
+      const maxBal = Decimal.max(...active.map((l) => l.principal), new Decimal(1));
+      const maxTenure = Math.max(...active.map((l) => l.tenureMonths), 1);
+
+      const scores = new Map<string, number>();
+      for (const l of active) {
+        const rNorm = l.interestRate.dividedBy(maxRate).toNumber();
+        const bNorm = 1 - l.principal.dividedBy(maxBal).toNumber();
+        const fNorm = l.emiType === 'flexible' ? 1.0 : 0.5;
+        const hasPenalty = l.prepaymentPenaltyType && l.prepaymentPenaltyType !== 'none';
+        const pNorm = hasPenalty ? 0.3 : 1.0;
+        const tNorm = 1 - l.tenureMonths / maxTenure;
+
+        const score =
+          (weights.weightRate * rNorm +
+            weights.weightBalance * bNorm +
+            weights.weightFlexibility * fNorm +
+            weights.weightPenalty * pNorm +
+            weights.weightTenure * tNorm) /
+          100;
+        scores.set(l.id, score);
+      }
+
+      const totalScore = active.reduce((sum, l) => sum + (scores.get(l.id) || 0), 0);
+      let sumPct = 0;
+      for (let i = 0; i < active.length; i++) {
+        const l = active[i];
+        if (i === active.length - 1) {
+          effectivePercentages[l.id] = Math.max(0, 100 - sumPct);
+        } else {
+          const share = totalScore > 0 ? (scores.get(l.id) || 0) / totalScore : 1 / active.length;
+          const pct = Math.round(share * 100);
+          effectivePercentages[l.id] = pct;
+          sumPct += pct;
+        }
+      }
     } else {
       // Default: 100% to highest principal loan, 0% to others
       for (const l of active) {

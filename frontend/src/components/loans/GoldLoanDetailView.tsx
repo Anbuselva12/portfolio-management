@@ -574,10 +574,11 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
                       type="button"
                       disabled={deletingPaymentId === p.id}
                       onClick={() => handleDeletePayment(p.id!)}
-                      className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                       title="Delete payment"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
                     </button>
                   )}
                 </div>

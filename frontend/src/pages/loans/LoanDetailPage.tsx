@@ -288,25 +288,40 @@ export const LoanDetailPage: React.FC = () => {
   const handleTogglePaid = async (inst: RepaymentInstallment) => {
     if (!id) return;
     const currentPaid = inst.isPaid ?? inst.is_paid ?? false;
+    const targetId = inst.id;
+    // Optimistic UI update so the user immediately sees the change without lag
+    setSchedule((prev) =>
+      prev.map((item) => (item.id === targetId ? { ...item, isPaid: !currentPaid, is_paid: !currentPaid } : item)),
+    );
     try {
-      await loansApi.updateInstallment(id, inst.id, {
+      await loansApi.updateInstallment(id, targetId, {
         isPaid: !currentPaid,
       });
       await loadLoanData();
     } catch (err: any) {
       alert('Failed to toggle installment status.');
+      await loadLoanData();
     }
   };
 
+  // Strictly sorted schedule by installment number
+  const sortedSchedule = useMemo(() => {
+    return [...schedule].sort((a, b) => {
+      const numA = Number(a.installmentNumber ?? a.installment_number ?? 0);
+      const numB = Number(b.installmentNumber ?? b.installment_number ?? 0);
+      return numA - numB;
+    });
+  }, [schedule]);
+
   // Filtered schedule
   const filteredSchedule = useMemo(() => {
-    return schedule.filter((inst) => {
+    return sortedSchedule.filter((inst) => {
       const isPaid = inst.isPaid ?? inst.is_paid ?? false;
       if (filterMode === 'paid') return isPaid;
       if (filterMode === 'unpaid') return !isPaid;
       return true;
     });
-  }, [schedule, filterMode]);
+  }, [sortedSchedule, filterMode]);
 
   // Accumulated totals across entire schedule
   const scheduleTotals = useMemo(() => {
@@ -392,16 +407,16 @@ export const LoanDetailPage: React.FC = () => {
   }
 
   // Paid stats
-  const unpaidInstallments = schedule.filter((i) => !(i.isPaid ?? i.is_paid));
+  const unpaidInstallments = sortedSchedule.filter((i) => !(i.isPaid ?? i.is_paid));
   const earliestUnpaid = unpaidInstallments[0];
-  const paidCount = schedule.filter((i) => i.isPaid ?? i.is_paid).length;
-  const progressPct = schedule.length > 0 ? Math.round((paidCount / schedule.length) * 100) : 0;
-  const lastInstallment = schedule[schedule.length - 1];
+  const paidCount = sortedSchedule.filter((i) => i.isPaid ?? i.is_paid).length;
+  const progressPct = sortedSchedule.length > 0 ? Math.round((paidCount / sortedSchedule.length) * 100) : 0;
+  const lastInstallment = sortedSchedule[sortedSchedule.length - 1];
   const payoffDate = lastInstallment ? lastInstallment.dueDate || lastInstallment.due_date : loan.startDate || loan.start_date;
 
   // Dynamic live outstanding and original terms
   let currentOutstandingVal = Number(loan.current_outstanding_principal ?? (loan as any).currentOutstandingPrincipal ?? loan.principal);
-  if (!isGoldLoan && schedule.length > 0) {
+  if (!isGoldLoan && sortedSchedule.length > 0) {
     if (unpaidInstallments.length === 0) {
       currentOutstandingVal = 0;
     } else if (earliestUnpaid) {
@@ -412,8 +427,8 @@ export const LoanDetailPage: React.FC = () => {
   }
 
   const originalPrincipalVal = Number(loan.original_principal ?? (loan as any).originalPrincipal ?? loan.principal);
-  const originalTenureMonths = loan.original_tenure_months ?? (loan as any).originalTenureMonths ?? loan.tenure_months ?? (loan as any).tenureMonths ?? schedule.length;
-  const actualTenureMonths = schedule.length || tenureMonths;
+  const originalTenureMonths = loan.original_tenure_months ?? (loan as any).originalTenureMonths ?? loan.tenure_months ?? (loan as any).tenureMonths ?? sortedSchedule.length;
+  const actualTenureMonths = sortedSchedule.length || tenureMonths;
   const remainingMonths = unpaidInstallments.length;
 
   if (isGoldLoan) {
@@ -908,9 +923,10 @@ export const LoanDetailPage: React.FC = () => {
                           onClick={() => handleDeleteRateRevision(rev.id)}
                           disabled={deletingRevId === rev.id}
                           title="Delete rate revision"
-                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
                         </button>
                       </div>
                     </div>
@@ -967,9 +983,10 @@ export const LoanDetailPage: React.FC = () => {
                             onClick={() => handleDeletePrepayment(prep.id)}
                             disabled={deletingPrepId === prep.id}
                             title="Delete part-payment"
-                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
                           </button>
                         </div>
                       </div>

@@ -175,6 +175,7 @@ export class LoansService {
           dayCountBasis: 365,
           compounding: 'MONTHLY_CAPITALISATION',
           roundingMode: 'ROUND',
+          transactions,
         },
         targetDate,
       );

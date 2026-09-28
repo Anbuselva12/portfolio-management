@@ -65,11 +65,11 @@ export class ExpensesService {
   }
 
   async getExpenses(familyId: string, year: number, month: number) {
+    // Lazy EMI auto-queue: create expense entries for loan EMIs due this month
+    await this.autoQueueLoanEmis(familyId, year, month);
+
     const expenses = await this.expenseRepository.findByMonth(familyId, year, month);
-    // Exclude loan_emi_auto so household expenses strictly track extra household expenses
-    return expenses
-      .filter((e) => (e as any).source !== 'loan_emi_auto')
-      .map((e) => ({ ...e, amount: e.amount.toString() }));
+    return expenses.map((e) => ({ ...e, amount: e.amount.toString() }));
   }
 
   /**
