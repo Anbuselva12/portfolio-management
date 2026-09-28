@@ -6,6 +6,7 @@ export const strategiesApi = {
     surplusOverride?: string;
     prepaymentMode?: 'one_off_lump_sum' | 'recurring_monthly';
     customWeights?: Partial<CustomWeights>;
+    loanAllocations?: Record<string, number>;
     includeAi?: boolean;
   }): Promise<StrategyComparisonResponse> =>
     (await api.post('/strategies/compare', data || {})).data,

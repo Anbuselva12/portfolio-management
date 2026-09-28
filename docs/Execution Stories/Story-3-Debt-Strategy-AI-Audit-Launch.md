@@ -17,9 +17,9 @@
   - **Recurring Monthly**: Ongoing surplus injected every month with cascading payoff.
 - **Avalanche**: highest-interest-rate loan first, with multi-loan cascading overflow ensuring 100% of surplus is allocated
 - **Snowball**: smallest-outstanding-balance loan first, with multi-loan cascading overflow ensuring 100% of surplus is allocated
-- **Custom-Weighted**: configurable composite score (rate, balance, EMI flexibility, penalty-free, remaining tenure), split-vs-cascade mode, optimal distributed split suggestions, weights editable in Family Settings
+- **Custom-Weighted**: interactive percentage sliders per active loan (0% to 100%), auto-balancing to 100% (default 100% to highest principal loan, 0% to rest), computing individual per-loan lifetime interest savings and overall savings, with persistent configuration saving until loans are closed
 - **Multi-Loan Cascading Overflow Guarantee**: When surplus exceeds a loan's balance, excess funds cascade to next ranked loans so the full surplus is deployed and interest saved is fully calculated
-- Simulation core: month-by-month simulator shared by all strategies, producing months-to-debt-free and total-interest-saved-vs-baseline for each mode
+- Simulation core: month-by-month simulator shared by all strategies, producing months-to-debt-free and total-interest-saved-vs-baseline for each mode (baseline card omitted from grid display, reserved for internal benchmark comparison)
 
 ### AI Suggestion Strategy (Gemini - On-Demand)
 - Explicit user control: requested only when the user chooses "Include Gemini AI Advisor" (or clicks "Ask AI")

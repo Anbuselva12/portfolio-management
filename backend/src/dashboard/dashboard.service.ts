@@ -118,10 +118,12 @@ export class DashboardService {
       return sum;
     }, new Decimal(0));
 
-    const monthlyExpenses = filteredCurrentExpenses.reduce((sum, e) => {
-      const conv = this.convert(new Decimal(e.amount.toString()), e.currency, baseCurrency, ratesMap);
-      return sum.plus(conv);
-    }, new Decimal(0));
+    const monthlyExpenses = filteredCurrentExpenses
+      .filter((e) => (e as any).source !== 'loan_emi_auto')
+      .reduce((sum, e) => {
+        const conv = this.convert(new Decimal(e.amount.toString()), e.currency, baseCurrency, ratesMap);
+        return sum.plus(conv);
+      }, new Decimal(0));
 
     // Net savings = Income - Expenses - EMI
     const monthlySavings = currentMonthIncome.minus(monthlyExpenses).minus(monthlyEmi);
@@ -147,10 +149,12 @@ export class DashboardService {
       return sum;
     }, new Decimal(0));
 
-    const lastMonthExpensesTotal = filteredLastMonthExpenses.reduce((sum, e) => {
-      const conv = this.convert(new Decimal(e.amount.toString()), e.currency, baseCurrency, ratesMap);
-      return sum.plus(conv);
-    }, new Decimal(0));
+    const lastMonthExpensesTotal = filteredLastMonthExpenses
+      .filter((e) => (e as any).source !== 'loan_emi_auto')
+      .reduce((sum, e) => {
+        const conv = this.convert(new Decimal(e.amount.toString()), e.currency, baseCurrency, ratesMap);
+        return sum.plus(conv);
+      }, new Decimal(0));
 
     const lastMonthSavings = lastMonthIncome.minus(lastMonthExpensesTotal).minus(monthlyEmi);
     const lastMonthSavingsRate = lastMonthIncome.greaterThan(0)

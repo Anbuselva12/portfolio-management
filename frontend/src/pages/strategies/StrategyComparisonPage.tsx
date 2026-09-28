@@ -56,8 +56,13 @@ export const StrategyComparisonPage: React.FC = () => {
   const [isWeightsModalOpen, setIsWeightsModalOpen] = useState(false);
 
   // Selected Strategies for Timeline Overlay
-  const [timelineStrategyAName, setTimelineStrategyAName] = useState<string>('baseline');
-  const [timelineStrategyBName, setTimelineStrategyBName] = useState<string>('avalanche');
+  const [timelineStrategyAName, setTimelineStrategyAName] = useState<string>('avalanche');
+  const [timelineStrategyBName, setTimelineStrategyBName] = useState<string>('snowball');
+
+  // Custom loan percentages slider state
+  const [customLoanPercentages, setCustomLoanPercentages] = useState<Record<string, number>>({});
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [configSavedSuccess, setConfigSavedSuccess] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -76,6 +81,14 @@ export const StrategyComparisonPage: React.FC = () => {
       if (compRes.prepaymentMode) {
         setPrepaymentMode(compRes.prepaymentMode);
       }
+      const customStrat = compRes.strategies.find((s) => s.strategyName === 'custom_weighted');
+      if (customStrat) {
+        const initialPcts: Record<string, number> = {};
+        customStrat.allocations.forEach((a) => {
+          initialPcts[a.loanId] = a.percentage ?? 0;
+        });
+        setCustomLoanPercentages(initialPcts);
+      }
     } catch {
       setData(null);
     } finally {
@@ -88,15 +101,18 @@ export const StrategyComparisonPage: React.FC = () => {
     updatedWeights?: CustomWeights,
     modeOverride?: 'one_off_lump_sum' | 'recurring_monthly',
     aiOverride?: boolean,
+    loanAllocationsOverride?: Record<string, number>,
   ) => {
     setIsRecalculating(true);
     try {
       const targetMode = modeOverride || prepaymentMode;
       const targetAi = aiOverride !== undefined ? aiOverride : includeAi;
+      const targetAllocs = loanAllocationsOverride !== undefined ? loanAllocationsOverride : customLoanPercentages;
       const res = await strategiesApi.compare({
         surplusOverride: overrideValue !== undefined ? overrideValue : surplusInput,
         prepaymentMode: targetMode,
         customWeights: updatedWeights || customWeights,
+        loanAllocations: targetAllocs,
         includeAi: targetAi,
       });
       setData(res);
@@ -109,6 +125,85 @@ export const StrategyComparisonPage: React.FC = () => {
     } finally {
       setIsRecalculating(false);
     }
+  };
+
+  const handleLoanPercentageChange = (loanId: string, newPct: number) => {
+    if (!data) return;
+    const customStrat = data.strategies.find((s) => s.strategyName === 'custom_weighted');
+    if (!customStrat) return;
+
+    // Identify highest principal loan as the auto-balancing anchor
+    const sortedLoans = [...customStrat.allocations].sort(
+      (a, b) => Number(b.currentPrincipal) - Number(a.currentPrincipal),
+    );
+    const highestLoanId = sortedLoans[0]?.loanId;
+
+    const clampedVal = Math.max(0, Math.min(100, Math.round(newPct)));
+    const updated: Record<string, number> = { ...customLoanPercentages };
+
+    if (loanId === highestLoanId) {
+      updated[highestLoanId] = clampedVal;
+      const remainingPct = 100 - clampedVal;
+      const secondLoan = sortedLoans[1];
+      if (secondLoan) {
+        const otherSum = sortedLoans
+          .filter((l) => l.loanId !== highestLoanId && l.loanId !== secondLoan.loanId)
+          .reduce((sum, l) => sum + (updated[l.loanId] || 0), 0);
+        updated[secondLoan.loanId] = Math.max(0, remainingPct - otherSum);
+      }
+    } else {
+      updated[loanId] = clampedVal;
+      const sumOthers = sortedLoans
+        .filter((l) => l.loanId !== highestLoanId)
+        .reduce((sum, l) => sum + (updated[l.loanId] || 0), 0);
+      if (sumOthers > 100) {
+        const maxAllowed = 100 - (sumOthers - clampedVal);
+        updated[loanId] = Math.max(0, maxAllowed);
+        updated[highestLoanId] = 0;
+      } else {
+        updated[highestLoanId] = Math.max(0, 100 - sumOthers);
+      }
+    }
+
+    setCustomLoanPercentages(updated);
+    handleRecalculate(undefined, undefined, undefined, undefined, updated);
+  };
+
+  const handleSaveCustomConfiguration = async () => {
+    try {
+      setIsSavingConfig(true);
+      await familyApi.updateSettings({
+        strategyWeights: {
+          ...customWeights,
+          loanPercentages: customLoanPercentages,
+        },
+      });
+      setConfigSavedSuccess(true);
+      setTimeout(() => setConfigSavedSuccess(false), 3000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to save configuration.');
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
+
+  const handleResetCustomConfiguration = () => {
+    if (!data) return;
+    const customStrat = data.strategies.find((s) => s.strategyName === 'custom_weighted');
+    if (!customStrat) return;
+
+    const sortedLoans = [...customStrat.allocations].sort(
+      (a, b) => Number(b.currentPrincipal) - Number(a.currentPrincipal),
+    );
+    const highestLoanId = sortedLoans[0]?.loanId;
+
+    const resetPcts: Record<string, number> = {};
+    customStrat.allocations.forEach((l) => {
+      resetPcts[l.loanId] = l.loanId === highestLoanId ? 100 : 0;
+    });
+
+    setCustomLoanPercentages(resetPcts);
+    handleRecalculate(undefined, undefined, undefined, undefined, resetPcts);
   };
 
   const handleSaveWeights = async (newWeights: CustomWeights, saveAsDefault: boolean) => {
@@ -171,9 +266,9 @@ export const StrategyComparisonPage: React.FC = () => {
     );
   }
 
-  const allAvailableStrategies = data.strategies;
-  const strategyA = allAvailableStrategies.find((s) => s.strategyName === timelineStrategyAName) || data.strategies[0];
-  const strategyB = allAvailableStrategies.find((s) => s.strategyName === timelineStrategyBName) || data.strategies[1] || data.strategies[0];
+  const allAvailableStrategies = data.strategies.filter((s) => s.strategyName !== 'baseline');
+  const strategyA = allAvailableStrategies.find((s) => s.strategyName === timelineStrategyAName) || allAvailableStrategies[0];
+  const strategyB = allAvailableStrategies.find((s) => s.strategyName === timelineStrategyBName) || allAvailableStrategies[1] || allAvailableStrategies[0];
   const isSurplusZero = Number(data.activeSurplus) <= 0;
 
   return (
@@ -416,8 +511,8 @@ export const StrategyComparisonPage: React.FC = () => {
       )}
 
       {/* Strategies Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {data.strategies.map((strat) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {allAvailableStrategies.map((strat) => (
           <StrategyCard
             key={strat.strategyName}
             strategy={strat}
@@ -429,15 +524,20 @@ export const StrategyComparisonPage: React.FC = () => {
             onMarkMyPlan={() => handleMarkAsMyPlan(strat)}
             onToggleTimeline={() => {
               if (timelineStrategyAName === strat.strategyName) {
-                setTimelineStrategyAName('baseline');
+                setTimelineStrategyAName(allAvailableStrategies[0]?.strategyName || 'avalanche');
               } else if (timelineStrategyBName === strat.strategyName) {
-                setTimelineStrategyBName('baseline');
+                setTimelineStrategyBName(allAvailableStrategies[1]?.strategyName || 'snowball');
               } else {
                 setTimelineStrategyBName(strat.strategyName);
               }
             }}
             onOpenWeights={strat.strategyName === 'custom_weighted' ? () => setIsWeightsModalOpen(true) : undefined}
             isSurplusZero={isSurplusZero}
+            onPercentageChange={strat.strategyName === 'custom_weighted' ? handleLoanPercentageChange : undefined}
+            onSaveCustomConfig={strat.strategyName === 'custom_weighted' ? handleSaveCustomConfiguration : undefined}
+            onResetCustomConfig={strat.strategyName === 'custom_weighted' ? handleResetCustomConfiguration : undefined}
+            isSavingConfig={isSavingConfig}
+            configSavedSuccess={configSavedSuccess}
           />
         ))}
       </div>

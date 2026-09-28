@@ -406,8 +406,9 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-30: Given a family's available surplus and selected **prepayment mode** (`one_off_lump_sum` or `recurring_monthly`), the engine computes and displays **multiple strategies side-by-side**:
   1. **Avalanche** (highest interest rate first)
   2. **Snowball** (smallest outstanding balance first)
-  3. **Custom-Weighted** — a configurable score: `score = w1*normalized(rate) + w2*normalized(1/balance) + w3*flexible_emi_bonus + w4*penalty_free_bonus + w5*normalized(1/remaining_tenure)`, with default weights editable in Family Settings.
+  3. **Custom-Weighted** — interactive percentage sliders per active loan (0% to 100%). Default allocation sets 100% on the loan with the highest principal balance (0% on others). Adjusting any slider auto-balances the highest loan to maintain a strict 100% total. Computes per-loan interest savings alongside overall household savings. The configuration can be saved persistently in family settings until debts close.
   4. **AI Suggestion** — a natural-language-explained recommendation (see §7.7) tailored to the prepayment mode that may split surplus across 2+ loans (e.g., 50/50) with reasoning, generated via an LLM call given the anonymized loan portfolio snapshot.
+  *(Note: The minimum-payment baseline card is excluded from acceleration strategy comparison cards since minimum EMIs provide no acceleration; baseline metrics serve solely as internal mathematical reference).*
 - FR-30a: **One-Off vs Recurring Mode Semantics**:
   - In `one_off_lump_sum` mode: the surplus is allocated in Month 1 across the target loan(s). For Month 2 onwards, all remaining loans continue on their baseline minimum EMIs. The engine calculates the total lifetime interest saved and total months shaved off by deploying that lump sum today.
   - In `recurring_monthly` mode: the surplus is injected continuously every month, cascading to subsequent loans as each loan closes.
@@ -561,7 +562,7 @@ All strategies run against a parameterized simulation core supporting two distin
 2. **Strategy Allocation Policies:**
    - **Avalanche**: sort active loans by `interest_rate_annual` descending; allocate to top-rate loan first until paid off.
    - **Snowball**: sort by `current_outstanding_principal` ascending; allocate to smallest-balance loan first until paid off.
-   - **Custom-Weighted**: compute a composite score per loan (formula in FR-30.3); allocate surplus **proportionally to score** across top loans (or cascade to top-ranked loan). Provides an "Optimal Distributed Split" evaluator that details recommended percentage distribution across loans.
+   - **Custom-Weighted**: allocates surplus across active debts based on user-defined percentage sliders (0% to 100%). By default, 100% is allocated to the highest principal loan. When any slider is moved, the highest loan auto-balances so the total across all loans is 100%. Surplus is partitioned as `surplus * (pct / 100)` per loan. Calculates each individual loan's lifetime interest saved and tenure shaved, alongside overall portfolio savings. Users can persist this configuration in Family Settings (`strategy_weights.loanPercentages`) until debts are cleared.
    - **AI Suggestion (On-Demand)**: Requested only when the user explicitly enables AI (`include_ai = true`). When enabled, the anonymized loan portfolio snapshot along with the `prepayment_mode` is passed server-side to the **Google Gemini API** (`gemini-2.x`). The prompt instructs the model on whether this is a one-off windfall allocation or a monthly recurring surplus. Gemini returns `{allocations: [{loan_id, extra_amount}], rationale: string}`, which is fed into the simulation core. Graceful degradation omits the card if Gemini is unavailable or disabled.
 
 3. **Multi-Loan Cascading Overflow Guarantee (Crucial Rule):**
@@ -570,8 +571,7 @@ All strategies run against a parameterized simulation core supporting two distin
    - Any remaining surplus **cascades immediately** to the next ranked loan in the strategy's priority list:
      - **Snowball**: Cascades to the 2nd smallest balance loan, then 3rd, and so on until 100% of the surplus is deployed or all debt is eliminated.
      - **Avalanche**: Cascades to the 2nd highest APR loan, then 3rd, and so on.
-     - **Custom-Weighted (Cascade)**: Cascades to the next highest composite scored loan.
-     - **Custom-Weighted (Split)**: If a loan's share exceeds its balance, the overflow is redistributed across the remaining active loans.
+     - **Custom-Weighted**: If a loan's allocated portion clears its balance, the overflow cascades to the next active debt with a balance.
    - Each strategy card's allocation list reflects the exact multi-loan partition of the surplus, and lifetime interest savings reflect the deployment of the entire surplus amount.
 
 4. **Executive Strategy Recommendation Banner:**
@@ -582,16 +582,12 @@ All strategies run against a parameterized simulation core supporting two distin
 
 All strategies output identical card formats with target loan highlights, direct links to `/loans/:id` for execution, interest saved, and payoff timeline overlay.
 
-### 7.11 Monthly EMI Auto-Expense Queue & Bi-Directional Payment Sync
-To ensure seamless cash flow tracking and eliminate manual double-entry between debt obligations and day-to-day expenditures:
-
-1. **Auto-Queuing Criteria:**
-   - On the installment due date of every month, scheduled EMIs for active loans are queued as pending expenses in the Family's expense ledger (`source: "loan_emi_auto"`).
-   - **Exclusion Rule:** Gold / Jewel loans (`loan_type == 'jewel'` or `loan_type == 'gold'`) that operate under simple interest with annual bullet repayments are excluded from monthly auto-queuing.
-   - **User Toggle:** Every loan maintains an `emi_reminders_enabled` flag (default: `true`), allowing borrowers to toggle automatic expense-queuing ON or OFF at any time without impacting the underlying amortization schedule.
-
-2. **Bi-Directional Status Synchronization:**
-   - **Action in Expenses Queue:** When a user marks a queued EMI expense as "Paid" in the Expenses view, the system updates the linked `RepaymentInstallment` (`is_paid = true`, `paid_date = today`) and updates the loan's current outstanding principal.
+### 7.11 Household Expenses & Loan EMI Separation
+To keep household cash flows clean and avoid double-counting debt obligations with daily living costs:
+1. **Separation Rule**:
+   - The Household Expenses view and monthly expense totals strictly track extra household expenditures (groceries, electricity, utility bills, fuel, subscriptions, etc.).
+   - Contractual loan EMIs are tracked independently in the Loans & Liabilities section and appear as the dedicated "EMI" metric in Dashboard Monthly Outflow.
+   - Loan EMIs are not auto-logged into the household expenses table, ensuring that "Total spending" in Expenses and "Exp:" on the dashboard reflect true household living costs without inflating outflow.
    - **Action in Loan Detail Schedule:** When a user marks an installment as paid directly within the Loan Repayment Schedule table, the linked expense queue entry is simultaneously marked as paid (`is_paid = true`).
    - If an installment is edited or corrected, the linked expense record amount updates to reflect the authoritative figure.
 

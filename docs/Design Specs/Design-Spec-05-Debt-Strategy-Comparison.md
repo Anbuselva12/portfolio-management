@@ -28,14 +28,19 @@
 - When **Recurring Monthly** mode is selected:
   - Extra money is assumed available every month until all loans reach zero.
   - Applies rolling waterfall cascade when an earlier loan is paid off.
-- Four or five `StrategyCard`s in a horizontal comparison layout (stack on mobile), each showing:
+- Active acceleration strategy cards in a comparison layout (Debt Avalanche, Debt Snowball, Custom-Weighted, and AI Suggestion when toggled on):
+  - **Removal of Minimum Payments (Baseline) Card**: The baseline minimum-payment card is omitted from the strategy cards grid as standard minimum EMIs provide no payoff acceleration. Baseline metrics remain available internally for benchmark comparison.
   - Strategy name + one-line description (e.g., "Avalanche — pays the highest-interest loan first")
   - Target loan highlight with badge, interest rate, outstanding balance, and specific loan name / place
   - Allocation table: Loan → Extra Amount (shows exact multi-loan partition when surplus overflows)
   - Key metrics: Months to Debt-Free (all loans), Total Interest Saved vs. minimum-only baseline
-  - **Custom-Weighted Strategy Card**:
-    - In cascade mode: cascades to highest composite scored loan.
-    - In split mode / optimal split: suggests optimal percentage distribution (e.g. 50% / 30% / 20%) across loans to balance interest savings and psychological milestones.
+  - **Custom-Weighted Strategy Card (Redesigned with Interactive Sliders)**:
+    - **All Active Loans with Percentage Sliders**: Each active loan displays an interactive percentage slider (0% to 100%).
+    - **Default Allocation**: By default, 100% is allocated to the highest outstanding principal loan, and 0% to all remaining loans.
+    - **Automatic 100% Balancing**: Adjusting any loan slider automatically adjusts the highest loan (or other loans) so that the sum of all percentages strictly equals 100% at all times (e.g., setting a second loan to 10% automatically lowers the highest loan from 100% to 90%).
+    - **Per-Loan & Overall Interest Savings**: Dynamically displays each loan's allocated extra amount (e.g. ₹5,000 for 10% of ₹50,000 surplus), each loan's individual lifetime interest savings (e.g. "Saves ₹8,200"), and the combined household total interest saved and accelerated debt-free horizon.
+    - **Configuration Persistence**: A "Save Configuration" button saves the custom percentage allocation to family settings (`strategy_weights.loanPercentages`). This configuration persists on future visits until the selected loans are closed or the user chooses to reconfigure.
+    - **Reset to Default**: A "Reset" button returns allocation to 100% on the highest principal loan.
   - **AI Suggestion card (when enabled)**: short rationale paragraph (from Gemini) tailored to the chosen mode (one-off vs recurring) + a clearly labeled disclaimer chip: "AI-generated — for guidance only."
 - **Multi-Loan Type Support (Home, Personal, Vehicle, Gold / Jewel Loans)**:
   - The strategy engine supports all retail loan categories simultaneously:
@@ -44,8 +49,9 @@
 - **"Compare on Timeline"** toggle: select any two strategy cards to overlay on the Debt Payoff Timeline chart (reuses the Dashboard's `GanttTimeline` component) — this is how the "close all in one-go vs take-one-loan-first" comparison is made visual.
 - **"Mark as My Plan"** button on a card stores the choice (SuggestionSnapshot) for the user's own tracking; it does **not** auto-apply any prepayment — the user still goes to the specific Loan's Prepayment Calculator (Design-Spec-04) to actually execute it. This reinforces the reversible-confidence principle: recommendations and commitments are always separate steps.
 
-## Custom-Weighted Strategy — Settings Link
-- A small "Adjust weights" link on the Custom-Weighted card opens Family Settings → Strategy Weights (sliders for rate/balance/flexibility/penalty/tenure weighting, plus a split-vs-cascade mode toggle and optimal distribution preset) — see Design-Spec-07.
+## Custom-Weighted Strategy — Slider Allocation & Persistence
+- Percentage sliders per loan allow custom split modeling (e.g., 90% to highest debt, 10% to quick-win debt).
+- Persistence stored in Family Settings (`strategy_weights`) ensures user preferences remain active across sessions until debts are fully extinguished.
 
 ## States
 - No active loans: screen shows an empty state instead of strategy cards — "Add a loan to see repayment strategies."

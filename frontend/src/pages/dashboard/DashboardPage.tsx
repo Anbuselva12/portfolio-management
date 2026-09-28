@@ -391,9 +391,15 @@ export const DashboardPage: React.FC = () => {
                   {formatted}
                 </div>
               </div>
-              <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2">
-                <span className="whitespace-nowrap">Exp: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatKpiINR(monthlyExpenses)}</strong></span>
-                <span className="whitespace-nowrap text-right">EMI: <strong className="font-mono text-rose-500">{formatKpiINR(monthlyEmi)}</strong></span>
+              <div className="mt-2.5 sm:mt-3 flex flex-col gap-0.5 text-[10px] sm:text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800/80 pt-2 overflow-hidden">
+                <div className="flex items-center justify-between gap-1">
+                  <span>Exp:</span>
+                  <strong className="font-mono text-slate-700 dark:text-slate-300 truncate">{formatKpiINR(monthlyExpenses)}</strong>
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <span>EMI:</span>
+                  <strong className="font-mono text-rose-500 truncate">{formatKpiINR(monthlyEmi)}</strong>
+                </div>
               </div>
             </div>
           );

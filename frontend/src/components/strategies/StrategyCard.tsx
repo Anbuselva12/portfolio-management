@@ -27,6 +27,11 @@ interface StrategyCardProps {
   onOpenWeights?: () => void;
   isSurplusZero?: boolean;
   prepaymentMode?: 'one_off_lump_sum' | 'recurring_monthly';
+  onPercentageChange?: (loanId: string, newPercentage: number) => void;
+  onSaveCustomConfig?: () => void;
+  onResetCustomConfig?: () => void;
+  isSavingConfig?: boolean;
+  configSavedSuccess?: boolean;
 }
 
 export const StrategyCard: React.FC<StrategyCardProps> = ({
@@ -38,6 +43,11 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
   onOpenWeights,
   isSurplusZero = false,
   prepaymentMode = 'one_off_lump_sum',
+  onPercentageChange,
+  onSaveCustomConfig,
+  onResetCustomConfig,
+  isSavingConfig = false,
+  configSavedSuccess = false,
 }) => {
   const isAi = strategy.strategyName === 'ai_suggestion';
   const isCustom = strategy.strategyName === 'custom_weighted';
@@ -152,6 +162,55 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
             </span>
           </div>
 
+          {isCustom && (
+            <div className="p-2.5 bg-cyan-50/60 dark:bg-slate-800/60 rounded-xl border border-cyan-100 dark:border-slate-700 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                  Drag sliders to allocate surplus (auto-maintains 100% total)
+                </span>
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                  {onResetCustomConfig && (
+                    <button
+                      type="button"
+                      onClick={onResetCustomConfig}
+                      className="px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 cursor-pointer"
+                      title="Reset to 100% on the highest principal loan"
+                    >
+                      Reset Default
+                    </button>
+                  )}
+                  {onSaveCustomConfig && (
+                    <button
+                      type="button"
+                      onClick={onSaveCustomConfig}
+                      disabled={isSavingConfig}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold transition-all shadow-sm cursor-pointer ${
+                        configSavedSuccess
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50'
+                      }`}
+                      title="Save this slider distribution until debts close"
+                    >
+                      {configSavedSuccess ? (
+                        <>
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Saved!</span>
+                        </>
+                      ) : isSavingConfig ? (
+                        <span>Saving...</span>
+                      ) : (
+                        <>
+                          <Bookmark className="w-3 h-3" />
+                          <span>Save Config</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {isSurplusZero ? (
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
               <Info className="w-4 h-4 shrink-0" />
@@ -229,6 +288,33 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
                         </div>
                       </div>
                     </div>
+
+                    {isCustom && onPercentageChange && (
+                      <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-500 dark:text-slate-400 font-medium">Surplus Share:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400">
+                              {alloc.percentage ?? 0}%
+                            </span>
+                            {Number(alloc.interestSaved || 0) > 0 && (
+                              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+                                (Saves +{formatINR(alloc.interestSaved)})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={alloc.percentage ?? 0}
+                          onChange={(e) => onPercentageChange(alloc.loanId, Number(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-600"
+                        />
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800/60 font-mono">
                       <span>

@@ -35,6 +35,8 @@ export interface AllocationItem {
   minimumEmi: string;
   extraAmount: string;
   totalMonthlyPayment: string;
+  percentage?: number;
+  interestSaved?: string;
 }
 
 export interface StrategySimulationResult {
@@ -54,6 +56,7 @@ export interface StrategySimulationResult {
     payoffDate: string;
   }[];
   rationale?: string;
+  loanInterestPaid?: Record<string, string>;
 }
 
 export class StrategyEngine {
@@ -66,7 +69,12 @@ export class StrategyEngine {
       return this.emptyResult('baseline', 'Minimum Payments Only', 'Paying only standard monthly EMIs without extra prepayments.');
     }
 
-    const { monthsToDebtFree, totalInterestPaid, timeline } = this.runSimulationLoop(active, new Decimal(0), () => ({}));
+    const { monthsToDebtFree, totalInterestPaid, timeline, loanInterestPaid } = this.runSimulationLoop(active, new Decimal(0), () => ({}));
+
+    const baselineLoanInterestRecord: Record<string, string> = {};
+    for (const [k, v] of loanInterestPaid.entries()) {
+      baselineLoanInterestRecord[k] = v.toFixed(2);
+    }
 
     return {
       strategyName: 'baseline',
@@ -90,9 +98,12 @@ export class StrategyEngine {
           minimumEmi: minEmi.toFixed(2),
           extraAmount: '0.00',
           totalMonthlyPayment: minEmi.toFixed(2),
+          percentage: 0,
+          interestSaved: '0.00',
         };
       }),
       timeline,
+      loanInterestPaid: baselineLoanInterestRecord,
     };
   }
 
@@ -286,16 +297,22 @@ export class StrategyEngine {
   /**
    * Custom-Weighted Strategy: Composite scoring across Rate, Balance, Flexibility, Penalty, Tenure
    */
+  /**
+   * Custom-Weighted Strategy: User slider-controlled percentage allocation across active debts
+   * (Default: 100% to highest principal loan, 0% to remaining loans, auto-balanced to 100%).
+   */
   static simulateCustomWeighted(
     loans: StrategyLoanInput[],
     surplus: Decimal,
     weights: CustomWeights,
     baselineInterest: Decimal,
     prepaymentMode: 'one_off_lump_sum' | 'recurring_monthly' = 'recurring_monthly',
+    loanPercentages?: Record<string, number>,
+    baselineLoanInterestPaid?: Record<string, string>,
   ): StrategySimulationResult {
     const active = loans.filter((l) => l.principal.greaterThan(0));
     if (active.length === 0) {
-      return this.emptyResult('custom_weighted', 'Custom-Weighted Strategy', `Tailored balance across ${weights.weightRate}% APR, ${weights.weightBalance}% Balance, and debt flexibility in ${weights.mode} mode.`);
+      return this.emptyResult('custom_weighted', 'Custom-Weighted Strategy', 'Interactive percentage-based allocation across active debts.');
     }
     if (surplus.lessThanOrEqualTo(0)) {
       const base = this.simulateBaseline(loans);
@@ -303,92 +320,90 @@ export class StrategyEngine {
         ...base,
         strategyName: 'custom_weighted',
         title: 'Custom-Weighted Strategy',
-        description: `Tailored balance across ${weights.weightRate}% APR, ${weights.weightBalance}% Balance, and debt flexibility in ${weights.mode} mode.`,
+        description: 'Interactive percentage-based allocation across active debts.',
       };
     }
 
-    // Max references for normalization
-    const maxRate = Decimal.max(...active.map((l) => l.interestRate), new Decimal(1));
-    const maxBal = Decimal.max(...active.map((l) => l.principal), new Decimal(1));
-    const maxTenure = Math.max(...active.map((l) => l.tenureMonths), 1);
+    // 1. Identify highest principal loan as the default anchor
+    const sortedByPrincipal = [...active].sort((a, b) => {
+      const balDiff = b.principal.minus(a.principal).toNumber();
+      if (balDiff !== 0) return balDiff;
+      return b.interestRate.minus(a.interestRate).toNumber();
+    });
+    const highestLoan = sortedByPrincipal[0];
 
-    const scores = new Map<string, number>();
-    for (const l of active) {
-      const rNorm = l.interestRate.dividedBy(maxRate).toNumber();
-      const bNorm = 1 - l.principal.dividedBy(maxBal).toNumber(); // smaller balance gets higher score
-      const fNorm = l.emiType === 'flexible' ? 1.0 : 0.5;
-      const hasPenalty = l.prepaymentPenaltyType && l.prepaymentPenaltyType !== 'none';
-      const pNorm = hasPenalty ? 0.3 : 1.0;
-      const tNorm = 1 - l.tenureMonths / maxTenure;
-
-      const score =
-        (weights.weightRate * rNorm +
-          weights.weightBalance * bNorm +
-          weights.weightFlexibility * fNorm +
-          weights.weightPenalty * pNorm +
-          weights.weightTenure * tNorm) /
-        100;
-      scores.set(l.id, score);
+    // 2. Resolve percentages per loan
+    const effectivePercentages: Record<string, number> = {};
+    if (loanPercentages && Object.keys(loanPercentages).length > 0) {
+      let sum = 0;
+      for (const l of active) {
+        const val = Math.max(0, Math.min(100, Math.round(Number(loanPercentages[l.id]) || 0)));
+        effectivePercentages[l.id] = val;
+        sum += val;
+      }
+      // Reconcile to exactly 100% if sum deviates
+      if (sum !== 100) {
+        const diff = 100 - sum;
+        const currentHighest = effectivePercentages[highestLoan.id] ?? 0;
+        effectivePercentages[highestLoan.id] = Math.max(0, Math.min(100, currentHighest + diff));
+      }
+    } else {
+      // Default: 100% to highest principal loan, 0% to others
+      for (const l of active) {
+        effectivePercentages[l.id] = l.id === highestLoan.id ? 100 : 0;
+      }
     }
 
-    const sorted = [...active].sort((a, b) => (scores.get(b.id) || 0) - (scores.get(a.id) || 0));
-
-    const initialBalances = new Map<string, Decimal>();
+    // 3. Compute initial allocation per loan from surplus
+    const initialAllocs: Record<string, Decimal> = {};
     for (const l of active) {
-      initialBalances.set(l.id, new Decimal(l.principal));
+      const pct = effectivePercentages[l.id] || 0;
+      if (pct > 0) {
+        const share = surplus.times(pct).dividedBy(100).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+        initialAllocs[l.id] = share;
+      } else {
+        initialAllocs[l.id] = new Decimal(0);
+      }
     }
 
-    let initialAllocs: Record<string, Decimal> = {};
-    let allocationStrategy: (currentBalances: Map<string, Decimal>, extraSurplus: Decimal) => Record<string, Decimal>;
+    // Allocation function for simulation loop with cascading overflow
+    const allocationStrategy = (currentBalances: Map<string, Decimal>, extraSurplus: Decimal) => {
+      const result: Record<string, Decimal> = {};
+      let remainingSurplus = new Decimal(extraSurplus);
 
-    if (weights.mode === 'split') {
-      const splitFn = (balances: Map<string, Decimal>, extraSurplus: Decimal) => {
-        const result: Record<string, Decimal> = {};
-        const remainingLoans = sorted.filter((l) => (balances.get(l.id) || new Decimal(0)).greaterThan(0));
-        if (remainingLoans.length === 0) return result;
-
-        const totalScore = remainingLoans.reduce((sum, l) => sum + (scores.get(l.id) || 0), 0);
-        let remSurplus = new Decimal(extraSurplus);
-
-        // First pass: proportional allocation based on score
-        for (let i = 0; i < remainingLoans.length; i++) {
-          const l = remainingLoans[i];
-          const bal = balances.get(l.id) || new Decimal(0);
-          const share = totalScore > 0 ? (scores.get(l.id) || 0) / totalScore : 1 / remainingLoans.length;
-          const targetAmt = extraSurplus.times(share).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
-          const actualAmt = Decimal.min(targetAmt, bal, remSurplus);
+      // First pass: proportional allocation based on configured percentages
+      for (const l of active) {
+        const bal = currentBalances.get(l.id) || new Decimal(0);
+        const pct = effectivePercentages[l.id] || 0;
+        if (bal.greaterThan(0) && pct > 0 && remainingSurplus.greaterThan(0)) {
+          const targetAmt = extraSurplus.times(pct).dividedBy(100).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+          const actualAmt = Decimal.min(targetAmt, bal, remainingSurplus);
           result[l.id] = actualAmt;
-          remSurplus = remSurplus.minus(actualAmt);
+          remainingSurplus = remainingSurplus.minus(actualAmt);
         }
+      }
 
-        // Second pass: if any loan hit its balance cap and surplus remains, cascade the excess to remaining loans
-        if (remSurplus.greaterThan(0)) {
-          for (const l of remainingLoans) {
-            if (remSurplus.lessThanOrEqualTo(0)) break;
-            const bal = balances.get(l.id) || new Decimal(0);
-            const alreadyAlloc = result[l.id] || new Decimal(0);
-            const canAbsorb = bal.minus(alreadyAlloc);
-            if (canAbsorb.greaterThan(0)) {
-              const addAmt = Decimal.min(remSurplus, canAbsorb);
-              result[l.id] = alreadyAlloc.plus(addAmt);
-              remSurplus = remSurplus.minus(addAmt);
-            }
+      // Second pass: cascade excess from loans that reached 0 to remaining loans with highest balance
+      if (remainingSurplus.greaterThan(0)) {
+        const remainingLoans = sortedByPrincipal.filter(
+          (l) => (currentBalances.get(l.id) || new Decimal(0)).minus(result[l.id] || new Decimal(0)).greaterThan(0),
+        );
+        for (const l of remainingLoans) {
+          if (remainingSurplus.lessThanOrEqualTo(0)) break;
+          const bal = currentBalances.get(l.id) || new Decimal(0);
+          const already = result[l.id] || new Decimal(0);
+          const canAbsorb = bal.minus(already);
+          if (canAbsorb.greaterThan(0)) {
+            const addAmt = Decimal.min(remainingSurplus, canAbsorb);
+            result[l.id] = already.plus(addAmt);
+            remainingSurplus = remainingSurplus.minus(addAmt);
           }
         }
-        return result;
-      };
+      }
+      return result;
+    };
 
-      initialAllocs = splitFn(initialBalances, surplus);
-      allocationStrategy = splitFn;
-    } else {
-      // cascade mode: 100% to highest score with overflow cascading to next
-      initialAllocs = this.cascadeSurplusAcrossRankedLoans(sorted, initialBalances, surplus);
-      allocationStrategy = (balances: Map<string, Decimal>, extraSurplus: Decimal) => {
-        return this.cascadeSurplusAcrossRankedLoans(sorted, balances, extraSurplus);
-      };
-    }
-
-    const { monthsToDebtFree, totalInterestPaid, timeline } = this.runSimulationLoop(
+    const { monthsToDebtFree, totalInterestPaid, timeline, loanInterestPaid } = this.runSimulationLoop(
       active,
       surplus,
       allocationStrategy,
@@ -396,26 +411,22 @@ export class StrategyEngine {
     );
     const interestSaved = Decimal.max(0, baselineInterest.minus(totalInterestPaid));
 
-    // Compute distributed split summary string
+    // Build human-friendly description showing distribution
     const splitPercentages: string[] = [];
-    if (surplus.greaterThan(0)) {
-      for (const l of sorted) {
-        const amt = initialAllocs[l.id] || new Decimal(0);
-        if (amt.greaterThan(0)) {
-          const pct = Math.round(amt.dividedBy(surplus).times(100).toNumber());
-          splitPercentages.push(`${pct}% to ${l.name || l.lender}`);
-        }
+    for (const l of active) {
+      const pct = effectivePercentages[l.id] || 0;
+      if (pct > 0) {
+        splitPercentages.push(`${pct}% to ${l.name || l.lender}`);
       }
     }
-
-    const splitInsight = splitPercentages.length > 0
-      ? `Optimal Allocation: ${splitPercentages.join(', ')}.`
-      : `Tailored balance across ${weights.weightRate}% APR, ${weights.weightBalance}% Balance in ${weights.mode} mode.`;
+    const description = splitPercentages.length > 0
+      ? `Allocated: ${splitPercentages.join(', ')}.`
+      : 'Interactive percentage-based allocation across active debts.';
 
     return {
       strategyName: 'custom_weighted',
       title: 'Custom-Weighted Strategy',
-      description: splitInsight,
+      description,
       monthsToDebtFree,
       totalInterestPaid: totalInterestPaid.toFixed(2),
       totalInterestSaved: interestSaved.toFixed(2),
@@ -424,6 +435,12 @@ export class StrategyEngine {
         const extra = initialAllocs[l.id] || new Decimal(0);
         const isGold = l.type === 'jewel' || l.type === 'gold';
         const minEmi = isGold ? new Decimal(0) : l.emiAmount;
+        const basePaid = baselineLoanInterestPaid && baselineLoanInterestPaid[l.id]
+          ? new Decimal(baselineLoanInterestPaid[l.id])
+          : new Decimal(0);
+        const thisPaid = loanInterestPaid.get(l.id) || new Decimal(0);
+        const loanSavings = Decimal.max(0, basePaid.minus(thisPaid));
+
         return {
           loanId: l.id,
           name: l.name || l.lender,
@@ -435,6 +452,8 @@ export class StrategyEngine {
           minimumEmi: minEmi.toFixed(2),
           extraAmount: extra.toFixed(2),
           totalMonthlyPayment: minEmi.plus(extra).toFixed(2),
+          percentage: effectivePercentages[l.id] || 0,
+          interestSaved: loanSavings.toFixed(2),
         };
       }),
       timeline,
@@ -530,16 +549,18 @@ export class StrategyEngine {
     initialSurplus: Decimal,
     allocationFn: (currentBalances: Map<string, Decimal>, availableSurplus: Decimal) => Record<string, Decimal>,
     prepaymentMode: 'one_off_lump_sum' | 'recurring_monthly' = 'recurring_monthly',
-  ): { monthsToDebtFree: number; totalInterestPaid: Decimal; timeline: any[] } {
+  ): { monthsToDebtFree: number; totalInterestPaid: Decimal; timeline: any[]; loanInterestPaid: Map<string, Decimal> } {
     const balances = new Map<string, Decimal>();
     const monthlyRates = new Map<string, Decimal>();
     const originalEmis = new Map<string, Decimal>();
     const payoffMonths = new Map<string, number>();
+    const loanInterestPaid = new Map<string, Decimal>();
 
     for (const l of loans) {
       balances.set(l.id, new Decimal(l.principal));
       monthlyRates.set(l.id, l.interestRate.dividedBy(1200));
       originalEmis.set(l.id, new Decimal(l.emiAmount));
+      loanInterestPaid.set(l.id, new Decimal(0));
     }
 
     let totalInterestPaid = new Decimal(0);
@@ -567,6 +588,7 @@ export class StrategyEngine {
         const r = monthlyRates.get(loan.id)!;
         const interest = bal.times(r).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
         totalInterestPaid = totalInterestPaid.plus(interest);
+        loanInterestPaid.set(loan.id, (loanInterestPaid.get(loan.id) || new Decimal(0)).plus(interest));
 
         const isGold = loan.type === 'jewel' || loan.type === 'gold';
         const extraPayment = extraAllocs[loan.id] || new Decimal(0);
@@ -640,6 +662,7 @@ export class StrategyEngine {
       monthsToDebtFree: month,
       totalInterestPaid,
       timeline,
+      loanInterestPaid,
     };
   }
 

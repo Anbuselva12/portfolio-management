@@ -15,6 +15,8 @@ import {
   I_SUGGESTION_SNAPSHOT_REPOSITORY,
   IAuditRepository,
   I_AUDIT_REPOSITORY,
+  IFamilyRepository,
+  I_FAMILY_REPOSITORY,
 } from '../repositories/interfaces';
 import { StrategyEngine, StrategyLoanInput, CustomWeights, StrategySimulationResult } from './engine/strategy-engine';
 import { GeminiAiService } from './engine/gemini-ai.service';
@@ -30,6 +32,7 @@ export class StrategiesService {
     @Inject(I_INSURANCE_POLICY_REPOSITORY) private readonly insuranceRepository: IInsurancePolicyRepository,
     @Inject(I_SUGGESTION_SNAPSHOT_REPOSITORY) private readonly snapshotRepository: ISuggestionSnapshotRepository,
     @Inject(I_AUDIT_REPOSITORY) private readonly auditRepository: IAuditRepository,
+    @Inject(I_FAMILY_REPOSITORY) private readonly familyRepository: IFamilyRepository,
     private readonly geminiAiService: GeminiAiService,
   ) {}
 
@@ -51,7 +54,9 @@ export class StrategiesService {
     // Trailing 30 days expenses average
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentExpenses = expenses.filter((e) => new Date(e.date) >= thirtyDaysAgo);
+    const recentExpenses = expenses.filter(
+      (e) => new Date(e.date) >= thirtyDaysAgo && (e as any).source !== 'loan_emi_auto',
+    );
     const monthlyExpenses = recentExpenses.reduce((sum, e) => sum.plus(new Decimal(e.amount.toString())), new Decimal(0));
 
     // Annualized/Monthly insurance premiums
@@ -122,7 +127,20 @@ export class StrategiesService {
     // 5. Snowball Simulation
     const snowball = StrategyEngine.simulateSnowball(loanInputs, effectiveSurplus, baselineInterest, prepaymentMode);
 
-    // 6. Custom-Weighted Simulation
+    // 6. Custom-Weighted Simulation (Slider-based percentage allocation with persistence)
+    let loanPercentages = dto.loanAllocations;
+    if (!loanPercentages) {
+      const family = await this.familyRepository.findById(familyId);
+      if (family?.strategy_weights) {
+        try {
+          const parsed = JSON.parse(family.strategy_weights);
+          if (parsed?.loanPercentages && typeof parsed.loanPercentages === 'object') {
+            loanPercentages = parsed.loanPercentages;
+          }
+        } catch {}
+      }
+    }
+
     const weights: CustomWeights = {
       weightRate: dto.customWeights?.weightRate ?? 40,
       weightBalance: dto.customWeights?.weightBalance ?? 30,
@@ -131,7 +149,15 @@ export class StrategiesService {
       weightTenure: dto.customWeights?.weightTenure ?? 10,
       mode: dto.customWeights?.mode ?? 'cascade',
     };
-    const customWeighted = StrategyEngine.simulateCustomWeighted(loanInputs, effectiveSurplus, weights, baselineInterest, prepaymentMode);
+    const customWeighted = StrategyEngine.simulateCustomWeighted(
+      loanInputs,
+      effectiveSurplus,
+      weights,
+      baselineInterest,
+      prepaymentMode,
+      loanPercentages,
+      baseline.loanInterestPaid,
+    );
 
     // 7. Gemini AI Suggestion (Requested On-Demand only when dto.includeAi === true)
     let aiStrategy: StrategySimulationResult | null = null;

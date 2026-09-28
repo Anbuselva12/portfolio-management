@@ -319,6 +319,8 @@ export interface AllocationItem {
   minimumEmi: string;
   extraAmount: string;
   totalMonthlyPayment: string;
+  percentage?: number;
+  interestSaved?: string;
 }
 
 export interface StrategySimulationResult {

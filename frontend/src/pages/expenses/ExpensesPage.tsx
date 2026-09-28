@@ -126,9 +126,9 @@ export const ExpensesPage: React.FC = () => {
     }
   };
 
-  const filteredExpenses = expenses.filter((e) =>
-    selectedCategory === 'all' ? true : e.categoryId === selectedCategory
-  );
+  const filteredExpenses = expenses
+    .filter((e) => (e as any).source !== 'loan_emi_auto')
+    .filter((e) => (selectedCategory === 'all' ? true : e.categoryId === selectedCategory));
 
   const totalMonthlySpend = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 

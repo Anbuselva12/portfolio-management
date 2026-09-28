@@ -42,6 +42,9 @@ export class CompareStrategiesDto {
   customWeights?: CustomWeightsDto;
 
   @IsOptional()
+  loanAllocations?: Record<string, number>;
+
+  @IsOptional()
   includeAi?: boolean = false;
 }
 
