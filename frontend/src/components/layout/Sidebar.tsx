@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import {
@@ -13,11 +13,24 @@ import {
   Zap,
   Clock,
   Wallet,
+  Users,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { adminApi } from '../../api/endpoints/admin.api';
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      adminApi.getPending()
+        .then((res) => {
+          if (Array.isArray(res)) setPendingCount(res.length);
+        })
+        .catch(() => {});
+    }
+  }, [user?.role]);
 
   const links = [
     { to: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -27,6 +40,9 @@ export const Sidebar: React.FC = () => {
     { to: '/strategies', icon: Zap, label: 'Debt Strategies' },
     { to: '/expenses', icon: Receipt, label: 'Expenses' },
     { to: '/insurance', icon: Shield, label: 'Insurance' },
+    ...(user?.role === 'admin'
+      ? [{ to: '/settings/members', icon: Users, label: 'Members & Access', badge: pendingCount }]
+      : []),
     { to: '/settings/audit', icon: Clock, label: 'Audit Trail' },
     { to: '/settings/profile', icon: Settings, label: 'Settings' },
   ];
@@ -65,6 +81,11 @@ export const Sidebar: React.FC = () => {
           >
             <link.icon className="w-5 h-5 shrink-0" />
             <span className="truncate">{link.label}</span>
+            {link.badge !== undefined && link.badge > 0 && (
+              <span className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500 text-white animate-pulse">
+                {link.badge}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

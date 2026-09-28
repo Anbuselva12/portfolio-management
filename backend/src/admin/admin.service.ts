@@ -19,6 +19,10 @@ export class AdminService {
     return this.memberRepository.findPendingByFamilyId(familyId);
   }
 
+  async getAllMembers(familyId: string) {
+    return this.memberRepository.findByFamilyId(familyId);
+  }
+
   async approveMember(adminId: string, familyId: string, targetId: string) {
     const target = await this.memberRepository.findById(targetId);
     if (!target || target.family_id !== familyId || target.status !== 'pending_approval') {
@@ -61,7 +65,7 @@ export class AdminService {
       throw new BadRequestException('Username already exists');
     }
 
-    const tempPassword = Math.random().toString(36).slice(-8);
+    const tempPassword = dto.password || Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(tempPassword, this.bcryptRounds);
 
     const member = await this.memberRepository.create({

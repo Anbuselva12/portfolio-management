@@ -3,9 +3,11 @@ import { useAuthStore } from '../../store/auth.store';
 import { dashboardApi } from '../../api/endpoints/dashboard.api';
 import { incomeApi } from '../../api/endpoints/income.api';
 import { loansApi } from '../../api/endpoints/loans.api';
+import { adminApi } from '../../api/endpoints/admin.api';
 import { formatINR } from '../../utils/currency';
 import {
   Wallet,
+  Users,
   TrendingUp,
   CreditCard,
   ArrowDownRight,
@@ -65,6 +67,7 @@ export const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [nwViewMode, setNwViewMode] = useState<'chart' | 'table'>('chart');
   const [cfViewMode, setCfViewMode] = useState<'chart' | 'table'>('chart');
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   useEffect(() => {
     loadDashboardData();
@@ -73,14 +76,18 @@ export const DashboardPage: React.FC = () => {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [sumData, anaData, remData] = await Promise.all([
+      const [sumData, anaData, remData, pendingData] = await Promise.all([
         dashboardApi.getSummary(scope === 'me' ? 'me' : undefined),
         dashboardApi.getAnalytics(scope === 'me' ? 'me' : undefined),
         dashboardApi.getReminders(scope === 'me' ? 'me' : undefined),
+        user?.role === 'admin' ? adminApi.getPending().catch(() => []) : Promise.resolve([]),
       ]);
       setSummary(sumData);
       setAnalytics(anaData);
       setReminders(remData);
+      if (Array.isArray(pendingData)) {
+        setPendingRequestsCount(pendingData.length);
+      }
       if (remData?.incomes) {
         const initial: { [id: string]: string } = {};
         remData.incomes.forEach((inc: any) => {
@@ -221,6 +228,37 @@ export const DashboardPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Admin Pending Join Requests Notification Banner */}
+      {user?.role === 'admin' && pendingRequestsCount > 0 && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs animate-in fade-in duration-300">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  {pendingRequestsCount} Pending Family Join Request{pendingRequestsCount > 1 ? 's' : ''}
+                </h3>
+                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-500 text-white animate-pulse">
+                  Action Required
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                New member accounts are awaiting your approval to access the family wealth portfolio.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/settings/members"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-colors shrink-0 cursor-pointer"
+          >
+            <span>Review & Approve Requests</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
 
       {/* KPI Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">

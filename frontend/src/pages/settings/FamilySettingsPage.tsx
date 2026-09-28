@@ -15,6 +15,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { SettingsNav } from '../../components/layout/SettingsNav';
 
 export const FamilySettingsPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -114,7 +115,8 @@ export const FamilySettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl space-y-8 pb-12">
+    <div className="max-w-3xl space-y-6 pb-12">
+      <SettingsNav />
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Family Workspace Settings</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">

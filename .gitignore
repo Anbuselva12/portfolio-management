@@ -23,6 +23,7 @@ backup.json
 backend/prisma/backup.json
 backend/prisma/*.db
 
+
 # Build outputs & caches
 dist/
 dist-ssr/

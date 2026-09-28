@@ -12,9 +12,17 @@
 - Custom-Weighted strategy default weights (sliders: rate / balance / flexibility / penalty / tenure) + split-vs-cascade mode toggle.
 
 ## 2. Screen: Settings → Members & Access (Admin only)
-- Table of members: Display Name, Username, Role, Status (Active/Deactivated/Pending), "Reset Password" and "Deactivate/Reactivate" actions.
+- **Navigation & Access**:
+  - Direct entry point in the main sidebar and mobile slide-over drawer as **"Members & Access"** (`/settings/members`), plus reachable via Settings tab bar.
+  - Displays an amber notification badge on navigation whenever pending join requests exist.
+  - Also surfaces as an amber alert banner at the top of the Admin's Dashboard.
+- **Pending Join Requests Section**:
+  - Highlights all users with `status = pending_approval` who requested to join this family group.
+  - Displays username, display name, and requested date with **Approve Access** and **Reject** buttons.
+  - Approving instantly activates the account and moves them to the active roster; Rejecting clears the family association and resets status to `unaffiliated`.
+- **Active Family Members Section**:
+  - Table of current members: Display Name, Username, Role (Admin/Member), Status (Active/Deactivated), "Generate Reset Code" and "Deactivate/Reactivate" actions.
 - **"+ Add Member"** button → Admin-direct invite flow (username + temp password; see Design-Spec-01 §6).
-- **Pending Requests** sub-section (or tab): list of `pending_approval` members with Approve/Reject actions (see Design-Spec-01 §5). A `PendingBadge` on the Settings nav item surfaces the count.
 
 ## 3. Screen: Settings → My Profile
 - Change password (requires current password), preferred display currency, display name.

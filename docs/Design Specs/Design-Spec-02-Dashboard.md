@@ -9,6 +9,7 @@
 The home screen after login (once `status = active` and a family is set).
 
 **Layout: top KPI strip → two-column chart area → recent activity.**
+*(Note: If the logged-in user is an Admin and pending member join requests exist, a prominent amber notification banner appears above the KPI strip with a "Review & Approve →" CTA routing to `/settings/members`).*
 
 ### KPI Strip
 5–6 compact stat cards, horizontally scrollable on mobile:

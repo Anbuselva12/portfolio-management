@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../api/endpoints/auth.api';
 import { User, Lock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { SettingsNav } from '../../components/layout/SettingsNav';
 
 export const MyProfilePage: React.FC = () => {
   const { user, setUser } = useAuthStore();
@@ -63,7 +64,8 @@ export const MyProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-3xl space-y-6">
+      <SettingsNav />
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Profile & Preferences</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">

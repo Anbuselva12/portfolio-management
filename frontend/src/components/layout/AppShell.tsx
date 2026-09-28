@@ -16,13 +16,26 @@ import {
   Menu,
   X,
   Wallet,
+  Users,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { adminApi } from '../../api/endpoints/admin.api';
 
 export const AppShell: React.FC = () => {
   const { user, logout } = useAuthStore();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      adminApi.getPending()
+        .then((res) => {
+          if (Array.isArray(res)) setPendingCount(res.length);
+        })
+        .catch(() => {});
+    }
+  }, [user?.role]);
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -44,6 +57,9 @@ export const AppShell: React.FC = () => {
     { to: '/strategies', icon: Zap, label: 'Debt Strategies' },
     { to: '/expenses', icon: Receipt, label: 'Expenses' },
     { to: '/insurance', icon: Shield, label: 'Insurance' },
+    ...(user?.role === 'admin'
+      ? [{ to: '/settings/members', icon: Users, label: 'Members & Access', badge: pendingCount }]
+      : []),
     { to: '/settings/audit', icon: Clock, label: 'Audit Trail' },
     { to: '/settings/profile', icon: Settings, label: 'Settings' },
   ];
@@ -66,10 +82,13 @@ export const AppShell: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsMobileNavOpen(true)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            className="min-h-[44px] min-w-[44px] relative flex items-center justify-center p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
+            {pendingCount > 0 && (
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+            )}
           </button>
           <Link to="/dashboard" className="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
             <div className="w-7 h-7 rounded-lg bg-cyan-600 flex items-center justify-center text-white">
@@ -139,7 +158,12 @@ export const AppShell: React.FC = () => {
                   }
                 >
                   <link.icon className="w-5 h-5 shrink-0" />
-                  <span>{link.label}</span>
+                  <span className="truncate">{link.label}</span>
+                  {link.badge !== undefined && link.badge > 0 && (
+                    <span className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500 text-white animate-pulse">
+                      {link.badge}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </nav>
@@ -200,12 +224,17 @@ export const AppShell: React.FC = () => {
           type="button"
           onClick={() => setIsMobileNavOpen(true)}
           className={clsx(
-            'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer',
+            'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium relative text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer',
             isMobileNavOpen && 'text-cyan-600 dark:text-cyan-400'
           )}
           aria-label="More navigation options"
         >
-          <Menu className="w-5 h-5 mb-0.5" />
+          <div className="relative">
+            <Menu className="w-5 h-5 mb-0.5" />
+            {pendingCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+            )}
+          </div>
           <span>More</span>
         </button>
       </nav>

@@ -35,9 +35,15 @@ Shown to any logged-in Member whose `family_id` is null. Two large side-by-side 
 - Auto-polls (or refreshes on next login) to detect approval and transition to Dashboard once `status = active`.
 
 ## 5. Admin Screen: Pending Requests (also referenced in Design-Spec-07)
-- A list under Settings → Members & Access: each row shows the requesting user's Display Name/Username, requested date, with **Approve** / **Reject** buttons.
-- A small amber `PendingBadge` count appears on the Settings nav item whenever pending requests exist, so Admins don't have to check manually.
-- Approve → member becomes `active`, gains full data access per their role; Reject → member reverts to `unaffiliated` and returns to Family Selection on next visit, with a neutral toast (no shaming copy — "Your request wasn't approved. You can try another family or create your own.").
+- **Dedicated Navigation Entry**:
+  - The family Admin can directly access this screen via **"Members & Access"** (`/settings/members`) located in the primary navigation sidebar (desktop) and mobile slide-over drawer (mobile).
+  - An amber `PendingBadge` count is displayed directly on the "Members & Access" navigation item whenever pending join requests exist.
+  - A prominent notification alert banner appears at the very top of the **Dashboard** for Admins when pending join requests exist (e.g., *"🔔 X join request(s) waiting for approval — Review & Approve →"*).
+- **Review & Actions**:
+  - A dedicated list under **Settings → Members & Access**: each pending request displays the requesting user's Display Name, Username, and submission timestamp.
+  - **Approve Access**: Transitions member from `pending_approval` to `active`, grants immediate family data access, logs an audit entry, and automatically moves them into the Active Members table. The user waiting on the holding screen detects approval on their auto-polling cycle and transitions to the Dashboard.
+  - **Reject**: Transitions member from `pending_approval` to `unaffiliated`, unlinks the `family_id`, logs an audit entry, and cleanses the pending request.
+- A small amber `PendingBadge` count appears on both the "Members & Access" nav item and the Settings nav item whenever pending requests exist, so Admins don't have to check manually.
 
 ## 6. Admin-Direct Invite Flow (alternative entry point)
 - From Settings → Members & Access → "+ Add Member": Admin enters username + temp password directly; this path **skips join-request/approval** entirely since the Admin is the one initiating it.
