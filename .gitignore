@@ -18,6 +18,8 @@ backend/.env.*
 *.sqlite3
 backend/dev.db*
 backend/test.db*
+backup.json
+**/backup.json
 backend/prisma/backup.json
 backend/prisma/*.db
 

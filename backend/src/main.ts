@@ -14,8 +14,13 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
+  const frontendUrl = process.env.FRONTEND_URL || config.get('FRONTEND_URL') || 'http://localhost:5173';
+  const allowedOrigins = frontendUrl.includes(',')
+    ? frontendUrl.split(',').map((u: string) => u.trim())
+    : frontendUrl;
+
   app.enableCors({
-    origin: config.get('FRONTEND_URL') || 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
   });
 
