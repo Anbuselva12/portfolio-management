@@ -4,7 +4,7 @@ import { dashboardApi } from '../../api/endpoints/dashboard.api';
 import { incomeApi } from '../../api/endpoints/income.api';
 import { loansApi } from '../../api/endpoints/loans.api';
 import { adminApi } from '../../api/endpoints/admin.api';
-import { formatINR } from '../../utils/currency';
+import { formatINR, formatKpiINR } from '../../utils/currency';
 import {
   Wallet,
   Users,
@@ -191,6 +191,14 @@ export const DashboardPage: React.FC = () => {
     return null;
   };
 
+  const getKpiFontSize = (valStr: string) => {
+    const len = valStr.length;
+    if (len > 13) return 'text-sm sm:text-base lg:text-lg 2xl:text-base';
+    if (len > 10) return 'text-base sm:text-lg lg:text-xl 2xl:text-lg';
+    if (len > 7) return 'text-lg sm:text-xl lg:text-2xl 2xl:text-xl';
+    return 'text-xl sm:text-2xl lg:text-3xl 2xl:text-2xl';
+  };
+
   return (
     <div className="space-y-8 pb-12">
       {/* Top Header & Scope Selector */}
@@ -261,111 +269,160 @@ export const DashboardPage: React.FC = () => {
       )}
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3.5 sm:gap-4">
         {/* 1. Net Worth */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
-              <span className="truncate">Net Worth</span>
-              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+        {(() => {
+          const formatted = isLoading ? '...' : formatKpiINR(netWorth);
+          return (
+            <div
+              title={formatINR(netWorth)}
+              className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+                  <span>Net Worth</span>
+                  <Wallet className="w-4 h-4 text-emerald-500 shrink-0" />
+                </div>
+                <div className={`${getKpiFontSize(formatted)} font-black text-slate-900 dark:text-white font-mono whitespace-nowrap tracking-tight`}>
+                  {formatted}
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px] border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span className="text-slate-400">MoM change</span>
+                <span className={`font-semibold flex items-center gap-0.5 ${nwDelta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
+                  <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span>{nwDeltaPct >= 0 ? `+${nwDeltaPct}%` : `${nwDeltaPct}%`}</span>
+                </span>
+              </div>
             </div>
-            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
-              {isLoading ? '...' : formatINR(netWorth)}
-            </div>
-          </div>
-          <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
-            <span className="text-slate-400">MoM change</span>
-            <span className={`font-semibold flex items-center gap-0.5 ${nwDelta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
-              <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span>{nwDeltaPct >= 0 ? `+${nwDeltaPct}%` : `${nwDeltaPct}%`}</span>
-            </span>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* 2. Total Assets */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
-              <span className="truncate">Total Assets</span>
-              <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500 shrink-0" />
+        {(() => {
+          const formatted = isLoading ? '...' : formatKpiINR(totalAssets);
+          return (
+            <div
+              title={formatINR(totalAssets)}
+              className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+                  <span>Total Assets</span>
+                  <Briefcase className="w-4 h-4 text-cyan-500 shrink-0" />
+                </div>
+                <div className={`${getKpiFontSize(formatted)} font-black text-slate-900 dark:text-white font-mono whitespace-nowrap tracking-tight`}>
+                  {formatted}
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 truncate border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                Bank, FDs, gold & more
+              </div>
             </div>
-            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
-              {isLoading ? '...' : formatINR(totalAssets)}
-            </div>
-          </div>
-          <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 truncate">
-            Bank, FDs, gold & more
-          </div>
-        </div>
+          );
+        })()}
 
         {/* 3. Total Liabilities */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
-              <span className="truncate">Total Debt</span>
-              <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 shrink-0" />
+        {(() => {
+          const formatted = isLoading ? '...' : formatKpiINR(totalLiabilities);
+          return (
+            <div
+              title={formatINR(totalLiabilities)}
+              className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+                  <span>Total Debt</span>
+                  <CreditCard className="w-4 h-4 text-rose-500 shrink-0" />
+                </div>
+                <div className={`${getKpiFontSize(formatted)} font-black text-rose-600 dark:text-rose-400 font-mono whitespace-nowrap tracking-tight`}>
+                  {formatted}
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px] border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span className="text-slate-400">Active Debt</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {analytics?.payoffTimeline?.length || 0} loan{(analytics?.payoffTimeline?.length || 0) === 1 ? '' : 's'}
+                </span>
+              </div>
             </div>
-            <div className="text-base sm:text-xl xl:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono truncate">
-              {isLoading ? '...' : formatINR(totalLiabilities)}
-            </div>
-          </div>
-          <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
-            <span className="text-slate-400">Active Debt</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
-              {analytics?.payoffTimeline?.length || 0} loan{(analytics?.payoffTimeline?.length || 0) === 1 ? '' : 's'}
-            </span>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* 4. Monthly Income */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
-              <span className="truncate">Monthly Inflow</span>
-              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+        {(() => {
+          const formatted = isLoading ? '...' : formatKpiINR(monthlyIncome);
+          return (
+            <div
+              title={formatINR(monthlyIncome)}
+              className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+                  <span>Monthly Inflow</span>
+                  <TrendingUp className="w-4 h-4 text-emerald-500 shrink-0" />
+                </div>
+                <div className={`${getKpiFontSize(formatted)} font-black text-slate-900 dark:text-white font-mono whitespace-nowrap tracking-tight`}>
+                  {formatted}
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                Active recurring incomes
+              </div>
             </div>
-            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
-              {isLoading ? '...' : formatINR(monthlyIncome)}
-            </div>
-          </div>
-          <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
-            Active recurring incomes
-          </div>
-        </div>
+          );
+        })()}
 
         {/* 5. Monthly Expenses + EMI */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
-              <span className="truncate">Monthly Outflow</span>
-              <ArrowDownRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
+        {(() => {
+          const totalOutflow = monthlyExpenses + monthlyEmi;
+          const formatted = isLoading ? '...' : formatKpiINR(totalOutflow);
+          return (
+            <div
+              title={formatINR(totalOutflow)}
+              className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+                  <span>Monthly Outflow</span>
+                  <ArrowDownRight className="w-4 h-4 text-amber-500 shrink-0" />
+                </div>
+                <div className={`${getKpiFontSize(formatted)} font-black text-slate-900 dark:text-white font-mono whitespace-nowrap tracking-tight`}>
+                  {formatted}
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span className="whitespace-nowrap">Exp: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatKpiINR(monthlyExpenses)}</strong></span>
+                <span className="whitespace-nowrap text-right">EMI: <strong className="font-mono text-rose-500">{formatKpiINR(monthlyEmi)}</strong></span>
+              </div>
             </div>
-            <div className="text-base sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white font-mono truncate">
-              {isLoading ? '...' : formatINR(monthlyExpenses + monthlyEmi)}
-            </div>
-          </div>
-          <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between truncate">
-            <span>Exp: <strong className="font-mono text-slate-600 dark:text-slate-300">{formatINR(monthlyExpenses)}</strong></span>
-            <span>EMI: <strong className="font-mono text-rose-500">{formatINR(monthlyEmi)}</strong></span>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* 6. Net Monthly Savings */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
-              <span className="truncate">Net Savings</span>
-              <PiggyBank className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-500 shrink-0" />
+        {(() => {
+          const formatted = isLoading ? '...' : formatKpiINR(monthlySavings);
+          return (
+            <div
+              title={formatINR(monthlySavings)}
+              className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+                  <span>Net Savings</span>
+                  <PiggyBank className="w-4 h-4 text-teal-500 shrink-0" />
+                </div>
+                <div className={`${getKpiFontSize(formatted)} font-black font-mono whitespace-nowrap tracking-tight ${monthlySavings >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600'}`}>
+                  {formatted}
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px] border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                <span className="text-slate-400">Savings Rate</span>
+                <span className="font-semibold text-teal-600 dark:text-teal-400">{savingsRatePct}%</span>
+              </div>
             </div>
-            <div className={`text-base sm:text-xl xl:text-2xl font-black font-mono truncate ${monthlySavings >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600'}`}>
-              {isLoading ? '...' : formatINR(monthlySavings)}
-            </div>
-          </div>
-          <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
-            <span className="text-slate-400">Savings Rate</span>
-            <span className="font-semibold text-teal-600 dark:text-teal-400">{savingsRatePct}%</span>
-          </div>
-        </div>
+          );
+        })()}
       </div>
 
       {/* Pending Reminders & Monthly Action Queue */}

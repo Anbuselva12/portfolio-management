@@ -10,6 +10,17 @@ export function formatINR(value: string | number | Decimal | null | undefined): 
   }).format(val);
 }
 
+export function formatKpiINR(value: string | number | Decimal | null | undefined): string {
+  if (value === null || value === undefined) return '₹0';
+  const val = new Decimal(value).toNumber();
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  }).format(val);
+}
+
 export function formatCurrency(value: string | number | Decimal | null | undefined, currency: string): string {
   if (value === null || value === undefined) return '0';
   const val = new Decimal(value).toNumber();

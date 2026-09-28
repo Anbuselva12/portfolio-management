@@ -12,13 +12,19 @@ The home screen after login (once `status = active` and a family is set).
 *(Note: If the logged-in user is an Admin and pending member join requests exist, a prominent amber notification banner appears above the KPI strip with a "Review & Approve →" CTA routing to `/settings/members`).*
 
 ### KPI Strip
-5–6 compact stat cards, horizontally scrollable on mobile:
-1. Net Worth (large, primary number, with ↑/↓ vs last month)
-2. Total Assets
-3. Total Liabilities
-4. Monthly Income
-5. Monthly Expenses (two sub-lines: "Expenses" / "EMI")
-6. Monthly Net Savings + Savings Rate % (secondary line)
+Stat cards arranged in a responsive grid (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6`):
+1. **Net Worth** (large primary number, with ↑/↓ MoM change vs last month)
+2. **Total Assets** (bank, FDs, gold & more)
+3. **Total Liabilities / Debt** (active debt sum with active loan count)
+4. **Monthly Income / Inflow** (active recurring incomes sum)
+5. **Monthly Outflow** (expenses + scheduled EMI sum, with sub-line breakdown: "Exp: ₹X" and "EMI: ₹Y")
+6. **Monthly Net Savings** (surplus/deficit with savings rate %)
+
+**Display & Anti-Truncation Rules for 5+ Digit Values**:
+- **Whole-Rupee Formatting (`formatKpiINR`)**: Formats high-level KPI cards to whole rupees without redundant trailing paise decimals (`.00`), saving horizontal space.
+- **Adaptive Font Scaling**: Font size dynamically scales with digit length (e.g. 5–8 digits vs. 9–14 digits) so multi-lakh and multi-crore numbers are fully displayed on one line without truncation ellipses.
+- **Tooltip Precision**: Card values include a native hover tooltip showing the exact full precision amount formatted with paise decimals.
+- **Title & Sub-metric Integrity**: Titles and sub-lines preserve full labels without truncation collisions.
 
 ### Pending Reminders & Monthly Action Queue (Directly Below KPI Strip)
 A dedicated, prominent action widget for the current month tracking incoming revenues and outgoing loan payments:
