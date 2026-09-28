@@ -13,9 +13,10 @@
     - **AI Advisor On-Demand Toggle**: "Include Gemini AI Advisor" toggle / "Ask AI" button. When turned off, strategies load instantaneously without invoking Gemini. When turned on, invokes Gemini and renders the AI card.
 - **Executive Strategy Recommendation Banner (Directly Above Cards)**:
   - High-impact summary bar highlighting:
-    - **Top Interest-Saving Strategy**: Identifies the strategy producing the maximum total interest saved (e.g. "Debt Avalanche saves ₹4,68,890.78, cutting payoff by X months").
+    - **Top Interest-Saving Strategy**: Identifies the strategy producing the maximum total interest saved (e.g. "Debt Avalanche saves ₹4,68,890.78, cutting payoff by X months", or "Custom-Weighted Strategy delivers maximum interest savings (₹2,62,495)").
     - **Fastest Debt Elimination / Milestone**: Identifies which loan(s) can be completely wiped out today with the current surplus amount (e.g. "Instant Milestone: Fully eliminate Insurance Premium (₹69,881) today to eliminate 1 monthly EMI obligation").
     - **Cascading Surplus Summary**: Highlights how the full surplus (e.g. ₹5,00,000) is deployed across multiple loans when earlier loans are paid off.
+    - **Synchronized Recommendation Verdict**: The text verdict dynamically names whichever strategy achieves the highest interest savings (Avalanche, Custom-Weighted, Snowball, or AI Smart Plan), ensuring total consistency between the verdict message, leader chip, and max saved metric.
 - When **One-Off Lump Sum** mode is selected:
   - Extra money is applied as a single lump-sum prepayment in Month 1 across the target loan(s).
   - **Multi-Loan Cascading Overflow Guarantee**: If the lump sum exceeds the target loan's balance, the excess cascades to the next ranked loan(s) until 100% of the lump sum is deployed.

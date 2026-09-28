@@ -195,21 +195,42 @@ export class StrategiesService {
       .filter((l) => l.principal.lessThanOrEqualTo(effectiveSurplus))
       .sort((a, b) => a.principal.minus(b.principal).toNumber());
 
+    // Format rupee amounts with Indian number formatting
+    const formatINRText = (val: Decimal | number) => {
+      const num = typeof val === 'number' ? Math.round(val) : Math.round(val.toNumber());
+      return num.toLocaleString('en-IN');
+    };
+
     // Best strategy verdict
     let verdict = '';
+    const maxSaved = new Decimal(maxInterestStrategy.totalInterestSaved);
+    const leaderTitle = maxInterestStrategy.title;
     const avalancheSaved = new Decimal(avalanche.totalInterestSaved);
     const snowballSaved = new Decimal(snowball.totalInterestSaved);
     const diff = avalancheSaved.minus(snowballSaved);
 
     if (fullyPayableLoans.length > 0) {
       const topClose = fullyPayableLoans[0];
-      if (diff.lessThan(5000) && diff.greaterThanOrEqualTo(0)) {
-        verdict = `Snowball is highly recommended: fully eliminates "${topClose.name}" (₹${topClose.principal.toFixed(0)}) immediately while saving virtually the same interest (₹${snowballSaved.toFixed(0)} vs ₹${avalancheSaved.toFixed(0)}).`;
+      if (maxInterestStrategy.strategyName === 'avalanche') {
+        if (diff.lessThan(5000) && diff.greaterThanOrEqualTo(0)) {
+          verdict = `Snowball is highly recommended: fully eliminates "${topClose.name}" (₹${formatINRText(topClose.principal)}) immediately while saving virtually the same interest (₹${formatINRText(snowballSaved)} vs ₹${formatINRText(avalancheSaved)}).`;
+        } else {
+          verdict = `Debt Avalanche delivers maximum interest savings (₹${formatINRText(avalancheSaved)}). Alternatively, Snowball completely wipes out "${topClose.name}" today for immediate psychological relief.`;
+        }
+      } else if (maxInterestStrategy.strategyName === 'snowball') {
+        verdict = `Debt Snowball delivers maximum interest savings (₹${formatINRText(snowballSaved)}) and completely wipes out "${topClose.name}" today for immediate psychological relief.`;
       } else {
-        verdict = `Debt Avalanche delivers maximum interest savings (₹${avalancheSaved.toFixed(0)}). Alternatively, Snowball completely wipes out "${topClose.name}" today for immediate psychological relief.`;
+        // Custom-Weighted or AI Strategy is the leader
+        verdict = `${leaderTitle} delivers maximum interest savings (₹${formatINRText(maxSaved)}). Alternatively, Snowball completely wipes out "${topClose.name}" today for immediate psychological relief.`;
       }
     } else {
-      verdict = `Debt Avalanche maximizes your savings (₹${avalancheSaved.toFixed(0)} saved) and cuts tenure by ${baseline.monthsToDebtFree - avalanche.monthsToDebtFree} months.`;
+      if (maxInterestStrategy.strategyName === 'avalanche') {
+        verdict = `Debt Avalanche maximizes your savings (₹${formatINRText(avalancheSaved)} saved) and cuts tenure by ${baseline.monthsToDebtFree - avalanche.monthsToDebtFree} months.`;
+      } else if (maxInterestStrategy.strategyName === 'snowball') {
+        verdict = `Debt Snowball maximizes your savings (₹${formatINRText(snowballSaved)} saved) and cuts tenure by ${baseline.monthsToDebtFree - snowball.monthsToDebtFree} months.`;
+      } else {
+        verdict = `${leaderTitle} maximizes your savings (₹${formatINRText(maxSaved)} saved) and cuts tenure by ${baseline.monthsToDebtFree - maxInterestStrategy.monthsToDebtFree} months.`;
+      }
     }
 
     const summaryBanner = {

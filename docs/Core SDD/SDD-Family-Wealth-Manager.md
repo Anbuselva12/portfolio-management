@@ -576,9 +576,9 @@ All strategies run against a parameterized simulation core supporting two distin
 
 4. **Executive Strategy Recommendation Banner:**
    - An executive summary banner rendered directly above the strategy comparison cards provides immediate strategic clarity:
-     - **Maximum Savings Leader**: Name of strategy and exact lifetime interest saved (e.g., "Debt Avalanche saves ₹4,68,890.78, cutting tenure by X months").
+     - **Maximum Savings Leader**: Name of strategy and exact lifetime interest saved (dynamically derived from whichever simulated strategy produces maximum interest savings: Custom-Weighted, Avalanche, Snowball, or AI Smart Plan).
      - **Quickest Milestone Closure**: Identifies loans that can be completely extinguished today with this lump sum (e.g. "Instant Milestone: Fully eliminate Insurance Premium (₹69,881) today to remove 1 monthly EMI obligation").
-     - **Actionable Verdict**: Practical recommendation synthesizing interest savings and psychological cash-flow relief.
+     - **Actionable Verdict**: Practical recommendation synthesizing interest savings and psychological cash-flow relief, accurately citing the leading strategy title and interest saved amount.
 
 All strategies output consistent card formats with target loan highlights, direct links to `/loans/:id` for execution, and interest saved. The screen features a dedicated Loan Portfolio Breakdown chart categorizing debts across Personal, Home, Gold/Jewel, and other retail liabilities.
 
