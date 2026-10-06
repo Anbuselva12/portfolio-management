@@ -19,6 +19,7 @@ import {
   Building2,
   FolderKanban,
   SlidersHorizontal,
+  Palmtree,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { adminApi } from '../../api/endpoints/admin.api';
@@ -35,6 +36,7 @@ export const Sidebar: React.FC = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
   const isTracker = location.pathname.startsWith('/tracker');
+  const isFairShare = location.pathname.startsWith('/fairshare');
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -67,7 +69,12 @@ export const Sidebar: React.FC = () => {
     { to: '/tracker/settings', icon: Settings, label: 'Settings' },
   ];
 
-  const links = isTracker ? trackerLinks : finFamilyLinks;
+  const fairShareLinks: NavItem[] = [
+    { to: '/fairshare', icon: Palmtree, label: 'Trips & Events' },
+    { to: '/fairshare/settings', icon: Settings, label: 'Settings' },
+  ];
+
+  const links = isFairShare ? fairShareLinks : isTracker ? trackerLinks : finFamilyLinks;
 
   return (
     <aside className="hidden md:flex flex-col w-60 lg:w-64 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shrink-0">

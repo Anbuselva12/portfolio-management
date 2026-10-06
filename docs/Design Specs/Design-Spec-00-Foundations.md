@@ -50,9 +50,17 @@
     │   ├── Tab 1: Expenses Log (Search, Phase & Tag filters, Add/Edit Drawer)
     │   ├── Tab 2: Reports & Analytics (Stacked Bar, Donut, Qty, Labour Toggle)
     │   └── Tab 3: Configuration (Phases, Types, Tags, Units, Sq Ft)
+│
+└── App 3: FairShare                                                      — Design-Spec-10
+    ├── Trips & Events Hub (Card Grid, + New Trip Modal)
+    ├── Trip Detail & Workspace (KPI Strip, WhatsApp Export, Excel Export)
+    │   ├── Tab 1: Expenses Log (Day-by-Day Timeline, Multi-Split Drawer)
+    │   ├── Tab 2: Balances & Settlement (Simplified "Who Pays Whom", Family Rollup)
+    │   └── Tab 3: Households & Participants (Household Groups, Guest Accounts)
+    └── Settings (Trip Defaults, WhatsApp Formats)
 ```
 
-Primary navigation: **left sidebar** with an Appian-style **App Switcher** in the top brand header, allowing one-click switching between FinFamily and Expense Tracker. Users can save their preferred default landing app under My Profile / Admin settings.
+Primary navigation: **left sidebar** with an Appian-style **App Switcher** in the top brand header, allowing one-click switching between **FinFamily**, **Expense Tracker**, and **FairShare**. Users can save their preferred default landing app under My Profile / Admin settings.
 
 ---
 

@@ -31,7 +31,7 @@ export class LocalStorageMemberRepository implements IMemberRepository {
 
   async create(data: any): Promise<Member> {
     const member: Member = {
-      id: LocalStorageStore.generateId(),
+      id: data.id || LocalStorageStore.generateId(),
       family_id: data.family_id || null,
       username: data.username,
       password_hash: data.password_hash,

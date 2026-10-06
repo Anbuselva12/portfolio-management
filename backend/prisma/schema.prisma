@@ -48,7 +48,7 @@ model Member {
   status             String    @default("unaffiliated") // unaffiliated | pending_approval | active | deactivated
   is_active          Boolean   @default(true)
   preferred_currency String    @default("INR")
-  preferred_app      String    @default("finfamily") // finfamily | expense_tracker
+  preferred_app      String    @default("finfamily") // finfamily | expense_tracker | fairshare
   created_at         DateTime  @default(now())
   last_login_at      DateTime?
 
@@ -64,6 +64,8 @@ model Member {
   income_receipts  MonthlyIncomeReceipt[]
   tracker_projects TrackerProject[]
   tracker_expenses TrackerExpense[]
+  fairshare_trips        FairShareTrip[]
+  fairshare_participants FairShareParticipant[]
 }
 
 // ─── Asset ────────────────────────────────────────────────────────────────────
@@ -469,5 +471,112 @@ model TrackerExpense {
   phase        TrackerPhase?       @relation(fields: [project_phase_id], references: [id])
   tag_item     TrackerTagItem?     @relation(fields: [tag_item_id], references: [id])
   created_by   Member?             @relation(fields: [created_by_id], references: [id])
+}
+
+// ─── FairShare Trip Models ──────────────────────────────────────────────────
+
+model FairShareTrip {
+  id                 String   @id @default(uuid())
+  created_by_id      String
+  title              String   // e.g. "Ooty Weekend Trip"
+  description        String?
+  location           String?  // e.g. "Ooty, Tamil Nadu"
+  start_date         DateTime?
+  end_date           DateTime?
+  duration_days      Int      @default(1)
+  currency           String   @default("INR")
+  default_split_mode String   @default("equal_headcount") // equal_headcount | equal_family | custom_percentage
+  settlement_level   String   @default("family")          // family | individual
+  is_settled         Boolean  @default(false)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  creator            Member                 @relation(fields: [created_by_id], references: [id])
+  households         FairShareHousehold[]
+  participants       FairShareParticipant[]
+  expenses           FairShareExpense[]
+  settlements        FairShareSettlement[]
+}
+
+model FairShareHousehold {
+  id                 String   @id @default(uuid())
+  trip_id            String
+  name               String   // e.g. "Family 1", "Family 2"
+  sort_order         Int      @default(0)
+  default_share_pct  Decimal? // Optional predefined percentage (e.g. 33.33)
+  created_at         DateTime @default(now())
+
+  trip               FairShareTrip           @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+  participants       FairShareParticipant[]
+  splits             FairShareExpenseSplit[]
+}
+
+model FairShareParticipant {
+  id                 String   @id @default(uuid())
+  trip_id            String
+  household_id       String?  // Optional link to a household
+  member_id          String?  // Optional link to registered Member account
+  display_name       String   // e.g. "Member A", "Guest B"
+  is_guest           Boolean  @default(true)
+  email              String?
+  phone              String?
+  created_at         DateTime @default(now())
+
+  trip               FairShareTrip           @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+  household          FairShareHousehold?     @relation(fields: [household_id], references: [id], onDelete: SetNull)
+  member             Member?                 @relation(fields: [member_id], references: [id], onDelete: SetNull)
+  paid_expenses      FairShareExpense[]
+  splits             FairShareExpenseSplit[]
+}
+
+model FairShareExpense {
+  id                    String   @id @default(uuid())
+  trip_id               String
+  payer_participant_id  String
+  title                 String   // e.g. "Travel Fare", "Dinner"
+  amount                Decimal
+  category              String   @default("general") // travel | food | stay | activities | shopping | general
+  expense_date          DateTime
+  day_number            Int?     @default(1) // e.g. Day 1, Day 2
+  notes                 String?
+  split_mode            String   @default("equal_headcount") // equal_headcount | equal_family | custom_percentage | exact_amounts
+  is_active             Boolean  @default(true)
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  trip                  FairShareTrip           @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+  payer                 FairShareParticipant   @relation(fields: [payer_participant_id], references: [id])
+  splits                FairShareExpenseSplit[]
+}
+
+model FairShareExpenseSplit {
+  id                 String   @id @default(uuid())
+  expense_id         String
+  participant_id     String
+  household_id       String?
+  allocated_amount   Decimal
+  share_percentage   Decimal?
+  is_excluded        Boolean  @default(false)
+  created_at         DateTime @default(now())
+
+  expense            FairShareExpense        @relation(fields: [expense_id], references: [id], onDelete: Cascade)
+  participant        FairShareParticipant   @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  household          FairShareHousehold?     @relation(fields: [household_id], references: [id], onDelete: SetNull)
+}
+
+model FairShareSettlement {
+  id                 String   @id @default(uuid())
+  trip_id            String
+  from_entity_id     String   // Participant ID or Household ID
+  to_entity_id       String   // Participant ID or Household ID
+  from_entity_name   String
+  to_entity_name     String
+  entity_type        String   @default("family") // family | individual
+  amount             Decimal
+  payment_method     String   @default("upi")    // upi | cash | bank_transfer
+  notes              String?
+  settled_at         DateTime @default(now())
+
+  trip               FairShareTrip           @relation(fields: [trip_id], references: [id], onDelete: Cascade)
 }
 

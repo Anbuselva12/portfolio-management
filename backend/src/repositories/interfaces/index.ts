@@ -13,3 +13,4 @@ export * from './ICurrencyRateRepository';
 export * from './ISuggestionSnapshotRepository';
 export * from './IRateRevisionRepository';
 export * from './ITrackerRepository';
+export * from './IFairShareRepository';

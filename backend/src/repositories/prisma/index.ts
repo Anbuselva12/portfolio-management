@@ -13,3 +13,4 @@ export * from './PrismaCurrencyRateRepository';
 export * from './PrismaSuggestionSnapshotRepository';
 export * from './PrismaRateRevisionRepository';
 export * from './PrismaTrackerRepository';
+export * from './PrismaFairShareRepository';

@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Check,
   ArrowRight,
+  Palmtree,
   Sparkles,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -18,6 +19,7 @@ export const AppSwitcher: React.FC = () => {
   const location = useLocation();
 
   const isTracker = location.pathname.startsWith('/tracker');
+  const isFairShare = location.pathname.startsWith('/fairshare');
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -44,7 +46,7 @@ export const AppSwitcher: React.FC = () => {
       color: 'bg-cyan-600 text-white',
       activeColor: 'border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/30',
       route: '/dashboard',
-      isActive: !isTracker,
+      isActive: !isTracker && !isFairShare,
     },
     {
       id: 'expense_tracker',
@@ -57,9 +59,20 @@ export const AppSwitcher: React.FC = () => {
       route: '/tracker',
       isActive: isTracker,
     },
+    {
+      id: 'fairshare',
+      name: 'FairShare',
+      subtitle: 'Trip & Event Splitter',
+      description: 'Group travel expenses, family units, "Who Pays Whom" debt settlement & WhatsApp export.',
+      icon: Palmtree,
+      color: 'bg-emerald-600 text-white',
+      activeColor: 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30',
+      route: '/fairshare',
+      isActive: isFairShare,
+    },
   ];
 
-  const currentApp = isTracker ? apps[1] : apps[0];
+  const currentApp = isFairShare ? apps[2] : isTracker ? apps[1] : apps[0];
 
   const handleSelectApp = (route: string) => {
     setIsOpen(false);

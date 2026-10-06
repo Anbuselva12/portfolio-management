@@ -448,6 +448,25 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-86: All Expense Tracker projects, phases, types, tags, and expenses are family-scoped (`family_id`), isolating each family's commercial and project data.
 - FR-87: Historical construction data is ingested and accessible under project "SK Complex" (Area: 3,058 sq ft) for the designated production member and family.
 
+### 4.10 FairShare — Trip & Event Group Expense Splitter
+- FR-88: **Independent Trip Tenancy & Security Boundary**: FairShare trips/events (`FairShareTrip`) operate under a separate security domain from FinFamily. Non-family trip participants and temporary guests have zero visibility or access to FinFamily wealth portfolios, income, loans, or household expenses.
+- FR-89: **Household / Family Units & Individual Participants**: Trips support first-class Household units (`FairShareHousehold`) grouping multiple individual participants (`FairShareParticipant`). If any member of a household contributes or incurs expenses, contributions and liabilities can be tracked individually or aggregated seamlessly to the family unit.
+- FR-90: **Registered & Guest Participant Accounts**: Trips accommodate both authenticated platform users (`Member`) and guest accounts without platform credentials. Registered trip admins can add guest participants, record expenses on their behalf, and link/claim guest profiles when users register.
+- FR-91: **Configurable Split Modes (Default & Per-Expense)**:
+  - *Equally by Headcount*: Distributed equally across all participating individuals.
+  - *Equally by Family Unit*: Distributed equally across participating households, regardless of family headcount.
+  - *Custom Percentage*: Custom weights per household/member summing to exactly 100%.
+  - *Exclusion / Exact Custom*: Support for single-family or subset-family coverage on specific items (e.g., specific activity taken by Family 1 and 2 only).
+- FR-92: **Dynamic Balance Calculation & Multi-Level Rollup Toggle**:
+  - Live calculation of Total Contributed ($C_i$) vs Total Fair Share Owed ($O_i$), yielding Net Balance ($B_i = C_i - O_i$).
+  - One-click UI toggle to view balances and settlements at either **Household / Family Level** or **Individual Member Level** at any time.
+- FR-93: **Optimal Greedy Debt Simplification Engine**:
+  - Automatically consolidates multi-party bilateral debts into the minimum number of transactions ($N-1$ or fewer) using a two-pointer greedy balance matching algorithm.
+  - Provides a clean, unambiguous "Who Pays Whom" settlement checklist.
+- FR-94: **One-Click WhatsApp Summary Export**: Generates a cleanly structured, emoji-rich WhatsApp Markdown summary (trip title, date, duration, itemized expense roll, and "Who Pays Whom" checklist) with a 1-click clipboard copy button.
+- FR-95: **Multi-Tab Excel Workbook Export**: Exports comprehensive `.xlsx` / `.csv` summaries containing high-level financial KPIs, household balance cards, and itemized transaction sheets.
+- FR-96: **Trip Lifecycle & Settlement Tracking**: Trips support statuses (`active`, `settling`, `settled`, `archived`) and recording of verified settlement transactions (`FairShareSettlement`).
+
 ---
 
 ## 5. Non-Functional Requirements

@@ -22,11 +22,18 @@ import { FamilySettingsPage } from './pages/settings/FamilySettingsPage';
 import { MembersAccessPage } from './pages/settings/MembersAccessPage';
 import { TrackerHubPage } from './pages/tracker/TrackerHubPage';
 import { TrackerProjectDetailPage } from './pages/tracker/TrackerProjectDetailPage';
+import { FairShareTripHubPage } from './pages/fairshare/FairShareTripHubPage';
+import { FairShareTripDetailPage } from './pages/fairshare/FairShareTripDetailPage';
 
 // Root redirect respecting preferred application
 const RootRedirect: React.FC = () => {
   const { user } = useAuthStore();
-  const target = user?.preferredApp === 'expense_tracker' ? '/tracker' : '/dashboard';
+  const target =
+    user?.preferredApp === 'fairshare'
+      ? '/fairshare'
+      : user?.preferredApp === 'expense_tracker'
+      ? '/tracker'
+      : '/dashboard';
   return <Navigate to={target} replace />;
 };
 
@@ -58,7 +65,13 @@ const RequireOnboarding: React.FC<{ children: React.ReactNode }> = ({ children }
   }
   if (!user) return <Navigate to="/login" replace />;
   if (user.status === 'active') {
-    return <Navigate to={user.preferredApp === 'expense_tracker' ? '/tracker' : '/dashboard'} replace />;
+    const target =
+      user.preferredApp === 'fairshare'
+        ? '/fairshare'
+        : user.preferredApp === 'expense_tracker'
+        ? '/tracker'
+        : '/dashboard';
+    return <Navigate to={target} replace />;
   }
   return <>{children}</>;
 };
@@ -134,6 +147,9 @@ export const App: React.FC = () => {
           <Route path="tracker" element={<TrackerHubPage />} />
           <Route path="tracker/projects/:id" element={<TrackerProjectDetailPage />} />
           <Route path="tracker/settings" element={<MyProfilePage />} />
+          <Route path="fairshare" element={<FairShareTripHubPage />} />
+          <Route path="fairshare/trips/:id" element={<FairShareTripDetailPage />} />
+          <Route path="fairshare/settings" element={<MyProfilePage />} />
           <Route path="settings">
             <Route index element={<Navigate to="/settings/profile" replace />} />
             <Route path="profile" element={<MyProfilePage />} />

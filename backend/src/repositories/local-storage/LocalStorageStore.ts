@@ -14,6 +14,10 @@ export class LocalStorageStore {
     return this.storage.get(name)!;
   }
 
+  static setCollection<T = any>(name: string, data: T[]): void {
+    this.storage.set(name, data);
+  }
+
   static clear(): void {
     this.storage.clear();
   }

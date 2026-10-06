@@ -14,3 +14,4 @@ export * from './LocalStorageCurrencyRateRepository';
 export * from './LocalStorageSuggestionSnapshotRepository';
 export * from './LocalStorageRateRevisionRepository';
 export * from './LocalStorageTrackerRepository';
+export * from './LocalStorageFairShareRepository';
