@@ -87,6 +87,7 @@ The following stack is locked. Do **not** introduce any library, framework, or t
 - **No direct Gemini API calls from the frontend** — all AI calls must be proxied through the backend.
 - **No hardcoded secrets** — all secrets (`JWT_SECRET`, `GEMINI_API_KEY`, DB credentials) must come from `.env` and never be committed to the repository.
 - **No new frameworks** (e.g., Next.js, SvelteKit, Express replacing NestJS) without explicit owner approval.
+- **No direct connections to production databases (Neon) or hosting platforms (Vercel)** from local agent sessions or scripts. Agents must NEVER configure, connect to, or execute commands against production database URLs (e.g., `*.neon.tech`). Production data access and migrations are strictly isolated to Vercel/Neon runtime directly. Local development must strictly use local storage / SQLite.
 
 ---
 
@@ -118,6 +119,12 @@ The following stack is locked. Do **not** introduce any library, framework, or t
 - A `pending_approval` member must be blocked from all financial endpoints — not just the UI.
 - The Gemini API key (`GEMINI_API_KEY`) must never appear in any frontend bundle, log output, or API response.
 - Refresh tokens must be stored in **HttpOnly** cookies — never in `localStorage`.
+
+### Production Environment Isolation (STRICT GUARDRAIL)
+- **Zero direct connections to Neon PostgreSQL or Vercel production environments:** AI agents, code generators, and local development tools must NEVER directly connect to, query, migrate, seed, or manipulate the production Neon database or Vercel production environment from the local shell, scripts, or codebase.
+- **Owner-Exclusive Production Management:** All production database updates (migrations, schema changes, DDL, data seeding) must be executed by the owner (Anbu) directly through the Neon console or Vercel platform.
+- **Strict Local Isolation:** Local development, scripts, and tests must strictly run against the local SQLite database (`dev.db` / `test.db`) or `LocalStorage`.
+- **Zero Production Credentials in Workspace:** Production credentials, connection strings (e.g., `*.neon.tech`), and Vercel tokens must NEVER be placed in `.env`, shell session variables, or committed to code.
 
 ---
 
