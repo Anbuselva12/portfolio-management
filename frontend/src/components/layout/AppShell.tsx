@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuthStore } from '../../store/auth.store';
 import {
@@ -17,15 +17,27 @@ import {
   X,
   Wallet,
   Users,
+  FolderKanban,
+  Palmtree,
+  LayoutGrid,
+  ChevronDown,
+  ArrowLeftRight,
+  ArrowRight,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { adminApi } from '../../api/endpoints/admin.api';
+import { APP_CONFIGS, getCurrentApp } from './appConfig';
+import { MobileAppSwitcherModal } from './MobileAppSwitcherModal';
 
 export const AppShell: React.FC = () => {
   const { user, logout } = useAuthStore();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isAppSwitcherModalOpen, setIsAppSwitcherModalOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentApp = getCurrentApp(location.pathname);
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -49,13 +61,21 @@ export const AppShell: React.FC = () => {
     }
   }, []);
 
-  const navLinks = [
+  interface MobileNavLink {
+    to: string;
+    icon: any;
+    label: string;
+    badge?: number;
+  }
+
+  const finFamilyLinks: MobileNavLink[] = [
     { to: '/dashboard', icon: Home, label: 'Dashboard' },
     { to: '/assets', icon: Briefcase, label: 'Assets' },
     { to: '/income', icon: TrendingUp, label: 'Income' },
     { to: '/loans', icon: CreditCard, label: 'Loans' },
     { to: '/strategies', icon: Zap, label: 'Debt Strategies' },
     { to: '/expenses', icon: Receipt, label: 'Expenses' },
+    { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
     { to: '/insurance', icon: Shield, label: 'Insurance' },
     ...(user?.role === 'admin'
       ? [{ to: '/settings/members', icon: Users, label: 'Members & Access', badge: pendingCount }]
@@ -64,12 +84,29 @@ export const AppShell: React.FC = () => {
     { to: '/settings/profile', icon: Settings, label: 'Settings' },
   ];
 
-  const bottomTabLinks = [
-    { to: '/dashboard', icon: Home, label: 'Dash' },
-    { to: '/loans', icon: CreditCard, label: 'Loans' },
-    { to: '/income', icon: TrendingUp, label: 'Income' },
-    { to: '/strategies', icon: Zap, label: 'Strategies' },
+  const trackerLinks: MobileNavLink[] = [
+    { to: '/tracker', icon: FolderKanban, label: 'Projects Hub' },
+    { to: '/tracker/settings', icon: Settings, label: 'Settings' },
   ];
+
+  const fairShareLinks: MobileNavLink[] = [
+    { to: '/fairshare', icon: Palmtree, label: 'Trips & Events' },
+    { to: '/fairshare/settings', icon: Settings, label: 'Settings' },
+  ];
+
+  const drawerNavLinks: MobileNavLink[] =
+    currentApp.id === 'fairshare'
+      ? fairShareLinks
+      : currentApp.id === 'expense_tracker'
+      ? trackerLinks
+      : finFamilyLinks;
+
+  const profileSettingsRoute =
+    currentApp.id === 'fairshare'
+      ? '/fairshare/settings'
+      : currentApp.id === 'expense_tracker'
+      ? '/tracker/settings'
+      : '/settings/profile';
 
   return (
     <div className="flex h-screen w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-hidden">
@@ -78,35 +115,68 @@ export const AppShell: React.FC = () => {
 
       {/* Mobile Top Header Bar (< 768px) */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-3 z-40">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Hamburger button */}
           <button
             type="button"
             onClick={() => setIsMobileNavOpen(true)}
-            className="min-h-[44px] min-w-[44px] relative flex items-center justify-center p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            className="min-h-[44px] min-w-[44px] relative flex items-center justify-center p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shrink-0"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
-            {pendingCount > 0 && (
+            {pendingCount > 0 && currentApp.id === 'finfamily' && (
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white dark:ring-gray-900 animate-pulse" />
             )}
           </button>
-          <Link to="/dashboard" className="flex items-center gap-2 font-bold text-base text-gray-900 dark:text-white">
-            <div className="w-7 h-7 rounded-lg bg-cyan-600 flex items-center justify-center text-white">
-              <Wallet className="w-4 h-4" />
+
+          {/* Current App Trigger (Opens App Switcher Modal) */}
+          <button
+            type="button"
+            onClick={() => setIsAppSwitcherModalOpen(true)}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-850/80 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer min-w-0"
+            title="Tap to switch applications"
+          >
+            <div
+              className={clsx(
+                'w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-xs',
+                currentApp.color,
+              )}
+            >
+              <currentApp.icon className="w-3.5 h-3.5" />
             </div>
-            <span>FinFamily</span>
-          </Link>
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="font-extrabold text-sm text-gray-900 dark:text-white truncate">
+                {currentApp.name}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            </div>
+          </button>
         </div>
 
-        <Link
-          to="/settings/profile"
-          className="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          title="Account profile"
-        >
-          <div className="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white text-xs font-bold shadow-xs">
-            {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
-          </div>
-        </Link>
+        {/* Right Header Actions */}
+        <div className="flex items-center gap-2">
+          {/* Apps Switcher Button */}
+          <button
+            type="button"
+            onClick={() => setIsAppSwitcherModalOpen(true)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 cursor-pointer"
+            title="Switch workspace"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Apps</span>
+          </button>
+
+          {/* User Profile Avatar */}
+          <Link
+            to={profileSettingsRoute}
+            className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Account profile"
+          >
+            <div className="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white text-xs font-bold shadow-xs">
+              {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+            </div>
+          </Link>
+        </div>
       </header>
 
       {/* Mobile Slide-Over Drawer Navigation */}
@@ -119,16 +189,21 @@ export const AppShell: React.FC = () => {
           />
 
           {/* Drawer sheet */}
-          <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-200">
+          <div className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-cyan-600 flex items-center justify-center text-white">
-                  <Wallet className="w-5 h-5" />
+                <div
+                  className={clsx(
+                    'w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-xs',
+                    currentApp.color,
+                  )}
+                >
+                  <currentApp.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="font-bold text-base text-gray-900 dark:text-white">FinFamily</div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400">Wealth & Debt Manager</div>
+                  <div className="font-bold text-base text-gray-900 dark:text-white">{currentApp.name}</div>
+                  <div className="text-[11px] text-gray-500 dark:text-gray-400">{currentApp.subtitle}</div>
                 </div>
               </div>
               <button
@@ -141,9 +216,66 @@ export const AppShell: React.FC = () => {
               </button>
             </div>
 
-            {/* Nav list */}
+            {/* In-Drawer Quick App Switcher Section */}
+            <div className="p-3 bg-gray-50 dark:bg-gray-850/60 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Switch Workspace
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileNavOpen(false);
+                    setIsAppSwitcherModalOpen(true);
+                  }}
+                  className="text-[11px] font-bold text-cyan-600 dark:text-cyan-400"
+                >
+                  View All
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5">
+                {APP_CONFIGS.map((app) => {
+                  const isActive = currentApp.id === app.id;
+                  const Icon = app.icon;
+                  return (
+                    <button
+                      key={app.id}
+                      type="button"
+                      onClick={() => {
+                        setIsMobileNavOpen(false);
+                        navigate(app.route);
+                      }}
+                      className={clsx(
+                        'flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer',
+                        isActive
+                          ? 'border-emerald-500 bg-white dark:bg-gray-800 shadow-xs ring-1 ring-emerald-500/30'
+                          : 'border-transparent bg-white/50 dark:bg-gray-800/40 hover:bg-white dark:hover:bg-gray-800',
+                      )}
+                    >
+                      <div
+                        className={clsx(
+                          'w-7 h-7 rounded-lg flex items-center justify-center text-white mb-1 shadow-xs',
+                          app.color,
+                        )}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[11px] font-extrabold text-gray-800 dark:text-gray-200 truncate w-full">
+                        {app.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Nav list for Current Workspace */}
             <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
-              {navLinks.map((link) => (
+              <div className="px-2 py-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                {currentApp.name} Navigation
+              </div>
+              {drawerNavLinks.map((link) => (
                 <NavLink
                   key={link.label}
                   to={link.to}
@@ -152,8 +284,8 @@ export const AppShell: React.FC = () => {
                     clsx(
                       'flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors min-h-[44px]',
                       isActive
-                        ? 'bg-cyan-600 text-white font-semibold shadow-xs'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        ? clsx(currentApp.color, 'font-semibold shadow-xs')
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
                     )
                   }
                 >
@@ -199,45 +331,174 @@ export const AppShell: React.FC = () => {
         </main>
       </div>
 
-      {/* Bottom Quick-Action Tab Bar on Mobile (< 768px) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 grid grid-cols-5 items-center px-1 z-40 safe-bottom">
-        {bottomTabLinks.map((link) => (
-          <NavLink
-            key={link.label}
-            to={link.to}
-            className={({ isActive }) =>
-              clsx(
-                'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
-                isActive
-                  ? 'text-cyan-600 dark:text-cyan-400 font-semibold'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              )
-            }
-          >
-            <link.icon className="w-5 h-5 mb-0.5" />
-            <span>{link.label}</span>
-          </NavLink>
-        ))}
+      {/* Context-Aware Bottom Tab Bar on Mobile (< 768px) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 grid grid-cols-4 items-center px-1 z-40 safe-bottom">
+        {currentApp.id === 'fairshare' ? (
+          <>
+            <NavLink
+              to="/fairshare"
+              end
+              className={({ isActive }) =>
+                clsx(
+                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                    : 'text-gray-500 dark:text-gray-400',
+                )
+              }
+            >
+              <Palmtree className="w-5 h-5 mb-0.5" />
+              <span>Trips</span>
+            </NavLink>
 
-        {/* 5th slot: More button that opens full navigation drawer */}
-        <button
-          type="button"
-          onClick={() => setIsMobileNavOpen(true)}
-          className={clsx(
-            'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium relative text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer',
-            isMobileNavOpen && 'text-cyan-600 dark:text-cyan-400'
-          )}
-          aria-label="More navigation options"
-        >
-          <div className="relative">
-            <Menu className="w-5 h-5 mb-0.5" />
-            {pendingCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white dark:ring-gray-900 animate-pulse" />
-            )}
-          </div>
-          <span>More</span>
-        </button>
+            <NavLink
+              to="/fairshare/settings"
+              className={({ isActive }) =>
+                clsx(
+                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                    : 'text-gray-500 dark:text-gray-400',
+                )
+              }
+            >
+              <Settings className="w-5 h-5 mb-0.5" />
+              <span>Settings</span>
+            </NavLink>
+
+            <button
+              type="button"
+              onClick={() => setIsAppSwitcherModalOpen(true)}
+              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer"
+            >
+              <LayoutGrid className="w-5 h-5 mb-0.5" />
+              <span>Switch</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(true)}
+              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer"
+            >
+              <Menu className="w-5 h-5 mb-0.5" />
+              <span>Menu</span>
+            </button>
+          </>
+        ) : currentApp.id === 'expense_tracker' ? (
+          <>
+            <NavLink
+              to="/tracker"
+              end
+              className={({ isActive }) =>
+                clsx(
+                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-amber-600 dark:text-amber-400 font-bold'
+                    : 'text-gray-500 dark:text-gray-400',
+                )
+              }
+            >
+              <FolderKanban className="w-5 h-5 mb-0.5" />
+              <span>Projects</span>
+            </NavLink>
+
+            <NavLink
+              to="/tracker/settings"
+              className={({ isActive }) =>
+                clsx(
+                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-amber-600 dark:text-amber-400 font-bold'
+                    : 'text-gray-500 dark:text-gray-400',
+                )
+              }
+            >
+              <Settings className="w-5 h-5 mb-0.5" />
+              <span>Settings</span>
+            </NavLink>
+
+            <button
+              type="button"
+              onClick={() => setIsAppSwitcherModalOpen(true)}
+              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
+            >
+              <LayoutGrid className="w-5 h-5 mb-0.5" />
+              <span>Switch</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(true)}
+              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
+            >
+              <Menu className="w-5 h-5 mb-0.5" />
+              <span>Menu</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                clsx(
+                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-cyan-600 dark:text-cyan-400 font-bold'
+                    : 'text-gray-500 dark:text-gray-400',
+                )
+              }
+            >
+              <Home className="w-5 h-5 mb-0.5" />
+              <span>Dash</span>
+            </NavLink>
+
+            <NavLink
+              to="/loans"
+              className={({ isActive }) =>
+                clsx(
+                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-cyan-600 dark:text-cyan-400 font-bold'
+                    : 'text-gray-500 dark:text-gray-400',
+                )
+              }
+            >
+              <CreditCard className="w-5 h-5 mb-0.5" />
+              <span>Loans</span>
+            </NavLink>
+
+            <button
+              type="button"
+              onClick={() => setIsAppSwitcherModalOpen(true)}
+              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-cyan-600 transition-colors cursor-pointer"
+            >
+              <LayoutGrid className="w-5 h-5 mb-0.5" />
+              <span>Switch</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(true)}
+              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium relative text-gray-500 dark:text-gray-400 hover:text-cyan-600 transition-colors cursor-pointer"
+              aria-label="More navigation options"
+            >
+              <div className="relative">
+                <Menu className="w-5 h-5 mb-0.5" />
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+                )}
+              </div>
+              <span>More</span>
+            </button>
+          </>
+        )}
       </nav>
+
+      {/* Mobile App Switcher Modal Sheet */}
+      <MobileAppSwitcherModal
+        isOpen={isAppSwitcherModalOpen}
+        onClose={() => setIsAppSwitcherModalOpen(false)}
+      />
     </div>
   );
 };

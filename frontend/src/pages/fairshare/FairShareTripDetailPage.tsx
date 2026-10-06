@@ -408,11 +408,11 @@ export const FairShareTripDetailPage: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
             <button
               onClick={handleCopyWhatsApp}
               className={clsx(
-                'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs',
+                'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs min-h-[44px]',
                 copiedWhatsApp
                   ? 'bg-emerald-600 border-emerald-600 text-white'
                   : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750',
@@ -425,7 +425,7 @@ export const FairShareTripDetailPage: React.FC = () => {
 
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors shadow-xs cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors shadow-xs cursor-pointer min-h-[44px]"
               title="Export ledger and settlements to Excel / CSV"
             >
               <Download className="w-4 h-4 text-cyan-600" />
@@ -434,7 +434,7 @@ export const FairShareTripDetailPage: React.FC = () => {
 
             <button
               onClick={() => setIsExpenseModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               <span>Add Expense</span>
@@ -466,25 +466,25 @@ export const FairShareTripDetailPage: React.FC = () => {
           </div>
 
           {/* Rollup Switcher Pill Toggle */}
-          <div className="flex items-center gap-1.5 self-start sm:self-auto bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
-            <span className="text-[11px] font-semibold text-gray-400 px-2">Settlement View:</span>
+          <div className="flex items-center gap-1.5 w-full sm:w-auto bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
+            <span className="text-[11px] font-semibold text-gray-400 px-2 shrink-0">View:</span>
             <button
               type="button"
               onClick={() => setRollupLevel('family')}
               className={clsx(
-                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[36px]',
                 rollupLevel === 'family'
                   ? 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-xs'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
               )}
             >
-              Household / Family Level
+              Household Level
             </button>
             <button
               type="button"
               onClick={() => setRollupLevel('individual')}
               className={clsx(
-                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[36px]',
                 rollupLevel === 'individual'
                   ? 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-xs'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
@@ -535,12 +535,12 @@ export const FairShareTripDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
+      {/* Navigation Tabs (Scrollable on Mobile) */}
+      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         <button
           onClick={() => setActiveTab('expenses')}
           className={clsx(
-            'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-bold transition-colors cursor-pointer',
+            'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-bold transition-colors cursor-pointer shrink-0 min-h-[44px]',
             activeTab === 'expenses'
               ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
               : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200',
@@ -553,7 +553,7 @@ export const FairShareTripDetailPage: React.FC = () => {
         <button
           onClick={() => setActiveTab('settlement')}
           className={clsx(
-            'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-bold transition-colors cursor-pointer',
+            'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-bold transition-colors cursor-pointer shrink-0 min-h-[44px]',
             activeTab === 'settlement'
               ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
               : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200',
@@ -566,7 +566,7 @@ export const FairShareTripDetailPage: React.FC = () => {
         <button
           onClick={() => setActiveTab('households')}
           className={clsx(
-            'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-bold transition-colors cursor-pointer',
+            'flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-bold transition-colors cursor-pointer shrink-0 min-h-[44px]',
             activeTab === 'households'
               ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
               : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200',
@@ -944,8 +944,8 @@ export const FairShareTripDetailPage: React.FC = () => {
 
       {/* Modal: Add Expense */}
       {isExpenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-xl w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-6 sm:p-8 my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-xl w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-5 sm:p-8 my-auto max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Add Group Expense</h3>
               <button onClick={() => setIsExpenseModalOpen(false)} className="text-gray-400 hover:text-gray-600">
@@ -1128,8 +1128,8 @@ export const FairShareTripDetailPage: React.FC = () => {
 
       {/* Modal: Record Settlement */}
       {isSettlementModalOpen && settlementTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-5 sm:p-6 my-auto max-h-[90vh] overflow-y-auto">
             <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">Record Settlement Payment</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               Recording payment from <strong className="text-rose-500">{settlementTarget.fromName}</strong> to{' '}
@@ -1200,8 +1200,8 @@ export const FairShareTripDetailPage: React.FC = () => {
 
       {/* Modal: Add Household */}
       {isHouseholdModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-sm w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-sm w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-5 sm:p-6 my-auto max-h-[90vh] overflow-y-auto">
             <h3 className="text-base font-bold text-gray-900 dark:text-white mb-3">Add Family Household</h3>
             <form onSubmit={handleAddHousehold} className="space-y-4">
               <input
@@ -1235,8 +1235,8 @@ export const FairShareTripDetailPage: React.FC = () => {
 
       {/* Modal: Add Participant */}
       {isParticipantModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-sm w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-sm w-full border border-gray-200 dark:border-gray-700 shadow-2xl p-5 sm:p-6 my-auto max-h-[90vh] overflow-y-auto">
             <h3 className="text-base font-bold text-gray-900 dark:text-white mb-3">Add Participant</h3>
             <form onSubmit={handleAddParticipant} className="space-y-3">
               <input
