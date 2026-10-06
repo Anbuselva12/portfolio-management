@@ -157,3 +157,4 @@ export class FairShareController {
     return { success: true };
   }
 }
+

@@ -59,3 +59,4 @@ export interface IFairShareRepository {
 }
 
 export const I_FAIR_SHARE_REPOSITORY = 'IFairShareRepository';
+

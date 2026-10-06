@@ -269,3 +269,4 @@ Generated as a downloadable workbook (`.xlsx` or `.csv`):
 - Monetary Precision: `Decimal.js` for all splits, net balances, and settlement amounts (zero floating-point math).
 - Storage Parity: Implemented with `IFairShareRepository`, `PrismaFairShareRepository`, and `LocalStorageFairShareRepository`.
 - Database Isolation: Local dev uses local SQLite `dev.db`. Zero direct production connections.
+

@@ -532,3 +532,4 @@ export const FairShareTripHubPage: React.FC = () => {
     </div>
   );
 };
+

@@ -8,3 +8,4 @@ import { FairShareService } from './fairshare.service';
   exports: [FairShareService],
 })
 export class FairShareModule {}
+

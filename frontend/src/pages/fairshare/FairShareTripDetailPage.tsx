@@ -1282,3 +1282,4 @@ export const FairShareTripDetailPage: React.FC = () => {
     </div>
   );
 };
+

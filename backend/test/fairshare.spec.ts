@@ -201,3 +201,4 @@ describe('FairShareService — Trip Expense Splitter & Debt Simplification Engin
     expect(summary).toContain('• Breakfast Buffet — ₹1,000 (Paid by *Anbu*)');
   });
 });
+

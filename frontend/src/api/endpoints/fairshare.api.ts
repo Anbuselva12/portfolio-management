@@ -69,3 +69,4 @@ export const fairShareApi = {
   deleteSettlement: async (tripId: string, settlementId: string): Promise<{ success: boolean }> =>
     (await api.delete(`/fairshare/trips/${tripId}/settlements/${settlementId}`)).data,
 };
+

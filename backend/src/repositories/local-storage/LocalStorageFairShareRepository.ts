@@ -457,3 +457,4 @@ export class LocalStorageFairShareRepository implements IFairShareRepository {
     );
   }
 }
+

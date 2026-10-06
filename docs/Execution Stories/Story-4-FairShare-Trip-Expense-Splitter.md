@@ -44,3 +44,4 @@
 6. "Copy for WhatsApp" copies a clean, emoji-formatted message to the clipboard with visual confirmation.
 7. Excel export downloads a valid file with summary and itemized expenses.
 8. Zero access is granted to FinFamily wealth portfolios from FairShare trips, preserving tenant isolation.
+
