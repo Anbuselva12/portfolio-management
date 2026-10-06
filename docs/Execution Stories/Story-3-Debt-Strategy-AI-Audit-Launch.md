@@ -42,6 +42,13 @@
   - **Recurring Incomes**: lists active recurring incomes with `reminders_enabled: true`. Provides 1-click "Confirm Received" or inline amount adjustment (e.g. for variable salary or partial rent) without altering the recurring baseline contract.
   - **Loan EMIs**: lists active loans due this month with `emi_reminders_enabled: true`. 1-click "Mark EMI Paid" with bi-directional synchronization to loan schedule and expense ledger.
 
+### Unified Statement of Transactions (Passbook Feed)
+- Dedicated `/transactions` page in primary navigation with chronological passbook of all financial movements (latest first)
+- Inflows (`+` Green): One-off income additions, confirmed recurring income arrivals
+- Outflows (`-` Red): Household expenses, insurance premiums, paid loan EMIs, part-payments, and gold loan cash payments
+- Multi-dimensional filtering: 1 Month / Quarterly / Yearly / All Time, Inflow (+) vs Outflow (-), origin source category, search by note/label/lender
+- Summary strip with Total Inflow, Total Outflow, Net Cash Flow (Surplus/Deficit), and Transaction Count
+
 ### Audit Trail
 - Full change log across all entities from Stories 1–2: create/update/delete/restore/login/password_reset/approve/reject, with before/after field diffs
 - Filters: Member, Entity Type, Date Range, Action

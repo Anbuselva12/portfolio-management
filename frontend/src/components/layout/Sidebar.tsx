@@ -7,6 +7,7 @@ import {
   TrendingUp,
   CreditCard,
   Receipt,
+  ArrowLeftRight,
   Shield,
   Settings,
   LogOut,
@@ -39,6 +40,7 @@ export const Sidebar: React.FC = () => {
     { to: '/loans', icon: CreditCard, label: 'Loans' },
     { to: '/strategies', icon: Zap, label: 'Debt Strategies' },
     { to: '/expenses', icon: Receipt, label: 'Expenses' },
+    { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
     { to: '/insurance', icon: Shield, label: 'Insurance' },
     ...(user?.role === 'admin'
       ? [{ to: '/settings/members', icon: Users, label: 'Members & Access', badge: pendingCount }]

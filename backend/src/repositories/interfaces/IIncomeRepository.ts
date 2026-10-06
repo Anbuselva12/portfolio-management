@@ -62,6 +62,11 @@ export interface IIncomeRepository {
   findReceiptsByFamilyAndMonth(familyId: string, yearMonth: string): Promise<any[]>;
 
   /**
+   * Find all receipts for a family across all months
+   */
+  findAllReceiptsByFamily(familyId: string): Promise<any[]>;
+
+  /**
    * Find receipt for a specific income in a given YYYY-MM
    */
   findReceiptByIncomeAndMonth(incomeId: string, yearMonth: string): Promise<any | null>;

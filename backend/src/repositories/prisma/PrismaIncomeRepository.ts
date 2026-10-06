@@ -98,6 +98,13 @@ export class PrismaIncomeRepository implements IIncomeRepository {
     });
   }
 
+  async findAllReceiptsByFamily(familyId: string): Promise<any[]> {
+    return (this.prisma as any).monthlyIncomeReceipt.findMany({
+      where: { family_id: familyId },
+      include: { income: true, member: true },
+    });
+  }
+
   async findReceiptByIncomeAndMonth(incomeId: string, yearMonth: string): Promise<any | null> {
     return (this.prisma as any).monthlyIncomeReceipt.findUnique({
       where: {

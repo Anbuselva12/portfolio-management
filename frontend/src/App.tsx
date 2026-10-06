@@ -15,6 +15,7 @@ import { InsurancePage } from './pages/insurance/InsurancePage';
 import { LoansPage } from './pages/loans/LoansPage';
 import { LoanDetailPage } from './pages/loans/LoanDetailPage';
 import { StrategyComparisonPage } from './pages/strategies/StrategyComparisonPage';
+import { TransactionsPage } from './pages/transactions/TransactionsPage';
 import { AuditTrailPage } from './pages/settings/AuditTrailPage';
 import { MyProfilePage } from './pages/settings/MyProfilePage';
 import { FamilySettingsPage } from './pages/settings/FamilySettingsPage';
@@ -114,6 +115,7 @@ export const App: React.FC = () => {
           <Route path="assets" element={<AssetsPage />} />
           <Route path="income" element={<IncomePage />} />
           <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="transactions" element={<TransactionsPage />} />
           <Route path="insurance" element={<InsurancePage />} />
           <Route path="loans" element={<LoansPage />} />
           <Route path="loans/:id" element={<LoanDetailPage />} />

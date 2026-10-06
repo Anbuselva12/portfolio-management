@@ -431,6 +431,13 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-61: Family Admin can view a filterable Audit Trail screen (by member, entity type, date range).
 - FR-62: Soft-deleted records can be restored by Admin from the Audit Trail (restore action re-activates the record and logs the restore).
 
+### 4.8 Unified Statement of Transactions
+- FR-70: System maintains a unified, chronological **Statement of Transactions** aggregating all inflows and outflows across the portfolio, sorted strictly **latest first**.
+- FR-71: Inflow transactions are displayed in green with a `+` symbol, tracking one-off incomes as of their date, and recurring incomes as of their confirmed arrival date (`received_date` from Monthly Action Queue / reminders).
+- FR-72: Outflow transactions are displayed in red with a `-` symbol, tracking household expenses, insurance premium payments, loan EMIs marked as paid (as of `paid_date`/`due_date`), loan part-payments, and gold loan cash payments.
+- FR-73: Transactions can be filtered by duration (`1 Month`, `Quarterly`, `Yearly`, `All Time`), flow direction (`All`, `Inflow (+)`, `Outflow (-)`), category/source, member scope, and free-text search.
+- FR-74: A top summary strip computes Total Inflow, Total Outflow, Net Cash Flow, and Transaction Count for the active filters.
+
 ---
 
 ## 5. Non-Functional Requirements

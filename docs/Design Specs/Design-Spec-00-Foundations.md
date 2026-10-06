@@ -30,6 +30,7 @@
 │   └── Prepayment Calculator
 ├── Debt Strategy Comparison                                          — Design-Spec-05
 ├── Expenses                                                          — Design-Spec-06
+├── Transactions (Statement of All Cashflows)                          — Design-Spec-08
 ├── Insurance                                                         — Design-Spec-06
 ├── Audit Trail                                                       — Design-Spec-07
 └── Settings                                                          — Design-Spec-07
@@ -38,7 +39,7 @@
     └── My Profile
 ```
 
-Primary navigation: **left sidebar** (desktop) collapsing to a **bottom tab bar** (mobile): Dashboard, Assets, Income, Loans, Expenses, Insurance, Settings. Audit Trail lives under Settings (least-frequently used, per requirement).
+Primary navigation: **left sidebar** (desktop) collapsing to a **bottom tab bar** (mobile): Dashboard, Assets, Income, Loans, Expenses, Transactions, Insurance, Settings. Audit Trail lives under Settings (least-frequently used, per requirement).
 
 ---
 
