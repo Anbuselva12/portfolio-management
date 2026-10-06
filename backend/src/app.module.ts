@@ -18,6 +18,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { StrategiesModule } from './strategies/strategies.module';
 import { AuditModule } from './audit/audit.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { TrackerModule } from './tracker/tracker.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     StrategiesModule,
     AuditModule,
     TransactionsModule,
+    TrackerModule,
   ],
 })
 export class AppModule {}

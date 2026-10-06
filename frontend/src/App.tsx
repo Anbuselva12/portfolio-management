@@ -20,6 +20,15 @@ import { AuditTrailPage } from './pages/settings/AuditTrailPage';
 import { MyProfilePage } from './pages/settings/MyProfilePage';
 import { FamilySettingsPage } from './pages/settings/FamilySettingsPage';
 import { MembersAccessPage } from './pages/settings/MembersAccessPage';
+import { TrackerHubPage } from './pages/tracker/TrackerHubPage';
+import { TrackerProjectDetailPage } from './pages/tracker/TrackerProjectDetailPage';
+
+// Root redirect respecting preferred application
+const RootRedirect: React.FC = () => {
+  const { user } = useAuthStore();
+  const target = user?.preferredApp === 'expense_tracker' ? '/tracker' : '/dashboard';
+  return <Navigate to={target} replace />;
+};
 
 // For routes requiring an active member account
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -48,7 +57,9 @@ const RequireOnboarding: React.FC<{ children: React.ReactNode }> = ({ children }
     );
   }
   if (!user) return <Navigate to="/login" replace />;
-  if (user.status === 'active') return <Navigate to="/dashboard" replace />;
+  if (user.status === 'active') {
+    return <Navigate to={user.preferredApp === 'expense_tracker' ? '/tracker' : '/dashboard'} replace />;
+  }
   return <>{children}</>;
 };
 
@@ -59,7 +70,7 @@ const RedirectIfAuthenticated: React.FC<{ children: React.ReactNode }> = ({ chil
   if (user) {
     if (user.status === 'unaffiliated') return <Navigate to="/onboarding/family-selection" replace />;
     if (user.status === 'pending_approval') return <Navigate to="/onboarding/pending" replace />;
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={user.preferredApp === 'expense_tracker' ? '/tracker' : '/dashboard'} replace />;
   }
   return <>{children}</>;
 };
@@ -110,7 +121,7 @@ export const App: React.FC = () => {
             </RequireAuth>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route index element={<RootRedirect />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="assets" element={<AssetsPage />} />
           <Route path="income" element={<IncomePage />} />
@@ -120,6 +131,8 @@ export const App: React.FC = () => {
           <Route path="loans" element={<LoansPage />} />
           <Route path="loans/:id" element={<LoanDetailPage />} />
           <Route path="strategies" element={<StrategyComparisonPage />} />
+          <Route path="tracker" element={<TrackerHubPage />} />
+          <Route path="tracker/projects/:id" element={<TrackerProjectDetailPage />} />
           <Route path="settings">
             <Route index element={<Navigate to="/settings/profile" replace />} />
             <Route path="profile" element={<MyProfilePage />} />

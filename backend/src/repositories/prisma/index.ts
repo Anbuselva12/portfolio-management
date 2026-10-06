@@ -12,3 +12,4 @@ export * from './PrismaAuditRepository';
 export * from './PrismaCurrencyRateRepository';
 export * from './PrismaSuggestionSnapshotRepository';
 export * from './PrismaRateRevisionRepository';
+export * from './PrismaTrackerRepository';

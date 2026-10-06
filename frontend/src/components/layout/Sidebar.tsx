@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
+import { AppSwitcher } from './AppSwitcher';
 import {
   Home,
   Briefcase,
@@ -15,13 +16,25 @@ import {
   Clock,
   Wallet,
   Users,
+  Building2,
+  FolderKanban,
+  SlidersHorizontal,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { adminApi } from '../../api/endpoints/admin.api';
 
+interface NavItem {
+  to: string;
+  icon: any;
+  label: string;
+  badge?: number;
+}
+
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
   const [pendingCount, setPendingCount] = useState(0);
+  const location = useLocation();
+  const isTracker = location.pathname.startsWith('/tracker');
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -33,7 +46,7 @@ export const Sidebar: React.FC = () => {
     }
   }, [user?.role]);
 
-  const links = [
+  const finFamilyLinks: NavItem[] = [
     { to: '/dashboard', icon: Home, label: 'Dashboard' },
     { to: '/assets', icon: Briefcase, label: 'Assets' },
     { to: '/income', icon: TrendingUp, label: 'Income' },
@@ -49,21 +62,19 @@ export const Sidebar: React.FC = () => {
     { to: '/settings/profile', icon: Settings, label: 'Settings' },
   ];
 
+  const trackerLinks: NavItem[] = [
+    { to: '/tracker', icon: FolderKanban, label: 'Projects Hub' },
+    { to: '/dashboard', icon: Wallet, label: 'Switch to FinFamily' },
+    { to: '/settings/profile', icon: Settings, label: 'Settings' },
+  ];
+
+  const links = isTracker ? trackerLinks : finFamilyLinks;
+
   return (
     <aside className="hidden md:flex flex-col w-60 lg:w-64 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shrink-0">
-      {/* Brand Logo & Name */}
-      <div className="p-5 lg:p-6 border-b border-gray-100 dark:border-gray-850 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-cyan-600 flex items-center justify-center text-white shadow-xs">
-          <Wallet className="w-5 h-5" />
-        </div>
-        <div>
-          <div className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">
-            FinFamily
-          </div>
-          <div className="text-[11px] font-medium text-gray-400">
-            Wealth & Debt Manager
-          </div>
-        </div>
+      {/* Brand & Appian-Style Multi-App Switcher */}
+      <div className="p-3 border-b border-gray-100 dark:border-gray-850">
+        <AppSwitcher />
       </div>
 
       {/* Nav links */}

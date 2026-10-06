@@ -47,6 +47,8 @@ describe('Story 2 — Loan Engine, Amortization, Prepayments & Storage Parity', 
     await prisma.expenseCategory.deleteMany();
     await prisma.incomeEntry.deleteMany();
     await prisma.asset.deleteMany();
+    await prisma.trackerExpense.deleteMany();
+    await prisma.trackerProject.deleteMany();
     await prisma.member.deleteMany();
     await prisma.family.deleteMany();
   });

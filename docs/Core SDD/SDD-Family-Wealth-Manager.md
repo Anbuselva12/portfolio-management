@@ -438,6 +438,16 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-73: Transactions can be filtered by duration (`1 Month`, `Quarterly`, `Yearly`, `All Time`), flow direction (`All`, `Inflow (+)`, `Outflow (-)`), category/source, member scope, and free-text search.
 - FR-74: A top summary strip computes Total Inflow, Total Outflow, Net Cash Flow, and Transaction Count for the active filters.
 
+### 4.9 Multi-App Architecture & Modular Expense Tracker
+- FR-80: The system supports an Appian-style top navigation App Switcher enabling one-click switching between FinFamily and the independent **Expense Tracker** application.
+- FR-81: Members can configure and persist their preferred default app (`preferred_app: 'finfamily' | 'expense_tracker'`), automatically loading on login or root navigation.
+- FR-82: Expense Tracker provides a Project/Category Hub displaying cards for configured project categories (e.g., "SK Complex", "Retail Business") with summary metrics.
+- FR-83: Each project tracks granular procurement transactions (`TrackerExpense`) with fields: expense type, product name, brand/vendor, description, quantity, price per unit, unit of measure, total cost (`quantity * price_per_qty`), project phase, tag item, purchase date, and exception flag.
+- FR-84: Projects support an optional `total_area_sqft` attribute; when present, the system calculates and displays the unit cost KPI $\text{Price per Sq Ft} = \frac{\text{Total Cost}}{\text{total\_area\_sqft}}$; when absent, the system displays $\text{Avg Cost per Item}$.
+- FR-85: Expense Tracker provides phase breakdown reports, stacked horizontal phase bar charts, donut charts with color-coded tags, and a "Show Labour Cost" toggle to inspect material vs labor distribution without skew.
+- FR-86: All Expense Tracker projects, phases, types, tags, and expenses are family-scoped (`family_id`), isolating each family's commercial and project data.
+- FR-87: Historical construction data is ingested and accessible under project "SK Complex" (Area: 3,058 sq ft) for the designated production member and family.
+
 ---
 
 ## 5. Non-Functional Requirements

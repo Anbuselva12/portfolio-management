@@ -44,6 +44,8 @@ describe('Story 1 — Foundation, Family Onboarding & Core Portfolio Data', () =
     await prisma.expenseCategory.deleteMany();
     await prisma.incomeEntry.deleteMany();
     await prisma.asset.deleteMany();
+    await prisma.trackerExpense.deleteMany();
+    await prisma.trackerProject.deleteMany();
     await prisma.member.deleteMany();
     await prisma.family.deleteMany();
   });

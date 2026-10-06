@@ -117,6 +117,15 @@ export class AuthService {
     return this.memberRepository.findById(memberId);
   }
 
+  async updateProfile(memberId: string, dto: { displayName?: string; preferredCurrency?: string; preferredApp?: string }) {
+    const updateData: any = {};
+    if (dto.displayName !== undefined) updateData.display_name = dto.displayName;
+    if (dto.preferredCurrency !== undefined) updateData.preferred_currency = dto.preferredCurrency;
+    if (dto.preferredApp !== undefined) updateData.preferred_app = dto.preferredApp;
+
+    return this.memberRepository.update(memberId, updateData);
+  }
+
   async changePassword(memberId: string, dto: ChangePasswordDto) {
     const member = await this.memberRepository.findById(memberId);
     if (!member) throw new UnauthorizedException('User not found');

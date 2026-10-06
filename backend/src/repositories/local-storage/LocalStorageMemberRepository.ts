@@ -40,6 +40,7 @@ export class LocalStorageMemberRepository implements IMemberRepository {
       status: data.status || 'unaffiliated',
       is_active: data.is_active ?? true,
       preferred_currency: data.preferred_currency || 'INR',
+      preferred_app: data.preferred_app || 'finfamily',
       created_at: new Date(),
       last_login_at: data.last_login_at || null,
     };

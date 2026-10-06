@@ -133,6 +133,7 @@ export class LocalStorageIncomeRepository implements IIncomeRepository {
 
   async findReceiptsByFamilyAndMonth(familyId: string, yearMonth: string): Promise<any[]> {
     return this.receipts
+      .filter((r) => r.family_id === familyId && r.year_month === yearMonth)
       .filter((r) => r.family_id === familyId)
       .filter((r) => r.year_month === yearMonth)
       .map((r) => ({ ...r }));

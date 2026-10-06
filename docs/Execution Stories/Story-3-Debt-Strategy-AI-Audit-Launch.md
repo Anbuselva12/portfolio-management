@@ -49,6 +49,15 @@
 - Multi-dimensional filtering: 1 Month / Quarterly / Yearly / All Time, Inflow (+) vs Outflow (-), origin source category, search by note/label/lender
 - Summary strip with Total Inflow, Total Outflow, Net Cash Flow (Surplus/Deficit), and Transaction Count
 
+### Multi-App Platform & Modular Expense Tracker
+- Top-left App Switcher (Appian-style launcher) toggling between FinFamily and Expense Tracker
+- User-specific preferred landing application persisted in Member profile
+- Modular Project Hub displaying project categories (e.g., "SK Complex", "Business")
+- Detailed procurement expense logging (`TrackerExpense` with quantity, price per unit, total cost, phase, tags, units)
+- Dynamic unit cost calculation (`Price per Sq Ft` when `total_area_sqft` is defined, or `Avg Cost per Item`)
+- Visual reports & analytics: Price by Phase stacked horizontal bar chart, Donut breakdown with tag colors, "Show Labour Cost" toggle
+- Historical SQL data ingested for "SK Complex" project (3,058 sq ft) matching legacy Appian totals
+
 ### Audit Trail
 - Full change log across all entities from Stories 1–2: create/update/delete/restore/login/password_reset/approve/reject, with before/after field diffs
 - Filters: Member, Entity Type, Date Range, Action

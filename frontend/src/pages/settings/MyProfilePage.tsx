@@ -8,7 +8,11 @@ export const MyProfilePage: React.FC = () => {
   const { user, setUser } = useAuthStore();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [preferredCurrency, setPreferredCurrency] = useState(user?.preferredCurrency || 'INR');
+  const [preferredApp, setPreferredApp] = useState<'finfamily' | 'expense_tracker'>(
+    user?.preferredApp || 'finfamily',
+  );
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // Change password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -18,16 +22,28 @@ export const MyProfilePage: React.FC = () => {
   const [pwSuccess, setPwSuccess] = useState<string | null>(null);
   const [isChangingPw, setIsChangingPw] = useState(false);
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (user) {
+    if (!user) return;
+    setIsUpdatingProfile(true);
+    try {
+      await authApi.updateProfile({
+        displayName: displayName.trim(),
+        preferredCurrency,
+        preferredApp,
+      });
       setUser({
         ...user,
         displayName: displayName.trim(),
         preferredCurrency,
+        preferredApp,
       });
       setProfileMsg('Profile preferences updated.');
       setTimeout(() => setProfileMsg(null), 3000);
+    } catch (err: any) {
+      setProfileMsg('Failed to update profile: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -130,12 +146,31 @@ export const MyProfilePage: React.FC = () => {
             </select>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Default Landing Application
+            </label>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              Select which workspace FinFamily opens automatically upon login.
+            </p>
+            <select
+              value={preferredApp}
+              onChange={(e) => setPreferredApp(e.target.value as any)}
+              className="mt-1 block w-full sm:w-64 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            >
+              <option value="finfamily">FinFamily (Wealth & Debt)</option>
+              <option value="expense_tracker">Expense Tracker (Projects & Procurement)</option>
+            </select>
+          </div>
+
           <div className="pt-2">
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-cyan-600 hover:bg-cyan-700 cursor-pointer"
+              disabled={isUpdatingProfile}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-cyan-600 hover:bg-cyan-700 cursor-pointer disabled:opacity-50 flex items-center gap-2"
             >
-              Save Profile
+              {isUpdatingProfile && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>Save Profile</span>
             </button>
           </div>
         </form>

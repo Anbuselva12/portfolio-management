@@ -22,24 +22,37 @@
 ├── Register (username/password only)
 ├── Family Selection (Create New | Join Existing)  — see Design-Spec-01
 ├── Pending-Approval Holding Screen                — see Design-Spec-01
-├── Dashboard (Family, default)  |  toggle → Dashboard (My view)     — Design-Spec-02
-├── Assets                                                            — Design-Spec-03
-├── Income                                                            — Design-Spec-03
-├── Loans                                                              — Design-Spec-04
-│   ├── Loan List / Detail / Repayment Schedule
-│   └── Prepayment Calculator
-├── Debt Strategy Comparison                                          — Design-Spec-05
-├── Expenses                                                          — Design-Spec-06
-├── Transactions (Statement of All Cashflows)                          — Design-Spec-08
-├── Insurance                                                         — Design-Spec-06
-├── Audit Trail                                                       — Design-Spec-07
-└── Settings                                                          — Design-Spec-07
-    ├── Family Settings
-    ├── Members & Access / Pending Requests (Admin)
-    └── My Profile
+```
+├── App Switcher (Top-Left Appian-style Launcher)
+│   ├── FinFamily (Family Wealth & Debt App)
+│   └── Expense Tracker (Project & Commercial Procurement App) — Design-Spec-09
+│
+├── App 1: FinFamily
+│   ├── Dashboard (Family | My view)                                      — Design-Spec-02
+│   ├── Assets                                                            — Design-Spec-03
+│   ├── Income                                                            — Design-Spec-03
+│   ├── Loans                                                             — Design-Spec-04
+│   │   ├── Loan List / Detail / Repayment Schedule
+│   │   └── Prepayment Calculator
+│   ├── Debt Strategy Comparison                                          — Design-Spec-05
+│   ├── Expenses                                                          — Design-Spec-06
+│   ├── Transactions (Statement of All Cashflows)                         — Design-Spec-08
+│   ├── Insurance                                                         — Design-Spec-06
+│   ├── Audit Trail                                                       — Design-Spec-07
+│   └── Settings                                                          — Design-Spec-07
+│       ├── Family Settings
+│       ├── Members & Access / Pending Requests (Admin)
+│       └── My Profile (Preferred App selector)
+│
+└── App 2: Expense Tracker                                                — Design-Spec-09
+    ├── Projects / Category Hub (Card Grid)
+    ├── Project Detail & Workspace (KPI Strip + Price/Sq Ft)
+    │   ├── Tab 1: Expenses Log (Search, Phase & Tag filters, Add/Edit Drawer)
+    │   ├── Tab 2: Reports & Analytics (Stacked Bar, Donut, Qty, Labour Toggle)
+    │   └── Tab 3: Configuration (Phases, Types, Tags, Units, Sq Ft)
 ```
 
-Primary navigation: **left sidebar** (desktop) collapsing to a **bottom tab bar** (mobile): Dashboard, Assets, Income, Loans, Expenses, Transactions, Insurance, Settings. Audit Trail lives under Settings (least-frequently used, per requirement).
+Primary navigation: **left sidebar** with an Appian-style **App Switcher** in the top brand header, allowing one-click switching between FinFamily and Expense Tracker. Users can save their preferred default landing app under My Profile / Admin settings.
 
 ---
 

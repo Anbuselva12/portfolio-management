@@ -7,4 +7,5 @@ export const authApi = {
   refresh: async () => (await api.post('/auth/refresh')).data,
   me: async () => (await api.get('/auth/me')).data,
   changePassword: async (data: any) => (await api.post('/auth/change-password', data)).data,
+  updateProfile: async (data: any) => (await api.patch('/auth/profile', data)).data,
 };

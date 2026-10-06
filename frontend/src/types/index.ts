@@ -23,6 +23,7 @@ export interface Member {
   status: MemberStatus;
   isActive: boolean;
   preferredCurrency: string;
+  preferredApp?: 'finfamily' | 'expense_tracker';
   createdAt: string;
   lastLoginAt: string | null;
 }
@@ -412,4 +413,122 @@ export interface SuggestionSnapshot {
   allocations: string;
   metrics: string;
   created_at: string;
+}
+
+// ─── Tracker Types ──────────────────────────────────────────────────────────
+
+export interface TrackerPhase {
+  id: string;
+  project_id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface TrackerExpenseType {
+  id: string;
+  project_id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface TrackerTagItem {
+  id: string;
+  project_id: string;
+  name: string;
+  hex_color?: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface TrackerUnit {
+  id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface TrackerExpense {
+  id: string;
+  project_id: string;
+  expense_type_id?: string | null;
+  product_name?: string | null;
+  brand?: string | null;
+  description?: string | null;
+  quantity: string;
+  price_per_qty: string;
+  unit_id?: string | null;
+  is_exception: boolean;
+  total_cost: string;
+  project_phase_id?: string | null;
+  tag_item_id?: string | null;
+  purchase_date: string;
+  created_by_id?: string | null;
+  is_active: boolean;
+  created_at: string;
+  expense_type?: TrackerExpenseType | null;
+  unit?: TrackerUnit | null;
+  phase?: TrackerPhase | null;
+  tag_item?: TrackerTagItem | null;
+}
+
+export interface TrackerProject {
+  id: string;
+  family_id: string;
+  created_by_id: string;
+  name: string;
+  code?: string | null;
+  description?: string | null;
+  total_area_sqft?: string | null;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  totalSpend?: string;
+  itemsCount?: number;
+  pricePerSqFt?: string | null;
+  avgCostPerItem?: string;
+  lastActivityDate?: string;
+  phases?: TrackerPhase[];
+  types?: TrackerExpenseType[];
+  tags?: TrackerTagItem[];
+  units?: TrackerUnit[];
+}
+
+export interface TrackerAnalytics {
+  summary: {
+    totalSpend: string;
+    itemsCount: number;
+    totalAreaSqFt?: string | null;
+    pricePerSqFt?: string | null;
+    avgCostPerItem: string;
+    includeLabour: boolean;
+    dominantPhase: string;
+  };
+  priceByPhase: Array<{
+    phaseId: string;
+    phaseName: string;
+    totalCost: string;
+    percentage: string;
+    count: number;
+  }>;
+  percentageByTag: Array<{
+    tagId: string;
+    tagName: string;
+    hexColor: string;
+    totalCost: string;
+    percentage: string;
+    count: number;
+  }>;
+  quantityByExpense: Array<{
+    typeName: string;
+    unitName: string;
+    totalQuantity: string;
+    totalCost: string;
+  }>;
+  phaseStackedData: Array<{
+    phase: string;
+    total: number;
+    [tagName: string]: any;
+  }>;
 }
