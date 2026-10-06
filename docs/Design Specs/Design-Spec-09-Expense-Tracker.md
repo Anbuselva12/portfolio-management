@@ -31,6 +31,12 @@ In the navigation header / brand bar:
 
 ```
 Expense Tracker (/tracker)
+├── Navigation Rules:
+│   ├── App Switching: Strictly through top-left AppSwitcher dropdown (no redundant in-menu switches)
+│   ├── Sidebar Links:
+│   │   ├── Projects Hub (/tracker)
+│   │   └── Settings (/tracker/settings) [Scoped to tracker context, excludes FinFamily Audit Trail]
+│
 ├── Projects / Category Hub (/tracker)
 │   ├── Grid of Project Cards ("SK Complex", "Retail Business", etc.)
 │   ├── Summary KPIs per Card (Total Spend, Phase Count, Item Count)
@@ -39,8 +45,8 @@ Expense Tracker (/tracker)
 ├── Project Detail & Workspace (/tracker/projects/:id)
 │   ├── Header KPI Strip:
 │   │   ├── Total Spend (₹)
-│   │   ├── Price per Sq Ft (e.g. ₹2,660.55 for 3,058 sq ft) OR Alternative Unit KPI (Avg Spend per Entry)
-│   │   ├── Active / Dominant Phase
+│   │   ├── Price per Sq Ft (e.g. ₹2,667.19 for 3,058 sq ft) OR Alternative Unit KPI (Avg Spend per Entry)
+│   │   ├── Dominant Phase (e.g. Labour / Final Finishing)
 │   │   └── Total Procurement Items Count
 │   │
 │   ├── Action: "+ Add New Expense" Drawer
@@ -49,15 +55,18 @@ Expense Tracker (/tracker)
 │   │   ├── Instant search (by item name, brand, description)
 │   │   ├── Phase dropdown filter (Basement, Lindal, Roof, Finishing, Labour)
 │   │   ├── Tag dropdown filter (Steels, Bricks, Cement, M Sand, etc.)
-│   │   ├── Granular columns: ID, Date, Expense Type, Product Name, Brand, Quantity, Unit, Rate per Unit, Total Cost, Phase, Tag
-│   │   └── Actions: Edit, Delete, Duplicate
+│   │   ├── Granular columns: Date, Material Item, Phase, Tag, Quantity, Unit, Rate, Total Cost, Actions
+│   │   └── Slide-over Drawer for Add/Edit with auto Quantity × Rate calculation
 │   │
-│   ├── Tab 2: Reports & Analytics
-│   │   ├── Price by Phase (Summary card list + Stacked horizontal Bar Chart)
-│   │   ├── Percentage of Expense (Interactive Donut Chart with Tag colors)
-│   │   ├── Quantity by Expense Material (Bricks pieces, Cement bags, Sand units)
-│   │   ├── Price by Expense list with phase filter dropdown
-│   │   └── "Show Labour Cost" Toggle (filters out labor from charts to inspect pure material distribution)
+│   ├── Tab 2: Reports & Analytics (Enhanced)
+│   │   ├── Smart Construction Insights & Suggestions Banner (Labor share, benchmark rating, exceptions)
+│   │   ├── Extended KPI Strip: Analyzed Spend, Unit Cost Metric, Material vs Labor Split %, Top Phase Share
+│   │   ├── Stacked Horizontal Bar Chart (Spend by Construction Phase in INR)
+│   │   ├── Interactive Donut Chart (Percentage of Expense by Tag with custom HEX colors and numeric radian calculation)
+│   │   ├── Phase Progress & Cost Allocation Breakdown Cards
+│   │   ├── Top 5 Cost Driver Materials Highlight Cards
+│   │   ├── "Show Labour Cost" Toggle Switch (filters labor to inspect pure material distributions)
+│   │   └── Aggregated Quantity & Cost by Material Table
 │   │
 │   └── Tab 3: Project Configuration
 │       ├── Edit Project Metadata (Name, Total Area Sq Ft, Description)
@@ -65,6 +74,11 @@ Expense Tracker (/tracker)
 │       ├── Custom Expense Types Management
 │       ├── Custom Tag Items Management (with Hex color picker)
 │       └── Custom Units of Measurement
+│
+└── Settings & Profile (/tracker/settings)
+    ├── User Profile details & Default Landing Application preference
+    ├── Password change & credentials
+    └── Explicitly excludes FinFamily Audit Trail (retains Tracker sidebar context)
 ```
 
 ---

@@ -133,6 +133,7 @@ export const App: React.FC = () => {
           <Route path="strategies" element={<StrategyComparisonPage />} />
           <Route path="tracker" element={<TrackerHubPage />} />
           <Route path="tracker/projects/:id" element={<TrackerProjectDetailPage />} />
+          <Route path="tracker/settings" element={<MyProfilePage />} />
           <Route path="settings">
             <Route index element={<Navigate to="/settings/profile" replace />} />
             <Route path="profile" element={<MyProfilePage />} />

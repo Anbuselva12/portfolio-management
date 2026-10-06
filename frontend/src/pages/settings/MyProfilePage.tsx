@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../api/endpoints/auth.api';
-import { User, Lock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { User, Lock, CheckCircle2, AlertCircle, Loader2, SlidersHorizontal } from 'lucide-react';
 import { SettingsNav } from '../../components/layout/SettingsNav';
 
 export const MyProfilePage: React.FC = () => {
+  const location = useLocation();
+  const isTracker = location.pathname.startsWith('/tracker');
   const { user, setUser } = useAuthStore();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [preferredCurrency, setPreferredCurrency] = useState(user?.preferredCurrency || 'INR');
@@ -81,11 +84,16 @@ export const MyProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <SettingsNav />
+      {!isTracker && <SettingsNav />}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Profile & Preferences</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          {isTracker && <SlidersHorizontal className="w-6 h-6 text-primary" />}
+          <span>{isTracker ? 'Expense Tracker Settings' : 'Profile & Preferences'}</span>
+        </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Manage your personal display name, account credentials, and localized currency.
+          {isTracker
+            ? 'Manage your personal profile, credentials, and default landing workspace.'
+            : 'Manage your personal display name, account credentials, and localized currency.'}
         </p>
       </div>
 

@@ -45,6 +45,10 @@ import {
   HelpCircle,
   Palette,
   Hash,
+  Hammer,
+  Scale,
+  TrendingUp,
+  Lightbulb,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -93,6 +97,72 @@ export const TrackerProjectDetailPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<TrackerAnalytics | null>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const [includeLabour, setIncludeLabour] = useState(true);
+
+  // Memoized calculations for rich analytics, numeric Recharts bindings, and smart recommendations
+  const analyticsDerived = useMemo(() => {
+    if (!analytics) return null;
+
+    const totalSpendNum = parseFloat(analytics.summary.totalSpend) || 0;
+
+    // 1. Tag Donut Chart Data (strictly numeric values so Recharts renders arcs!)
+    const tagChartData = (analytics.percentageByTag || [])
+      .map((item) => ({
+        ...item,
+        value: parseFloat(item.totalCost) || 0,
+        numericPercentage: parseFloat(item.percentage) || 0,
+      }))
+      .filter((item) => item.value > 0);
+
+    // 2. Identify Labor vs Material spend
+    const laborTags = tagChartData.filter((t) => t.tagName.toLowerCase().includes('labour'));
+    const laborSpend = laborTags.reduce((sum, t) => sum + t.value, 0);
+    const materialSpend = Math.max(0, totalSpendNum - (includeLabour ? laborSpend : 0));
+    const laborSharePct = totalSpendNum > 0 ? ((laborSpend / totalSpendNum) * 100).toFixed(1) : '0';
+    const materialSharePct = totalSpendNum > 0 ? ((materialSpend / totalSpendNum) * 100).toFixed(1) : '100';
+
+    // 3. Top 5 Material Cost Drivers (excluding labor)
+    const topMaterials = tagChartData
+      .filter((t) => !t.tagName.toLowerCase().includes('labour'))
+      .slice(0, 5);
+    const top3MaterialsTotal = topMaterials.slice(0, 3).reduce((sum, t) => sum + t.value, 0);
+    const top3MaterialPct = materialSpend > 0 ? ((top3MaterialsTotal / materialSpend) * 100).toFixed(1) : '0';
+    const top3Names = topMaterials.slice(0, 3).map((t) => t.tagName).join(', ') || 'Core Materials';
+
+    // 4. Built-up Cost Industry Benchmark
+    const sqFtRate = analytics.summary.pricePerSqFt ? parseFloat(analytics.summary.pricePerSqFt) : 0;
+    let benchmarkStatus = 'Optimal Benchmark';
+    let benchmarkBadgeBg = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+    let benchmarkText = 'Standard commercial/residential RCC benchmark range in India is ₹2,200 – ₹2,900 / sq ft.';
+    if (sqFtRate > 2900) {
+      benchmarkStatus = 'Premium Grade';
+      benchmarkBadgeBg = 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800';
+      benchmarkText = 'Above standard benchmark (> ₹2,900/sq ft) reflecting superior material specs or specialized finishes.';
+    } else if (sqFtRate < 2100 && sqFtRate > 0) {
+      benchmarkStatus = 'High Cost Efficiency';
+      benchmarkBadgeBg = 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+      benchmarkText = 'Below ₹2,100/sq ft reflecting disciplined direct sourcing and bulk procurement discounts.';
+    }
+
+    // 5. Total unique materials count
+    const uniqueMaterialsCount = analytics.quantityByExpense?.length || 0;
+
+    return {
+      totalSpendNum,
+      tagChartData,
+      laborSpend,
+      materialSpend,
+      laborSharePct,
+      materialSharePct,
+      topMaterials,
+      top3MaterialPct,
+      top3Names,
+      sqFtRate,
+      benchmarkStatus,
+      benchmarkBadgeBg,
+      benchmarkText,
+      uniqueMaterialsCount,
+    };
+  }, [analytics, includeLabour]);
 
   // Slide-over Drawer for Add/Edit Expense
   const [isExpenseDrawerOpen, setIsExpenseDrawerOpen] = useState(false);
@@ -1032,54 +1102,157 @@ export const TrackerProjectDetailPage: React.FC = () => {
             </div>
           ) : analytics ? (
             <>
-              {/* Analytics Mini KPI row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                  <div className="text-xs text-slate-400">Analyzed Spend</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+              {/* 1. Smart Construction Suggestions & Engineering Insights Banner */}
+              <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-teal-500/10 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-teal-950/30 border border-blue-200 dark:border-blue-800/60 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-200/50 dark:border-blue-800/40 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-blue-600 text-white shadow-xs">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        Construction Analytics & Engineering Insights
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Automated auditing of labor absorption, built-up sq ft rate benchmarks, and material concentration.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="self-start sm:self-auto px-2.5 py-1 text-[11px] font-semibold rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                    Live Project Audit
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  {/* Insight 1: Labor vs Material */}
+                  <div className="bg-white/80 dark:bg-slate-900/80 p-3.5 rounded-xl border border-blue-100 dark:border-slate-800 backdrop-blur-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        <Hammer className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span>Labor vs Material Share</span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Labour wages absorb <strong className="text-amber-600 dark:text-amber-400">{analyticsDerived?.laborSharePct}%</strong> ({formatINR(analyticsDerived?.laborSpend)}) of expenditure. Pure material procurement accounts for <strong className="text-blue-600 dark:text-blue-400">{analyticsDerived?.materialSharePct}%</strong> ({formatINR(analyticsDerived?.materialSpend)}).
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                      💡 Tip: Toggle "Include Labour Costs" OFF to inspect bulk material rates without labor distortion.
+                    </div>
+                  </div>
+
+                  {/* Insight 2: Benchmark Tracking */}
+                  <div className="bg-white/80 dark:bg-slate-900/80 p-3.5 rounded-xl border border-blue-100 dark:border-slate-800 backdrop-blur-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        <Scale className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Built-up Cost Benchmark</span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {analyticsDerived?.sqFtRate ? (
+                          <>
+                            Tracking at <strong className="text-emerald-600 dark:text-emerald-400">{formatINR(analyticsDerived.sqFtRate)} / sq ft</strong>. {analyticsDerived.benchmarkText}
+                          </>
+                        ) : (
+                          <>Average spend per procurement transaction is <strong>{formatINR(analytics.summary.avgCostPerItem)}</strong>.</>
+                        )}
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <span className={clsx('inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border', analyticsDerived?.benchmarkBadgeBg)}>
+                        {analyticsDerived?.benchmarkStatus}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Insight 3: Core Material Drivers */}
+                  <div className="bg-white/80 dark:bg-slate-900/80 p-3.5 rounded-xl border border-blue-100 dark:border-slate-800 backdrop-blur-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        <TrendingUp className="w-4 h-4 text-indigo-500 shrink-0" />
+                        <span>Primary Material Drivers</span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Top 3 categories (<strong className="text-slate-900 dark:text-white">{analyticsDerived?.top3Names}</strong>) constitute <strong className="text-indigo-600 dark:text-indigo-400">{analyticsDerived?.top3MaterialPct}%</strong> of total material procurement.
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                      📌 Concentrated volume in structural core (Steel & Cement).
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Expanded High-Value KPI Strip */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-3.5">
+                {/* Card 1: Analyzed Net Spend */}
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-400">Analyzed Spend</div>
+                  <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
                     {formatINR(analytics.summary.totalSpend)}
                   </div>
-                  <div className="text-[10px] text-slate-400">
+                  <div className="text-[11px] text-slate-500 mt-1">
                     {includeLabour ? 'Includes labour wages' : 'Pure materials only'}
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                  <div className="text-xs text-slate-400">Unit Cost Metric</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                    {analytics.summary.pricePerSqFt
-                      ? `${formatINR(analytics.summary.pricePerSqFt)} / sq ft`
-                      : formatINR(analytics.summary.avgCostPerItem)}
+                {/* Card 2: Unit Cost Metric */}
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-400">Unit Cost Metric</div>
+                  <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    {analytics.summary.pricePerSqFt ? `${formatINR(analytics.summary.pricePerSqFt)} / sq ft` : formatINR(analytics.summary.avgCostPerItem)}
                   </div>
-                  <div className="text-[10px] text-slate-400">
-                    {analytics.summary.pricePerSqFt ? 'Per square foot' : 'Average per entry'}
+                  <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                    {analyticsDerived?.benchmarkStatus || 'Standard'}
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                  <div className="text-xs text-slate-400">Top Phase</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                {/* Card 3: Material vs Labor Split Progress */}
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-400">Material : Labor</div>
+                  <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    {analyticsDerived?.materialSharePct}% : {analyticsDerived?.laborSharePct}%
+                  </div>
+                  <div className="w-full bg-amber-200 dark:bg-amber-950/60 rounded-full h-2 mt-1.5 overflow-hidden flex">
+                    <div style={{ width: `${analyticsDerived?.materialSharePct}%` }} className="bg-blue-600 h-full" title="Materials" />
+                    <div style={{ width: `${analyticsDerived?.laborSharePct}%` }} className="bg-amber-500 h-full" title="Labour" />
+                  </div>
+                </div>
+
+                {/* Card 4: Top Phase Share */}
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-400">Dominant Phase</div>
+                  <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1 truncate">
                     {analytics.summary.dominantPhase}
                   </div>
-                  <div className="text-[10px] text-slate-400">Highest expenditure phase</div>
+                  <div className="text-[11px] text-slate-500 mt-1">
+                    {analytics.priceByPhase[0]?.percentage || '0'}% of analyzed spend
+                  </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                  <div className="text-xs text-slate-400">Total Entries</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                    {analytics.summary.itemsCount}
+                {/* Card 5: Procurement Items & Materials */}
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-400">Tracked Catalog</div>
+                  <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    {analytics.summary.itemsCount} Entries
                   </div>
-                  <div className="text-[10px] text-slate-400">Active records examined</div>
+                  <div className="text-[11px] text-slate-500 mt-1">
+                    {analyticsDerived?.uniqueMaterialsCount || 0} unique material types
+                  </div>
                 </div>
               </div>
 
-              {/* Charts Grid */}
+              {/* 3. Charts Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* 1. Stacked Bar Chart: Phase Breakdown */}
                 <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
-                    Expenditure by Construction Phase
-                  </h3>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Expenditure by Construction Phase
+                    </h3>
+                    <span className="text-xs text-slate-400">
+                      {analytics.priceByPhase.length} Milestones
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-400 mb-4">
                     Horizontal breakdown of total spend across project milestones (INR).
                   </p>
@@ -1140,21 +1313,26 @@ export const TrackerProjectDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. Donut Chart: Percentage of Expense by Tag */}
+                {/* 2. Donut Chart: Percentage of Expense by Tag (Fixed Numeric Binding + Center Label + Tag Chips) */}
                 <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
-                    Expense Distribution by Tags
-                  </h3>
-                  <p className="text-xs text-slate-400 mb-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Expense Distribution by Tags
+                    </h3>
+                    <span className="text-xs text-slate-400">
+                      {analyticsDerived?.tagChartData.length || 0} Categories
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-2">
                     Proportional share of budget absorbed by steel, cement, labour, plumbing, etc.
                   </p>
-                  <div className="h-80 w-full">
-                    {analytics.percentageByTag.length > 0 ? (
+                  <div className="h-64 w-full relative">
+                    {analyticsDerived && analyticsDerived.tagChartData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={analytics.percentageByTag}
-                            dataKey="totalCost"
+                            data={analyticsDerived.tagChartData}
+                            dataKey="value"
                             nameKey="tagName"
                             cx="50%"
                             cy="50%"
@@ -1162,7 +1340,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
                             outerRadius={85}
                             paddingAngle={2}
                           >
-                            {analytics.percentageByTag.map((entry, index) => (
+                            {analyticsDerived.tagChartData.map((entry, index) => (
                               <Cell
                                 key={`tag-cell-${index}`}
                                 fill={entry.hexColor || '#0ea5e9'}
@@ -1175,18 +1353,12 @@ export const TrackerProjectDetailPage: React.FC = () => {
                               name,
                             ]}
                             contentStyle={{
-                              backgroundColor: '#1e293b',
+                              backgroundColor: '#0f172a',
                               color: '#fff',
                               borderRadius: '8px',
-                              border: 'none',
+                              border: '1px solid #334155',
                               fontSize: '12px',
                             }}
-                          />
-                          <Legend
-                            layout="horizontal"
-                            verticalAlign="bottom"
-                            align="center"
-                            wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -1195,11 +1367,129 @@ export const TrackerProjectDetailPage: React.FC = () => {
                         No tag data available
                       </div>
                     )}
+                    {/* Donut Center Display */}
+                    {analyticsDerived && analyticsDerived.tagChartData.length > 0 && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Total</span>
+                        <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                          {formatINR(analytics.summary.totalSpend)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Category Tag Chips with Color Dots & Percentages */}
+                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                    {analyticsDerived?.tagChartData.map((t) => (
+                      <span
+                        key={t.tagId}
+                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60"
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: t.hexColor || '#0ea5e9' }}
+                        />
+                        <span className="text-slate-700 dark:text-slate-300">{t.tagName}</span>
+                        <span className="text-slate-400 text-[10px] font-semibold">({t.percentage}%)</span>
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* 3. Quantity by Material Table */}
+              {/* 4. Construction Phases Milestone Breakdown Cards */}
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-primary" />
+                      Milestone Phase Cost Absorption
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Progressive expenditure across physical execution phases and labour allocations.
+                    </p>
+                  </div>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {analytics.priceByPhase.length} Active Phases
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+                  {analytics.priceByPhase.map((p) => (
+                    <div
+                      key={p.phaseId}
+                      className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col justify-between"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {p.phaseName}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
+                          {p.percentage}%
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-baseline justify-between">
+                        <span className="text-base font-extrabold text-slate-900 dark:text-white">
+                          {formatINR(p.totalCost)}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          {p.count} entries
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
+                        <div
+                          style={{ width: `${Math.min(100, parseFloat(p.percentage))}%` }}
+                          className="bg-primary h-full rounded-full"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 5. Top 5 Material Drivers Highlight */}
+              {analyticsDerived && analyticsDerived.topMaterials.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                        Primary Material Cost Drivers (Excl. Labour)
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Top 5 procurement materials contributing the greatest share of physical construction investment.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-1">
+                    {analyticsDerived.topMaterials.map((mat, idx) => (
+                      <div
+                        key={mat.tagId}
+                        className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 relative overflow-hidden"
+                      >
+                        <div
+                          className="absolute top-0 left-0 right-0 h-1"
+                          style={{ backgroundColor: mat.hexColor || '#0ea5e9' }}
+                        />
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          <span className="truncate">{mat.tagName}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">#{idx + 1}</span>
+                        </div>
+                        <div className="text-base font-bold text-slate-900 dark:text-white">
+                          {formatINR(mat.value)}
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center justify-between">
+                          <span>{mat.count} items</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">{mat.percentage}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 6. Quantity by Material Table */}
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800">
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">

@@ -64,8 +64,7 @@ export const Sidebar: React.FC = () => {
 
   const trackerLinks: NavItem[] = [
     { to: '/tracker', icon: FolderKanban, label: 'Projects Hub' },
-    { to: '/dashboard', icon: Wallet, label: 'Switch to FinFamily' },
-    { to: '/settings/profile', icon: Settings, label: 'Settings' },
+    { to: '/tracker/settings', icon: Settings, label: 'Settings' },
   ];
 
   const links = isTracker ? trackerLinks : finFamilyLinks;
