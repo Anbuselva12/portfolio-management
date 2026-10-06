@@ -1,0 +1,30 @@
+# Set default behavior to automatically normalize text files to LF
+* text=auto eol=lf
+
+# Explicit text file types
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.prisma text eol=lf
+*.sql text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.env text eol=lf
+*.env.* text eol=lf
+
+# Binary file types
+*.db binary
+*.sqlite binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

@@ -176,4 +176,5 @@ Features must be built in story order. Do not implement Story 2 items while Stor
 4. **After completing a sub-task**, summarise what was built and explicitly list any assumptions made, so the owner can verify or correct them.
 5. **Never output a large block of code speculatively** ("here's what I think it might look like") — only output code that has been confirmed against the spec and approved scope.
 6. **Update documentation before implementing requested requirement changes**: When the owner asks for new capabilities or modifications not in the specs, update the relevant files in `docs/` first before touching code.
+7. **Post-Push Workspace Cleansing (MANDATORY)**: Immediately after pushing any commit to GitHub `origin/main`, the agent must run `git status`. If any stale in-memory editor buffers or ghost modifications appear in the working tree, the agent must execute `git reset --hard HEAD` and verify that `git status` reports `nothing to commit, working tree clean` before concluding the turn. This completely eliminates data rollback caused by editor auto-saves.
 
