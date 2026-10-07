@@ -49,3 +49,4 @@ export const getCurrentApp = (pathname: string): AppDefinition => {
   if (pathname.startsWith('/tracker')) return APP_CONFIGS[1];
   return APP_CONFIGS[0];
 };
+

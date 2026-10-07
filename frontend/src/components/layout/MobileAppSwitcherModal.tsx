@@ -122,3 +122,4 @@ export const MobileAppSwitcherModal: React.FC<MobileAppSwitcherModalProps> = ({
     </div>
   );
 };
+
