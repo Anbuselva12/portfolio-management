@@ -10,6 +10,8 @@ import { RateRevisionModal } from '../../components/loans/RateRevisionModal';
 import { PartPaymentModal } from '../../components/loans/PartPaymentModal';
 import { CalibrateLoanModal } from '../../components/loans/CalibrateLoanModal';
 import { GoldLoanDetailView } from '../../components/loans/GoldLoanDetailView';
+import { CloseLoanModal } from '../../components/loans/CloseLoanModal';
+import { ZeroBalancePromptModal } from '../../components/loans/ZeroBalancePromptModal';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import {
   ArrowLeft,
@@ -54,6 +56,8 @@ export const LoanDetailPage: React.FC = () => {
   const [isRateRevisionOpen, setIsRateRevisionOpen] = useState(false);
   const [isPartPaymentOpen, setIsPartPaymentOpen] = useState(false);
   const [isCalibrateOpen, setIsCalibrateOpen] = useState(false);
+  const [isCloseLoanOpen, setIsCloseLoanOpen] = useState(false);
+  const [isZeroBalancePromptOpen, setIsZeroBalancePromptOpen] = useState(false);
 
   // Edit Loan Drawer
   const [isEditLoanOpen, setIsEditLoanOpen] = useState(false);
@@ -255,6 +259,27 @@ export const LoanDetailPage: React.FC = () => {
     }
   };
 
+  const handleConfirmCloseLoan = async (data: { closureReason?: string; closureNotes?: string; closedAt?: string }) => {
+    if (!id) return;
+    try {
+      await loansApi.closeLoan(id, data);
+      await loadLoanData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to close loan.');
+    }
+  };
+
+  const handleReopenLoan = async () => {
+    if (!id) return;
+    if (!window.confirm('Are you sure you want to reopen this loan? This will set its status back to active.')) return;
+    try {
+      await loansApi.reopenLoan(id);
+      await loadLoanData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to reopen loan.');
+    }
+  };
+
   const openEditInstallment = (inst: RepaymentInstallment) => {
     setEditingInstallment(inst);
     setInstEmi(inst.emiAmount || inst.emi_amount || '');
@@ -278,6 +303,12 @@ export const LoanDetailPage: React.FC = () => {
       });
       setEditingInstallment(null);
       await loadLoanData();
+      if (instPaid && loan?.status === 'active') {
+        const remainingUnpaid = schedule.filter((i) => i.id !== editingInstallment.id && !(i.isPaid ?? i.is_paid)).length;
+        if (remainingUnpaid === 0) {
+          setIsZeroBalancePromptOpen(true);
+        }
+      }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to update installment.');
     } finally {
@@ -298,6 +329,12 @@ export const LoanDetailPage: React.FC = () => {
         isPaid: !currentPaid,
       });
       await loadLoanData();
+      if (!currentPaid && loan?.status === 'active') {
+        const remainingUnpaid = schedule.filter((i) => i.id !== targetId && !(i.isPaid ?? i.is_paid)).length;
+        if (remainingUnpaid === 0) {
+          setIsZeroBalancePromptOpen(true);
+        }
+      }
     } catch (err: any) {
       alert('Failed to toggle installment status.');
       await loadLoanData();
@@ -396,6 +433,7 @@ export const LoanDetailPage: React.FC = () => {
   const emiAmount = loan.emiAmount || loan.emi_amount || '0';
   const tenureMonths = loan.tenureMonths || loan.tenure_months || 0;
   const isDefaulted = loan.status === 'defaulted';
+  const isClosed = loan.status === 'closed' || loan.status === 'paid_off';
   const discrepancyFlag = loan.discrepancyFlag ?? loan.discrepancy_flag;
 
   // Discrepancy details parsing
@@ -441,6 +479,23 @@ export const LoanDetailPage: React.FC = () => {
           onEditTerms={() => setIsEditLoanOpen(true)}
           onDeleteLoan={handleDeleteLoan}
           onBack={() => navigate('/loans')}
+          onCloseLoan={() => setIsCloseLoanOpen(true)}
+          onReopenLoan={handleReopenLoan}
+        />
+
+        <CloseLoanModal
+          isOpen={isCloseLoanOpen}
+          onClose={() => setIsCloseLoanOpen(false)}
+          loan={loan}
+          currentOutstanding={currentOutstandingVal}
+          onConfirmClose={handleConfirmCloseLoan}
+        />
+
+        <ZeroBalancePromptModal
+          isOpen={isZeroBalancePromptOpen}
+          onClose={() => setIsZeroBalancePromptOpen(false)}
+          loan={loan}
+          onProceedToClose={() => setIsCloseLoanOpen(true)}
         />
 
         {/* Edit Terms Slide Drawer */}
@@ -571,43 +626,75 @@ export const LoanDetailPage: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setIsPartPaymentOpen(true)}
-            disabled={isDefaulted}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>Make Part-Payment</span>
-          </button>
+          {!isClosed ? (
+            <>
+              <button
+                onClick={() => setIsCloseLoanOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-sm transition-all cursor-pointer"
+                title="Close loan / record payoff reason"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Close Loan</span>
+              </button>
 
-          <button
-            onClick={() => setIsRateRevisionOpen(true)}
-            disabled={isDefaulted}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-sm shadow-cyan-600/20 transition-all cursor-pointer"
-          >
-            <TrendingDown className="w-3.5 h-3.5" />
-            <span>Log Rate Revision</span>
-          </button>
+              <button
+                onClick={() => setIsPartPaymentOpen(true)}
+                disabled={isDefaulted}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Make Part-Payment</span>
+              </button>
 
-          <button
-            onClick={() => setIsCalibrateOpen(true)}
-            disabled={isDefaulted}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors cursor-pointer shadow-sm"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Sync Statement</span>
-          </button>
+              <button
+                onClick={() => setIsRateRevisionOpen(true)}
+                disabled={isDefaulted}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-sm shadow-cyan-600/20 transition-all cursor-pointer"
+              >
+                <TrendingDown className="w-3.5 h-3.5" />
+                <span>Log Rate Revision</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={handleSyncBalance}
-            disabled={isSyncing}
-            title="Recalculate and sync outstanding balance"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer shadow-sm disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Syncing...' : 'Sync Balance'}</span>
-          </button>
+              <button
+                onClick={() => setIsCalibrateOpen(true)}
+                disabled={isDefaulted}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors cursor-pointer shadow-sm"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Sync Statement</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSyncBalance}
+                disabled={isSyncing}
+                title="Recalculate and sync outstanding balance"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Balance'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsPrepaymentOpen(true)}
+                disabled={isDefaulted}
+                title={isDefaulted ? 'Prepayment disabled for defaulted loans' : 'Run Prepayment Simulator'}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all cursor-pointer"
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                <span>Calculator</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleReopenLoan}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer shadow-sm"
+              title="Reopen closed loan"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
+              <span>Reopen Loan</span>
+            </button>
+          )}
 
           <button
             onClick={() => setIsEditLoanOpen(true)}
@@ -615,16 +702,6 @@ export const LoanDetailPage: React.FC = () => {
           >
             <Edit2 className="w-3.5 h-3.5" />
             <span>Edit Terms</span>
-          </button>
-
-          <button
-            onClick={() => setIsPrepaymentOpen(true)}
-            disabled={isDefaulted}
-            title={isDefaulted ? 'Prepayment disabled for defaulted loans' : 'Run Prepayment Simulator'}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all cursor-pointer"
-          >
-            <Calculator className="w-3.5 h-3.5" />
-            <span>Calculator</span>
           </button>
 
           <button
@@ -636,6 +713,36 @@ export const LoanDetailPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Closed Loan Financial Lockdown Banner */}
+      {isClosed && (
+        <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5 text-xs">
+            <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
+              <span>This loan is fully closed.</span>
+              {(loan.closureReason || loan.closure_reason) && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  {loan.closureReason || loan.closure_reason}
+                </span>
+              )}
+              {(loan.closedAt || loan.closed_at) && (
+                <span className="text-slate-500 dark:text-slate-400 font-normal">
+                  Closed on {formatDate(loan.closedAt || loan.closed_at || '')}
+                </span>
+              )}
+            </div>
+            <p className="text-slate-600 dark:text-slate-400">
+              All dues are settled. In accordance with financial safety rules, no further payments, part-payments, or rate revisions can be added to this loan.
+            </p>
+            {(loan.closureNotes || loan.closure_notes) && (
+              <p className="text-slate-500 dark:text-slate-400 italic pt-1">
+                &ldquo;{loan.closureNotes || loan.closure_notes}&rdquo;
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Loan Title & Badges */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -651,12 +758,12 @@ export const LoanDetailPage: React.FC = () => {
               className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase ${
                 loan.status === 'active'
                   ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                  : loan.status === 'paid_off'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200'
+                  : loan.status === 'closed' || loan.status === 'paid_off'
+                  ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
                   : 'bg-rose-50 dark:bg-rose-950 text-rose-600 border border-rose-200'
               }`}
             >
-              {loan.status}
+              {loan.status === 'closed' ? 'Closed' : loan.status === 'paid_off' ? 'Paid Off' : loan.status}
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-2 flex-wrap">
@@ -679,17 +786,19 @@ export const LoanDetailPage: React.FC = () => {
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Auto EMI Queue</span>
           <button
             type="button"
+            disabled={isClosed}
             onClick={async () => {
-              if (!id || !loan) return;
+              if (!id || !loan || isClosed) return;
               const newVal = !((loan as any).emi_reminders_enabled ?? (loan as any).emiRemindersEnabled ?? true);
               try {
                 await loansApi.update(id, { emiRemindersEnabled: newVal });
                 await loadLoanData();
               } catch { alert('Failed to update EMI reminder setting.'); }
             }}
-            title="Toggle monthly EMI auto-queue in Expenses"
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-              ((loan as any).emi_reminders_enabled ?? (loan as any).emiRemindersEnabled ?? true) ? 'bg-rose-500' : 'bg-slate-300 dark:bg-slate-600'
+            title={isClosed ? 'Auto EMI Queue disabled for closed loans' : 'Toggle monthly EMI auto-queue in Expenses'}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+              isClosed ? 'opacity-40 cursor-not-allowed bg-slate-300 dark:bg-slate-700' :
+              ((loan as any).emi_reminders_enabled ?? (loan as any).emiRemindersEnabled ?? true) ? 'bg-rose-500 cursor-pointer' : 'bg-slate-300 dark:bg-slate-600 cursor-pointer'
             }`}
           >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
@@ -1357,11 +1466,15 @@ export const LoanDetailPage: React.FC = () => {
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
+                          disabled={isClosed}
                           onClick={() => handleTogglePaid(inst)}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-bold cursor-pointer transition-all ${
-                            isPaid
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-emerald-50'
+                          title={isClosed ? 'Loan is closed — payments locked' : undefined}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-bold transition-all ${
+                            isClosed
+                              ? 'opacity-60 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              : isPaid
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 cursor-pointer'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-emerald-50 cursor-pointer'
                           }`}
                         >
                           <CheckCircle2 className={`w-3 h-3 ${isPaid ? 'text-emerald-600' : 'text-slate-400'}`} />
@@ -1380,9 +1493,14 @@ export const LoanDetailPage: React.FC = () => {
                     </td>
                     <td className="py-2.5 px-4 text-center font-sans">
                       <button
+                        disabled={isClosed}
                         onClick={() => openEditInstallment(inst)}
-                        className="min-h-[36px] min-w-[36px] flex items-center justify-center mx-auto p-1.5 rounded-lg text-slate-400 hover:text-cyan-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                        title="Edit installment details"
+                        className={`min-h-[36px] min-w-[36px] flex items-center justify-center mx-auto p-1.5 rounded-lg text-slate-400 transition-colors ${
+                          isClosed
+                            ? 'opacity-30 cursor-not-allowed'
+                            : 'hover:text-cyan-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer'
+                        }`}
+                        title={isClosed ? 'Loan is closed — editing locked' : 'Edit installment details'}
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -1786,6 +1904,25 @@ export const LoanDetailPage: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {loan && (
+        <>
+          <CloseLoanModal
+            isOpen={isCloseLoanOpen}
+            onClose={() => setIsCloseLoanOpen(false)}
+            loan={loan}
+            currentOutstanding={currentOutstandingVal}
+            onConfirmClose={handleConfirmCloseLoan}
+          />
+
+          <ZeroBalancePromptModal
+            isOpen={isZeroBalancePromptOpen}
+            onClose={() => setIsZeroBalancePromptOpen(false)}
+            loan={loan}
+            onProceedToClose={() => setIsCloseLoanOpen(true)}
+          />
+        </>
       )}
     </div>
   );

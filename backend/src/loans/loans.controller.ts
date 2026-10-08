@@ -13,6 +13,7 @@ import {
   UpdateInstallmentDto,
   RateRevisionDto,
   CalibrateLoanDto,
+  CloseLoanDto,
 } from './dto';
 
 @UseGuards(JwtAuthGuard, ActiveMemberGuard, FamilyScopeGuard)
@@ -44,6 +45,16 @@ export class LoansController {
   @Patch(':id')
   async updateLoan(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: UpdateLoanDto) {
     return this.loansService.updateLoan(id, user.familyId, user.sub, dto);
+  }
+
+  @Post(':id/close')
+  async closeLoan(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: CloseLoanDto) {
+    return this.loansService.closeLoan(id, user.familyId, user.sub, dto);
+  }
+
+  @Post(':id/reopen')
+  async reopenLoan(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.loansService.reopenLoan(id, user.familyId, user.sub);
   }
 
   @Delete(':id')

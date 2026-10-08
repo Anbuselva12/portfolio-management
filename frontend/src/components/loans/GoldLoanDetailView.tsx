@@ -22,6 +22,8 @@ import {
   Clock,
   ArrowLeft,
   Edit2,
+  CheckCircle2,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -41,6 +43,8 @@ interface GoldLoanDetailViewProps {
   onEditTerms: () => void;
   onDeleteLoan: () => void;
   onBack: () => void;
+  onCloseLoan?: () => void;
+  onReopenLoan?: () => void;
 }
 
 export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
@@ -50,6 +54,8 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
   onEditTerms,
   onDeleteLoan,
   onBack,
+  onCloseLoan,
+  onReopenLoan,
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
   const [asOfDate, setAsOfDate] = useState<string>(todayStr);
@@ -159,6 +165,8 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
     }
   };
 
+  const isClosed = loan.status === 'closed' || loan.status === 'paid_off';
+
   return (
     <div className="space-y-6">
       {/* Top Bar Navigation */}
@@ -172,6 +180,30 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
         </button>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {!isClosed ? (
+            onCloseLoan && (
+              <button
+                onClick={onCloseLoan}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-sm transition-all cursor-pointer"
+                title="Close loan / record payoff reason"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Close Loan</span>
+              </button>
+            )
+          ) : (
+            onReopenLoan && (
+              <button
+                onClick={onReopenLoan}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer shadow-sm"
+                title="Reopen closed loan"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
+                <span>Reopen Loan</span>
+              </button>
+            )
+          )}
+
           <button
             onClick={onEditTerms}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer shadow-sm"
@@ -190,6 +222,36 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
         </div>
       </div>
 
+      {/* Closed Loan Lockdown Banner */}
+      {isClosed && (
+        <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5 text-xs">
+            <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
+              <span>This gold loan is fully closed.</span>
+              {(loan.closureReason || loan.closure_reason) && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  {loan.closureReason || loan.closure_reason}
+                </span>
+              )}
+              {(loan.closedAt || loan.closed_at) && (
+                <span className="text-slate-500 dark:text-slate-400 font-normal">
+                  Closed on {new Date(loan.closedAt || loan.closed_at || '').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </span>
+              )}
+            </div>
+            <p className="text-slate-600 dark:text-slate-400">
+              All dues are settled and pledged gold/jewels may be retrieved from locker. No further payments can be added to this loan.
+            </p>
+            {(loan.closureNotes || loan.closure_notes) && (
+              <p className="text-slate-500 dark:text-slate-400 italic pt-1">
+                &ldquo;{loan.closureNotes || loan.closure_notes}&rdquo;
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header Parameter Strip */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -201,8 +263,16 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
               <span className="text-xs uppercase font-bold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-700">
                 Gold / Jewel Loan
               </span>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 uppercase">
-                Active
+              <span
+                className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase ${
+                  loan.status === 'active'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                    : loan.status === 'closed' || loan.status === 'paid_off'
+                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                    : 'bg-rose-50 dark:bg-rose-950 text-rose-600 border border-rose-200'
+                }`}
+              >
+                {loan.status === 'closed' ? 'Closed' : loan.status === 'paid_off' ? 'Paid Off' : loan.status}
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
@@ -475,71 +545,77 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
           </p>
         </div>
 
-        {/* Inline Add Payment Form */}
-        <form onSubmit={handleAddPayment} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
-                Payment Date
-              </label>
-              <input
-                type="date"
-                required
-                value={payDate}
-                onChange={(e) => setPayDate(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
-                Amount (₹)
-              </label>
-              <input
-                type="number"
-                required
-                min="1"
-                step="1"
-                placeholder="e.g. 5000"
-                value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
-                Note (optional)
-              </label>
-              <div className="flex gap-2">
+        {/* Inline Add Payment Form or Closed Notice */}
+        {isClosed ? (
+          <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-400">
+            🔒 This gold loan is closed. No additional payments can be recorded.
+          </div>
+        ) : (
+          <form onSubmit={handleAddPayment} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                  Payment Date
+                </label>
                 <input
-                  type="text"
-                  placeholder="e.g. Festival bonus"
-                  value={payNotes}
-                  onChange={(e) => setPayNotes(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  type="date"
+                  required
+                  value={payDate}
+                  onChange={(e) => setPayDate(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
-                <button
-                  type="submit"
-                  disabled={isSubmittingPayment || !payAmount || Number(payAmount) <= 0}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 shadow-sm disabled:opacity-50 cursor-pointer shrink-0 transition-all"
-                >
-                  {isSubmittingPayment ? 'Saving...' : '+ Add'}
-                </button>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                  Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 5000"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                  Note (optional)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Festival bonus"
+                    value={payNotes}
+                    onChange={(e) => setPayNotes(e.target.value)}
+                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmittingPayment || !payAmount || Number(payAmount) <= 0}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 shadow-sm disabled:opacity-50 cursor-pointer shrink-0 transition-all"
+                  >
+                    {isSubmittingPayment ? 'Saving...' : '+ Add'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Live Saving Preview */}
-          {prospectiveSavings > 0 && (
-            <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>
-                Paying <strong>{formatINR(Number(payAmount))}</strong> on {formatDate(payDate)} saves <strong>{formatINR(prospectiveSavings)}</strong> interest by maturity.
-              </span>
-            </div>
-          )}
-        </form>
+            {/* Live Saving Preview */}
+            {prospectiveSavings > 0 && (
+              <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  Paying <strong>{formatINR(Number(payAmount))}</strong> on {formatDate(payDate)} saves <strong>{formatINR(prospectiveSavings)}</strong> interest by maturity.
+                </span>
+              </div>
+            )}
+          </form>
+        )}
 
         {/* List of Payments */}
         {summary.paymentsWithSavings.length === 0 ? (

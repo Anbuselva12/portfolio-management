@@ -91,3 +91,4 @@
 10. Loan metadata (`name`, `place_or_purpose`, `comments`, `emi_reminders_enabled`) is persisted on creation, editable via Edit Terms, and displayed prominently in the UI.
 11. Active loans with reminders enabled automatically post their monthly EMI into the month's expense queue, and marking as paid in either location synchronizes payment status and decrements balance.
 12. Loans page list cards display accurate monthly EMI, interest rate, tenure, and header totals without empty fields.
+13. Loans of all types support direct full closure with optional reason logging, intelligent smart auto-prompt when remaining dues reach zero, and full financial lockdown preventing extra payments or modifications while closed.

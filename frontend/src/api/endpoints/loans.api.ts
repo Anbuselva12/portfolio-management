@@ -39,5 +39,9 @@ export const loansApi = {
     (await api.post(`/loans/${loanId}/recalculate`)).data,
   recalculateAll: async () =>
     (await api.post('/loans/recalculate-all')).data,
+  closeLoan: async (id: string, data?: { closureReason?: string; closureNotes?: string; closedAt?: string }) =>
+    (await api.post(`/loans/${id}/close`, data || {})).data,
+  reopenLoan: async (id: string) =>
+    (await api.post(`/loans/${id}/reopen`)).data,
 };
 

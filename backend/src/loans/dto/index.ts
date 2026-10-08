@@ -117,6 +117,32 @@ export class UpdateLoanDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @IsString()
+  @IsOptional()
+  closureReason?: string;
+
+  @IsString()
+  @IsOptional()
+  closureNotes?: string;
+
+  @IsDateString()
+  @IsOptional()
+  closedAt?: string;
+}
+
+export class CloseLoanDto {
+  @IsString()
+  @IsOptional()
+  closureReason?: string;
+
+  @IsString()
+  @IsOptional()
+  closureNotes?: string;
+
+  @IsDateString()
+  @IsOptional()
+  closedAt?: string;
 }
 
 export class PrepaymentPreviewDto {

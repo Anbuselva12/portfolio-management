@@ -424,6 +424,95 @@ describe('Story 2 — Loan Engine, Amortization, Prepayments & Storage Parity', 
         const postSchedule = await loansService.getSchedule(homeLoan.id, family.id);
         expect(postSchedule[0].is_paid).toBe(false);
       });
+
+      it(`[${name}] handles direct loan closure with optional reason, enforces financial lockdown, and supports reopening`, async () => {
+        const repos = factory();
+        const loansService = new LoansService(
+          repos.loanRepo,
+          repos.scheduleRepo,
+          repos.prepaymentRepo,
+          repos.rateRevisionRepo,
+          repos.auditRepo,
+          repos.expenseRepo,
+        );
+        const family = await repos.familyRepo.create({ name: 'Closure Test Family', country: 'IN', base_currency: 'INR' });
+        const member = await repos.memberRepo.create({
+          family_id: family.id,
+          username: `anbu_close_${Date.now()}_${name}`,
+          password_hash: 'hash',
+          display_name: 'Anbu',
+          role: 'admin',
+          status: 'active',
+        });
+
+        // 1. Create a loan
+        const loan = await loansService.createLoan(member.id, family.id, {
+          type: 'personal',
+          name: 'Personal Loan for Travel',
+          lender: 'HDFC Bank',
+          principal: '100000',
+          interestRate: '12.0',
+          tenureMonths: 12,
+          startDate: '2026-01-01',
+          currency: 'INR',
+        });
+
+        expect(loan.status).toBe('active');
+
+        // 2. Direct loan closure with reason
+        const closedLoan = await loansService.closeLoan(loan.id, family.id, member.id, {
+          closureReason: 'Full Closure with Money',
+          closureNotes: 'Settled from annual performance bonus',
+          closedAt: '2026-06-15',
+        });
+
+        expect(closedLoan.status).toBe('closed');
+        expect(closedLoan.closure_reason).toBe('Full Closure with Money');
+        expect(closedLoan.closure_notes).toBe('Settled from annual performance bonus');
+        expect(closedLoan.emi_reminders_enabled).toBe(false);
+
+        // 3. Verify financial lockdown: Cannot add prepayment to closed loan
+        await expect(
+          loansService.applyPrepayment(loan.id, family.id, member.id, {
+            amount: '20000',
+            date: '2026-07-01',
+            mode: 'reduce_tenure',
+          }),
+        ).rejects.toThrow('Cannot add part-payment: this loan is closed.');
+
+        // 4. Verify financial lockdown: Cannot apply rate revision to closed loan
+        await expect(
+          loansService.applyRateRevision(loan.id, family.id, member.id, {
+            newRate: '10.5',
+            effectiveDate: '2026-07-01',
+            policy: 'keep_emi',
+          }),
+        ).rejects.toThrow('Cannot apply rate revision: this loan is closed.');
+
+        // 5. Verify financial lockdown: Cannot modify installments on closed loan
+        const schedule = await loansService.getSchedule(loan.id, family.id);
+        await expect(
+          loansService.updateInstallment(loan.id, schedule[0].id, family.id, member.id, {
+            isPaid: true,
+          }),
+        ).rejects.toThrow('Cannot modify installment: this loan is closed.');
+
+        // 6. Reopen loan
+        const reopenedLoan = await loansService.reopenLoan(loan.id, family.id, member.id);
+        expect(reopenedLoan.status).toBe('active');
+        expect(reopenedLoan.closure_reason).toBeNull();
+
+        // 7. Reopening restores ability to modify installment
+        const updatedInst = await loansService.updateInstallment(loan.id, schedule[0].id, family.id, member.id, {
+          isPaid: true,
+        });
+        expect(updatedInst.is_paid).toBe(true);
+
+        // 8. Direct closure without selecting any reason (non-mandatory reason test)
+        const closedWithoutReason = await loansService.closeLoan(loan.id, family.id, member.id, {});
+        expect(closedWithoutReason.status).toBe('closed');
+        expect(closedWithoutReason.closure_reason).toBeNull();
+      });
     });
   }
 });

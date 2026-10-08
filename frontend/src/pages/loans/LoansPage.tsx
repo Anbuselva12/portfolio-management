@@ -286,11 +286,15 @@ export const LoansPage: React.FC = () => {
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="flex items-center gap-1.5">
-                      {isNearPayoff && (
+                      {loan.status === 'closed' || loan.status === 'paid_off' ? (
+                        <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full uppercase">
+                          Closed
+                        </span>
+                      ) : isNearPayoff ? (
                         <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
                           Almost there 🎉
                         </span>
-                      )}
+                      ) : null}
                       {isGold ? (
                         <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full uppercase tracking-wider">
                           BULLET (NO EMI)

@@ -21,6 +21,7 @@ import {
   UpdateInstallmentDto,
   RateRevisionDto,
   CalibrateLoanDto,
+  CloseLoanDto,
 } from './dto';
 import { LoanEngine } from './engine/loan-engine';
 import { GoldLoanCalculator } from './engine/gold-loan.calculator';
@@ -262,6 +263,9 @@ export class LoansService {
     if (dto.lender) updateData.lender = dto.lender;
     if (dto.emiType) updateData.emi_type = dto.emiType;
     if (dto.status) updateData.status = dto.status;
+    if (dto.closureReason !== undefined) updateData.closure_reason = dto.closureReason;
+    if (dto.closureNotes !== undefined) updateData.closure_notes = dto.closureNotes;
+    if (dto.closedAt !== undefined) updateData.closed_at = dto.closedAt ? new Date(dto.closedAt) : null;
 
     let termsChanged = false;
     const newRate = dto.interestRate ? new Decimal(dto.interestRate) : new Decimal(loan.interest_rate.toString());
@@ -304,8 +308,65 @@ export class LoansService {
     return updated;
   }
 
+  async closeLoan(loanId: string, familyId: string, memberId: string, dto: CloseLoanDto) {
+    await this.getLoanById(loanId, familyId);
+    const closedAt = dto.closedAt ? new Date(dto.closedAt) : new Date();
+    const updateData: any = {
+      status: 'closed',
+      closure_reason: dto.closureReason?.trim() || null,
+      closure_notes: dto.closureNotes?.trim() || null,
+      closed_at: closedAt,
+      emi_reminders_enabled: false,
+    };
+
+    const updated = await this.loanRepository.update(loanId, updateData);
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'loan',
+      entity_id: loanId,
+      action: 'close',
+      field_changes: JSON.stringify({
+        status: 'closed',
+        closure_reason: dto.closureReason?.trim() || null,
+        closure_notes: dto.closureNotes?.trim() || null,
+        closed_at: closedAt.toISOString(),
+      }),
+    });
+
+    return updated;
+  }
+
+  async reopenLoan(loanId: string, familyId: string, memberId: string) {
+    await this.getLoanById(loanId, familyId);
+    const updateData: any = {
+      status: 'active',
+      closure_reason: null,
+      closure_notes: null,
+      closed_at: null,
+    };
+
+    const updated = await this.loanRepository.update(loanId, updateData);
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'loan',
+      entity_id: loanId,
+      action: 'reopen',
+      field_changes: JSON.stringify({ status: 'active' }),
+    });
+
+    await this.recalculateLoanOutstanding(loanId);
+    return updated;
+  }
+
   async updateInstallment(loanId: string, installmentId: string, familyId: string, memberId: string, dto: UpdateInstallmentDto) {
     const loan = await this.getLoanById(loanId, familyId);
+    if (loan.status === 'closed' || loan.status === 'paid_off') {
+      throw new BadRequestException('Cannot modify installment: this loan is closed.');
+    }
     const installment = await this.scheduleRepository.findById(installmentId);
     if (!installment || installment.loan_id !== loanId) {
       throw new NotFoundException('Installment not found');
@@ -419,6 +480,9 @@ export class LoansService {
 
   async applyPrepayment(loanId: string, familyId: string, memberId: string, dto: ApplyPrepaymentDto) {
     const loan = await this.getLoanById(loanId, familyId);
+    if (loan.status === 'closed' || loan.status === 'paid_off') {
+      throw new BadRequestException('Cannot add part-payment: this loan is closed.');
+    }
     const preview = await this.previewPrepayment(loanId, familyId, dto);
     const accruedInterest = dto.accruedInterest ? new Decimal(dto.accruedInterest) : new Decimal(0);
 
@@ -534,6 +598,9 @@ export class LoansService {
 
   async applyRateRevision(loanId: string, familyId: string, memberId: string, dto: RateRevisionDto) {
     const loan = await this.getLoanById(loanId, familyId);
+    if (loan.status === 'closed' || loan.status === 'paid_off') {
+      throw new BadRequestException('Cannot apply rate revision: this loan is closed.');
+    }
     const preview = await this.previewRateRevision(loanId, familyId, dto);
     const schedule = await this.scheduleRepository.findByLoanId(loanId);
     const unpaid = schedule.filter((i) => !i.is_paid);
@@ -617,6 +684,9 @@ export class LoansService {
 
   async calibrateLoan(loanId: string, familyId: string, memberId: string, dto: CalibrateLoanDto) {
     const loan = await this.getLoanById(loanId, familyId);
+    if (loan.status === 'closed' || loan.status === 'paid_off') {
+      throw new BadRequestException('Cannot calibrate loan: this loan is closed.');
+    }
     const outstanding = new Decimal(dto.currentOutstanding);
     const rate = new Decimal(dto.currentRate);
     const tenureMonths = dto.remainingTenureMonths;
@@ -822,6 +892,9 @@ export class LoansService {
     dto: { paymentDate: string; amount: string; notes?: string },
   ) {
     const loan = await this.getLoanById(loanId, familyId);
+    if (loan.status === 'closed' || loan.status === 'paid_off') {
+      throw new BadRequestException('Cannot add payment: this loan is closed.');
+    }
     const payAmt = new Decimal(dto.amount);
     if (payAmt.lessThanOrEqualTo(0)) {
       throw new BadRequestException('Payment amount must be greater than zero');

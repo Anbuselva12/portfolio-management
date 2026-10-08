@@ -230,6 +230,9 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 | prepayment_penalty_value | decimal | nullable |
 | emi_reminders_enabled | boolean | default true — toggleable anytime to enable/disable auto-queuing into monthly expenses |
 | status | enum | active, closed, defaulted |
+| closure_reason | string | nullable — reason for full closure (e.g. "Full Closure with Money", "Transfer to new bank", "Foreclosure / Prepayment", "Collateral / Asset Liquidation", "Others") |
+| closure_notes | string | nullable — optional user notes regarding closure |
+| closed_at | datetime | nullable — timestamp when loan was fully closed |
 | country_rule_set | enum | inherited from Family.country at creation; snapshotted so later country changes don't retroactively alter existing loans |
 | created_at, updated_at, deleted_at | datetime | |
 
@@ -582,7 +585,39 @@ Real-world bank statements often deviate slightly from textbook formulas due to 
 3. The final $n^{\text{th}}$ installment is automatically adjusted to absorb any fractional residual tail, guaranteeing the loan balance reaches exactly ₹0.00.
 4. An audit log entry is recorded documenting the statement reconciliation point.
 
-### 7.10 Debt Strategy Engine — Detail
+### 7.10 Loan Closure, Reason Tracking & Financial Lockdown Protocol
+Loans of all types (home, car, personal, jewel, gold, education, business, other) support direct full closure and automated payoff detection.
+
+1. **Direct Loan Closure & Reason Classification:**
+   - A user can close any active loan directly at any time via the "Close Loan" action.
+   - When closing, the system displays a modal presenting standard closure reason options:
+     - **Full Closure with Money**: Paid off in full from savings/income.
+     - **Transfer to new bank**: Balance transfer / refinancing with another institution.
+     - **Foreclosure / Prepayment**: Early full principal repayment.
+     - **Asset Sale / Collateral Liquidation**: Financed asset sold or pledged collateral released.
+     - **Waived / Written Off**: Special concession, subsidy, or waiver.
+     - **Others**: Custom user reason with optional text notes.
+   - **Non-Mandatory Selection Rule**: Selecting a reason is strictly optional. Users may confirm closure without choosing any reason.
+   - Upon confirmation, the loan's status is set to `closed`, `closed_at` is set to the closure date, and `closure_reason` / `closure_notes` are recorded. An audit log entry is generated.
+
+2. **Smart Zero-Balance Auto-Prompt:**
+   - Whenever an action reduces remaining dues to zero:
+     - Marking the last scheduled EMI as paid (`unpaidInstallments.length === 0`).
+     - Making a part-payment or gold loan payment that pays off all outstanding principal ($\le 0$).
+   - The system detects the cleared status and automatically displays an intelligent prompt:
+     *"All dues are cleared! There is no pending balance on this loan. Would you like to mark this loan as fully closed?"*
+   - Accepting launches the closure reason modal or closes the loan directly. Declining leaves the loan active.
+
+3. **Closed Loan Lockdown Rules:**
+   - To maintain financial data integrity, **no further amount or payment can be added to a closed loan**:
+     - **Part-Payments Blocked**: Cannot apply prepayments.
+     - **Rate Revisions Blocked**: Cannot apply benchmark rate changes.
+     - **Schedule Modification Blocked**: Amortization installments cannot be edited, paid, or amounts modified.
+     - **EMI Auto-Queue Disabled**: The monthly expense queue toggle is permanently disengaged.
+     - Backend API routes enforce strict validation rejecting modifications to closed loans.
+   - **Reopen Capability**: An authorized user may reopen an erroneously closed loan, restoring its status to `active` and re-enabling payment actions.
+
+### 7.11 Debt Strategy Engine — Detail
 All strategies run against a parameterized simulation core supporting two distinct Prepayment Modes:
 
 1. **Prepayment Modes:**

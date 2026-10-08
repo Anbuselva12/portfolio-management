@@ -213,7 +213,10 @@ model Loan {
   prepayment_penalty_type   String    @default("none") // none | percentage_of_prepayment | fixed_amount
   prepayment_penalty_value  Decimal?
   country_rule_set          String    @default("IN")
-  status                    String    @default("active") // active | paid_off | defaulted
+  status                    String    @default("active") // active | paid_off | defaulted | closed
+  closure_reason            String?   // Full Closure with Money | Transfer to new bank | Foreclosure / Prepayment | Asset Sale / Collateral Liquidation | Waived / Written Off | Others
+  closure_notes             String?
+  closed_at                 DateTime?
   discrepancy_flag          Boolean   @default(false)
   discrepancy_details       String?   // JSON stringified: { calculatedEmi, userEmi, diffPct, impliedRate }
   created_at                DateTime  @default(now())

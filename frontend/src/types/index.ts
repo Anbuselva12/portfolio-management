@@ -12,7 +12,7 @@ export type InsuranceStatus = 'active' | 'lapsed' | 'matured';
 
 export type LoanType = 'home' | 'car' | 'personal' | 'jewel' | 'education' | 'business' | 'gold' | 'other';
 export type InterestType = 'reducing_compound' | 'flat_simple';
-export type LoanStatus = 'active' | 'paid_off' | 'defaulted';
+export type LoanStatus = 'active' | 'paid_off' | 'defaulted' | 'closed';
 
 export interface Member {
   id: string;
@@ -154,6 +154,12 @@ export interface Loan {
   countryRuleSet?: string;
   country_rule_set?: string;
   status: LoanStatus;
+  closureReason?: string | null;
+  closure_reason?: string | null;
+  closureNotes?: string | null;
+  closure_notes?: string | null;
+  closedAt?: string | null;
+  closed_at?: string | null;
   discrepancyFlag?: boolean;
   discrepancy_flag?: boolean;
   discrepancyDetails?: string | null;

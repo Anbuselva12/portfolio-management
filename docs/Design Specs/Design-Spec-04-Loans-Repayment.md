@@ -114,6 +114,54 @@ Allows one-click alignment of an existing active loan with live bank statements 
 
 ---
 
+## 6. Loan Closure Modal & Smart Zero-Balance Auto-Prompt
+Applicable across all loan types (Home, Car, Personal, Jewel/Gold, Education, Business, Other) and responsive across Mobile, Tablet, Web, and Desktop.
+
+### 6.1 Direct Loan Closure Action
+- **Trigger**: "Close Loan" button in the Top Action Bar on the Loan Detail page.
+- **Closure Modal Layout**:
+  - **Header**: "Close Loan — [Loan Name]" with lender & type badge.
+  - **Outstanding Balance Warning/Context**: Displays current outstanding balance (e.g., `₹0.00` or remaining balance if settling early).
+  - **Reason for Full Closure Selector**:
+    - Selectable radio options with clear visual icons:
+      1. 💰 **Full Closure with Money**: Cleared in full using personal savings or income.
+      2. 🏦 **Transfer to new bank**: Balance transfer / refinancing with another bank or NBFC.
+      3. ⚡ **Foreclosure / Prepayment**: Early full principal settlement before scheduled tenure.
+      4. 💎 **Asset Sale / Collateral Liquidation**: Sold financed property/vehicle or released pledged gold.
+      5. 🎁 **Waived / Written Off**: Subsidized, settled via concession, or written off.
+      6. 📝 **Others**: Other custom scenario.
+    - **Non-Mandatory Rule Banner**:
+      > *"Selecting a closure reason is optional. You can confirm loan closure directly without choosing any option."*
+  - **Closure Date**: Defaults to today's date (editable).
+  - **Closure Notes (Optional)**: Free-text input for personal remarks or bank closure reference number.
+  - **Action Buttons**:
+    - `Cancel` (Ghost button)
+    - `Confirm Loan Closure` (Emerald primary button)
+
+### 6.2 Smart Zero-Balance Auto-Prompt
+- **Trigger Condition**:
+  - Automatically triggered whenever:
+    1. The user marks the final remaining installment as paid (`unpaidInstallments.length === 0`).
+    2. A part-payment or gold loan payment reduces outstanding principal to zero or below ($\le 0$).
+- **Prompt Dialog (Modal)**:
+  - Header: "All Dues Cleared! 🎉"
+  - Body: "There is no outstanding balance or pending EMI due on this loan. Would you like to mark this loan as fully closed now?"
+  - Quick Actions:
+    - `Yes, Close Loan` → Opens the Closure Reason Modal (or performs one-click closure).
+    - `Keep Active / Later` → Dismisses the prompt and leaves the loan active.
+
+### 6.3 Closed Loan State & Financial Lockdown
+When a loan status is `closed`:
+- **Visual Badge**: Display prominent `CLOSED` badge (emerald/slate) with closure reason and date (e.g. `CLOSED • 12 Oct 2026 • Transfer to new bank`).
+- **Financial Lockdown (No Further Amounts Can Be Added)**:
+  - "Make Part-Payment" button is hidden.
+  - "Log Rate Revision" button is hidden.
+  - "Sync Statement" / "Calibrate" is disabled.
+  - "Auto EMI Queue" toggle is disengaged and disabled.
+  - Amortization schedule rows are locked (cannot mark as paid/unpaid or edit values).
+  - Informative Lockdown Banner: *"This loan was closed on [Date]. All dues are settled and no further payments or rate adjustments can be added."*
+  - **Reopen Action**: A discreet "Reopen Loan" action is provided in Edit Terms or top actions for administrative recovery if a loan was closed by mistake.
+
 ---
 
 ## 7. Gold / Jewel Loan Running-Balance Ledger & Bullet Repayment View
