@@ -5,6 +5,8 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { ActiveMemberGuard } from '../common/guards/active-member.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { InviteMemberDto } from './dto/invite-member.dto';
+import { UpdateMemberStatusDto } from './dto/update-member-status.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, ActiveMemberGuard)
 @Roles('admin')
@@ -33,12 +35,12 @@ export class AdminController {
   }
 
   @Post(['members', 'invite'])
-  async inviteMember(@CurrentUser() user: any, @Body() dto: any) {
+  async inviteMember(@CurrentUser() user: any, @Body() dto: InviteMemberDto) {
     return this.adminService.inviteMember(user.sub, user.familyId, dto);
   }
 
   @Patch(['members/:id', 'member/:id'])
-  async updateMemberStatus(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: any) {
+  async updateMemberStatus(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: UpdateMemberStatusDto) {
     return this.adminService.updateMemberStatus(user.sub, user.familyId, id, dto.isActive);
   }
 

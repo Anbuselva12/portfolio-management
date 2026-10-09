@@ -155,12 +155,20 @@ export class TrackerService {
   }
 
   async updatePhase(familyId: string, projectId: string, phaseId: string, dto: any) {
-    await this.getProject(familyId, projectId);
-    return this.trackerRepo.updatePhase(phaseId, dto);
+    const project = await this.getProject(familyId, projectId);
+    this.assertBelongsToProject(project.phases, phaseId, 'Phase');
+    const updateData: any = {};
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.sortOrder !== undefined) updateData.sort_order = dto.sortOrder;
+    if (dto.sort_order !== undefined) updateData.sort_order = dto.sort_order;
+    if (dto.isActive !== undefined) updateData.is_active = Boolean(dto.isActive);
+    if (dto.is_active !== undefined) updateData.is_active = Boolean(dto.is_active);
+    return this.trackerRepo.updatePhase(phaseId, updateData);
   }
 
   async deletePhase(familyId: string, projectId: string, phaseId: string) {
-    await this.getProject(familyId, projectId);
+    const project = await this.getProject(familyId, projectId);
+    this.assertBelongsToProject(project.phases, phaseId, 'Phase');
     await this.trackerRepo.deletePhase(phaseId);
     return { success: true };
   }
@@ -175,12 +183,20 @@ export class TrackerService {
   }
 
   async updateType(familyId: string, projectId: string, typeId: string, dto: any) {
-    await this.getProject(familyId, projectId);
-    return this.trackerRepo.updateType(typeId, dto);
+    const project = await this.getProject(familyId, projectId);
+    this.assertBelongsToProject(project.types, typeId, 'Expense type');
+    const updateData: any = {};
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.sortOrder !== undefined) updateData.sort_order = dto.sortOrder;
+    if (dto.sort_order !== undefined) updateData.sort_order = dto.sort_order;
+    if (dto.isActive !== undefined) updateData.is_active = Boolean(dto.isActive);
+    if (dto.is_active !== undefined) updateData.is_active = Boolean(dto.is_active);
+    return this.trackerRepo.updateType(typeId, updateData);
   }
 
   async deleteType(familyId: string, projectId: string, typeId: string) {
-    await this.getProject(familyId, projectId);
+    const project = await this.getProject(familyId, projectId);
+    this.assertBelongsToProject(project.types, typeId, 'Expense type');
     await this.trackerRepo.deleteType(typeId);
     return { success: true };
   }
@@ -196,7 +212,8 @@ export class TrackerService {
   }
 
   async updateTag(familyId: string, projectId: string, tagId: string, dto: any) {
-    await this.getProject(familyId, projectId);
+    const project = await this.getProject(familyId, projectId);
+    this.assertBelongsToProject(project.tags, tagId, 'Tag');
     return this.trackerRepo.updateTag(tagId, {
       name: dto.name,
       hex_color: dto.hexColor,
@@ -205,9 +222,26 @@ export class TrackerService {
   }
 
   async deleteTag(familyId: string, projectId: string, tagId: string) {
-    await this.getProject(familyId, projectId);
+    const project = await this.getProject(familyId, projectId);
+    this.assertBelongsToProject(project.tags, tagId, 'Tag');
     await this.trackerRepo.deleteTag(tagId);
     return { success: true };
+  }
+
+  private assertBelongsToProject(items: { id: string }[], id: string, label: string) {
+    if (!items.some((item) => item.id === id)) {
+      throw new NotFoundException(`${label} not found`);
+    }
+  }
+
+  /** Ensures optional phase/type/tag references on an expense belong to the given project. */
+  private async assertExpenseRefsInProject(
+    project: { phases: { id: string }[]; types: { id: string }[]; tags: { id: string }[] },
+    refs: { phaseId?: string | null; typeId?: string | null; tagId?: string | null },
+  ) {
+    if (refs.phaseId) this.assertBelongsToProject(project.phases, refs.phaseId, 'Phase');
+    if (refs.typeId) this.assertBelongsToProject(project.types, refs.typeId, 'Expense type');
+    if (refs.tagId) this.assertBelongsToProject(project.tags, refs.tagId, 'Tag');
   }
 
   async getUnits() {
@@ -289,7 +323,12 @@ export class TrackerService {
   }
 
   async createExpense(familyId: string, memberId: string, projectId: string, dto: any) {
-    await this.getProject(familyId, projectId);
+    const project = await this.getProject(familyId, projectId);
+    await this.assertExpenseRefsInProject(project, {
+      phaseId: dto.projectPhaseId,
+      typeId: dto.expenseTypeId,
+      tagId: dto.tagItemId,
+    });
 
     const q = new Decimal(dto.quantity || 1);
     const rate = new Decimal(dto.pricePerQty || 0);
@@ -323,7 +362,12 @@ export class TrackerService {
   async updateExpense(familyId: string, expenseId: string, dto: any) {
     const existing = await this.trackerRepo.findExpenseById(expenseId);
     if (!existing) throw new NotFoundException('Expense not found');
-    await this.getProject(familyId, existing.project_id);
+    const project = await this.getProject(familyId, existing.project_id);
+    await this.assertExpenseRefsInProject(project, {
+      phaseId: dto.projectPhaseId,
+      typeId: dto.expenseTypeId,
+      tagId: dto.tagItemId,
+    });
 
     const updateData: any = {};
     if (dto.expenseTypeId !== undefined) updateData.expense_type_id = dto.expenseTypeId;

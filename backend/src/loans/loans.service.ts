@@ -928,6 +928,10 @@ export class LoansService {
    */
   async deleteGoldLoanPayment(loanId: string, familyId: string, memberId: string, paymentId: string) {
     await this.getLoanById(loanId, familyId);
+    const payment = await this.prepaymentRepository.findById(paymentId);
+    if (!payment || payment.loan_id !== loanId) {
+      throw new NotFoundException('Payment not found');
+    }
     await this.prepaymentRepository.delete(paymentId);
     await this.auditRepository.create({
       member_id: memberId,

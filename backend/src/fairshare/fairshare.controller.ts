@@ -32,17 +32,20 @@ export class FairShareController {
   }
 
   @Get('trips/:id')
-  async getTrip(@Param('id') id: string) {
+  async getTrip(@CurrentUser() user: any, @Param('id') id: string) {
+    await this.fairShareService.assertTripAccess(id, user.sub);
     return this.fairShareService.getTrip(id);
   }
 
   @Patch('trips/:id')
-  async updateTrip(@Param('id') id: string, @Body() dto: any) {
+  async updateTrip(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: any) {
+    await this.fairShareService.assertTripAccess(id, user.sub);
     return this.fairShareService.updateTrip(id, dto);
   }
 
   @Delete('trips/:id')
-  async deleteTrip(@Param('id') id: string) {
+  async deleteTrip(@CurrentUser() user: any, @Param('id') id: string) {
+    await this.fairShareService.assertTripAccess(id, user.sub, true);
     await this.fairShareService.deleteTrip(id);
     return { success: true };
   }
@@ -51,17 +54,21 @@ export class FairShareController {
 
   @Get('trips/:id/analytics')
   async getTripAnalytics(
+    @CurrentUser() user: any,
     @Param('id') id: string,
     @Query('rollup') rollup?: 'family' | 'individual',
   ) {
+    await this.fairShareService.assertTripAccess(id, user.sub);
     return this.fairShareService.getTripAnalytics(id, rollup);
   }
 
   @Get('trips/:id/whatsapp')
   async getWhatsAppSummary(
+    @CurrentUser() user: any,
     @Param('id') id: string,
     @Query('rollup') rollup?: 'family' | 'individual',
   ) {
+    await this.fairShareService.assertTripAccess(id, user.sub);
     const text = await this.fairShareService.generateWhatsAppSummary(id, rollup);
     return { text };
   }
@@ -69,24 +76,29 @@ export class FairShareController {
   // ─── Households ─────────────────────────────────────────────────────────────
 
   @Post('trips/:id/households')
-  async addHousehold(@Param('id') tripId: string, @Body() dto: any) {
+  async addHousehold(@CurrentUser() user: any, @Param('id') tripId: string, @Body() dto: any) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     return this.fairShareService.addHousehold(tripId, dto);
   }
 
   @Patch('trips/:id/households/:householdId')
   async updateHousehold(
+    @CurrentUser() user: any,
     @Param('id') tripId: string,
     @Param('householdId') householdId: string,
     @Body() dto: any,
   ) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     return this.fairShareService.updateHousehold(tripId, householdId, dto);
   }
 
   @Delete('trips/:id/households/:householdId')
   async deleteHousehold(
+    @CurrentUser() user: any,
     @Param('id') tripId: string,
     @Param('householdId') householdId: string,
   ) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     await this.fairShareService.deleteHousehold(tripId, householdId);
     return { success: true };
   }
@@ -94,24 +106,29 @@ export class FairShareController {
   // ─── Participants ───────────────────────────────────────────────────────────
 
   @Post('trips/:id/participants')
-  async addParticipant(@Param('id') tripId: string, @Body() dto: any) {
+  async addParticipant(@CurrentUser() user: any, @Param('id') tripId: string, @Body() dto: any) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     return this.fairShareService.addParticipant(tripId, dto);
   }
 
   @Patch('trips/:id/participants/:participantId')
   async updateParticipant(
+    @CurrentUser() user: any,
     @Param('id') tripId: string,
     @Param('participantId') participantId: string,
     @Body() dto: any,
   ) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     return this.fairShareService.updateParticipant(tripId, participantId, dto);
   }
 
   @Delete('trips/:id/participants/:participantId')
   async deleteParticipant(
+    @CurrentUser() user: any,
     @Param('id') tripId: string,
     @Param('participantId') participantId: string,
   ) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     await this.fairShareService.deleteParticipant(tripId, participantId);
     return { success: true };
   }
@@ -119,24 +136,29 @@ export class FairShareController {
   // ─── Expenses ───────────────────────────────────────────────────────────────
 
   @Post('trips/:id/expenses')
-  async createExpense(@Param('id') tripId: string, @Body() dto: any) {
+  async createExpense(@CurrentUser() user: any, @Param('id') tripId: string, @Body() dto: any) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     return this.fairShareService.createExpense(tripId, dto);
   }
 
   @Patch('trips/:id/expenses/:expenseId')
   async updateExpense(
+    @CurrentUser() user: any,
     @Param('id') tripId: string,
     @Param('expenseId') expenseId: string,
     @Body() dto: any,
   ) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     return this.fairShareService.updateExpense(tripId, expenseId, dto);
   }
 
   @Delete('trips/:id/expenses/:expenseId')
   async deleteExpense(
+    @CurrentUser() user: any,
     @Param('id') tripId: string,
     @Param('expenseId') expenseId: string,
   ) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     await this.fairShareService.deleteExpense(tripId, expenseId);
     return { success: true };
   }
@@ -144,15 +166,18 @@ export class FairShareController {
   // ─── Settlements ────────────────────────────────────────────────────────────
 
   @Post('trips/:id/settlements')
-  async recordSettlement(@Param('id') tripId: string, @Body() dto: any) {
+  async recordSettlement(@CurrentUser() user: any, @Param('id') tripId: string, @Body() dto: any) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     return this.fairShareService.recordSettlement(tripId, dto);
   }
 
   @Delete('trips/:id/settlements/:settlementId')
   async deleteSettlement(
+    @CurrentUser() user: any,
     @Param('id') tripId: string,
     @Param('settlementId') settlementId: string,
   ) {
+    await this.fairShareService.assertTripAccess(tripId, user.sub);
     await this.fairShareService.deleteSettlement(tripId, settlementId);
     return { success: true };
   }

@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import {
   IFairShareRepository,
@@ -63,6 +63,38 @@ export class FairShareService {
       throw new NotFoundException(`Trip with ID ${tripId} not found`);
     }
     return trip;
+  }
+
+  /**
+   * Authorizes a member against a trip: the creator or any registered participant may access it.
+   * Pass `creatorOnly` for destructive trip-level operations.
+   * Non-members receive a 404 so trip IDs cannot be probed.
+   */
+  async assertTripAccess(tripId: string, memberId: string, creatorOnly = false): Promise<TripWithDetails> {
+    const trip = await this.getTrip(tripId);
+    const isCreator = trip.created_by_id === memberId;
+    const isParticipant = trip.participants.some((p) => p.member_id === memberId);
+    if (!isCreator && !isParticipant) {
+      throw new NotFoundException(`Trip with ID ${tripId} not found`);
+    }
+    if (creatorOnly && !isCreator) {
+      throw new ForbiddenException('Only the trip creator can perform this action');
+    }
+    return trip;
+  }
+
+  private assertChild(items: { id: string }[], id: string, label: string) {
+    if (!items.some((item) => item.id === id)) {
+      throw new NotFoundException(`${label} not found in this trip`);
+    }
+  }
+
+  private pick(source: any, allowed: readonly string[]): any {
+    const result: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (source && source[key] !== undefined) result[key] = source[key];
+    }
+    return result;
   }
 
   async createTrip(memberId: string, dto: {
@@ -142,7 +174,13 @@ export class FairShareService {
 
   async updateTrip(tripId: string, dto: any) {
     await this.getTrip(tripId);
-    return this.fairShareRepo.updateTrip(tripId, dto);
+    const data = this.pick(dto, [
+      'title', 'description', 'location', 'duration_days', 'currency',
+      'default_split_mode', 'settlement_level', 'is_settled',
+    ]);
+    if (dto?.start_date !== undefined) data.start_date = dto.start_date ? new Date(dto.start_date) : null;
+    if (dto?.end_date !== undefined) data.end_date = dto.end_date ? new Date(dto.end_date) : null;
+    return this.fairShareRepo.updateTrip(tripId, data);
   }
 
   async deleteTrip(tripId: string) {
@@ -163,12 +201,17 @@ export class FairShareService {
   }
 
   async updateHousehold(tripId: string, householdId: string, dto: any) {
-    await this.getTrip(tripId);
-    return this.fairShareRepo.updateHousehold(householdId, dto);
+    const trip = await this.getTrip(tripId);
+    this.assertChild(trip.households, householdId, 'Household');
+    return this.fairShareRepo.updateHousehold(
+      householdId,
+      this.pick(dto, ['name', 'sort_order', 'default_share_pct']),
+    );
   }
 
   async deleteHousehold(tripId: string, householdId: string) {
-    await this.getTrip(tripId);
+    const trip = await this.getTrip(tripId);
+    this.assertChild(trip.households, householdId, 'Household');
     return this.fairShareRepo.deleteHousehold(householdId);
   }
 
@@ -182,7 +225,8 @@ export class FairShareService {
     email?: string;
     phone?: string;
   }) {
-    await this.getTrip(tripId);
+    const trip = await this.getTrip(tripId);
+    if (dto.household_id) this.assertChild(trip.households, dto.household_id, 'Household');
     return this.fairShareRepo.createParticipant({
       trip_id: tripId,
       household_id: dto.household_id || null,
@@ -195,12 +239,18 @@ export class FairShareService {
   }
 
   async updateParticipant(tripId: string, participantId: string, dto: any) {
-    await this.getTrip(tripId);
-    return this.fairShareRepo.updateParticipant(participantId, dto);
+    const trip = await this.getTrip(tripId);
+    this.assertChild(trip.participants, participantId, 'Participant');
+    if (dto?.household_id) this.assertChild(trip.households, dto.household_id, 'Household');
+    return this.fairShareRepo.updateParticipant(
+      participantId,
+      this.pick(dto, ['display_name', 'household_id', 'is_guest', 'email', 'phone']),
+    );
   }
 
   async deleteParticipant(tripId: string, participantId: string) {
-    await this.getTrip(tripId);
+    const trip = await this.getTrip(tripId);
+    this.assertChild(trip.participants, participantId, 'Participant');
     return this.fairShareRepo.deleteParticipant(participantId);
   }
 
@@ -272,6 +322,9 @@ export class FairShareService {
     const existing = trip.expenses.find((e) => e.id === expenseId);
     if (!existing) throw new NotFoundException('Expense not found');
 
+    if (dto.payer_participant_id) {
+      this.assertChild(trip.participants, dto.payer_participant_id, 'Payer participant');
+    }
     const amountDec = dto.amount !== undefined ? new Decimal(dto.amount) : new Decimal(existing.amount.toString());
     const splitMode = dto.split_mode || (existing.split_mode as any);
 
@@ -297,7 +350,8 @@ export class FairShareService {
   }
 
   async deleteExpense(tripId: string, expenseId: string) {
-    await this.getTrip(tripId);
+    const trip = await this.getTrip(tripId);
+    this.assertChild(trip.expenses, expenseId, 'Expense');
     return this.fairShareRepo.deleteExpense(expenseId);
   }
 
@@ -334,7 +388,8 @@ export class FairShareService {
   }
 
   async deleteSettlement(tripId: string, settlementId: string) {
-    await this.getTrip(tripId);
+    const trip = await this.getTrip(tripId);
+    this.assertChild(trip.settlements, settlementId, 'Settlement');
     return this.fairShareRepo.deleteSettlement(settlementId);
   }
 

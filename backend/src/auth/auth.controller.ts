@@ -3,14 +3,17 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('api/v1/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.register(registerDto);
@@ -18,6 +21,7 @@ export class AuthController {
     return { accessToken: result.accessToken, member: result.member };
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
@@ -51,6 +55,7 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @Post('change-password')
@@ -68,7 +73,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard('jwt'))
   @Patch('profile')
-  async updateProfile(@CurrentUser() user: any, @Body() dto: any) {
+  async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
     const member = await this.authService.updateProfile(user.sub, dto);
     return { member };
   }

@@ -122,3 +122,12 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+## Security notes
+
+- Roles, family and active status are re-read from the database on every authenticated request; token claims are not trusted.
+- Refresh tokens are stored as SHA-256 digests and rotated on every refresh. Tokens issued before this change are invalid, so users sign in once.
+- Production (`NODE_ENV=production`) refuses to start unless `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` are distinct, at least 32 characters, and not placeholder values.
+- Rate limiting is global (100 req/min) with stricter limits on register, login and change-password. Set `TRUST_PROXY` (e.g. `1`) when running behind a reverse proxy.
+- FairShare trips are limited to their creator and participants; Tracker phases/types/tags and audit restores are checked against the caller's family.

@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { createHash, timingSafeEqual } from 'crypto';
 import { I_MEMBER_REPOSITORY, IMemberRepository, I_AUDIT_REPOSITORY, IAuditRepository } from '../repositories/interfaces';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -11,6 +12,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 @Injectable()
 export class AuthService {
   private readonly bcryptRounds: number;
+  private readonly dummyHash: string;
 
   constructor(
     @Inject(I_MEMBER_REPOSITORY) private readonly memberRepository: IMemberRepository,
@@ -20,6 +22,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
   ) {
     this.bcryptRounds = this.configService.get<number>('bcryptRounds') || 12;
+    this.dummyHash = bcrypt.hashSync('timing-equalisation', this.bcryptRounds);
   }
 
   async register(dto: RegisterDto) {
@@ -49,6 +52,8 @@ export class AuthService {
   async login(dto: LoginDto) {
     const member = await this.memberRepository.findByUsername(dto.username);
     if (!member) {
+      // Equalise response time so usernames cannot be enumerated by timing.
+      await bcrypt.compare(dto.password, this.dummyHash);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -102,8 +107,7 @@ export class AuthService {
       throw new UnauthorizedException('Access Denied');
     }
 
-    const isMatch = await bcrypt.compare(refreshToken, tokenRecord.token_hash);
-    if (!isMatch) {
+    if (!refreshToken || !this.digestMatches(refreshToken, tokenRecord.token_hash)) {
       throw new UnauthorizedException('Access Denied');
     }
 
@@ -171,8 +175,22 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  /**
+   * Refresh tokens are long JWTs; bcrypt only reads the first 72 bytes, which are identical
+   * across a member's tokens, so a full-token SHA-256 digest is used to make rotation effective.
+   */
+  private digest(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private digestMatches(token: string, storedDigest: string): boolean {
+    const a = Buffer.from(this.digest(token));
+    const b = Buffer.from(storedDigest);
+    return a.length === b.length && timingSafeEqual(a, b);
+  }
+
   private async updateRefreshToken(memberId: string, refreshToken: string) {
-    const hash = await bcrypt.hash(refreshToken, 10);
+    const hash = this.digest(refreshToken);
     const expiresIn = this.configService.get<string>('jwt.refreshExpiresIn') || '7d';
     const days = parseInt(expiresIn, 10);
     const expiresAt = new Date();

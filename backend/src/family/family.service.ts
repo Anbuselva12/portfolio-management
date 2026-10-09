@@ -153,6 +153,10 @@ export class FamilyService {
   }
 
   async deleteCurrencyRate(familyId: string, memberId: string, id: string) {
+    const rates = await this.currencyRateRepository.findByFamilyId(familyId);
+    if (!rates.some((r) => r.id === id)) {
+      throw new NotFoundException('Currency rate not found');
+    }
     await this.currencyRateRepository.deleteRate(id);
     await this.auditRepository.create({
       family_id: familyId,
@@ -173,7 +177,12 @@ export class FamilyService {
 
     const updateData: any = {};
     if (dto.name) updateData.name = dto.name;
-    if (dto.joinPolicy) updateData.join_policy = dto.joinPolicy;
+    if (dto.joinPolicy) {
+      if (!['open', 'approval_required'].includes(dto.joinPolicy)) {
+        throw new BadRequestException('Invalid join policy');
+      }
+      updateData.join_policy = dto.joinPolicy;
+    }
     if (dto.isDiscoverable !== undefined) updateData.is_discoverable = dto.isDiscoverable;
     if (dto.strategyWeights) {
       updateData.strategy_weights =

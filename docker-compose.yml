@@ -13,14 +13,14 @@ services:
       - PORT=3000
       - NODE_ENV=production
       - DATABASE_URL=file:/app/prisma/dev.db
-      - STORAGE_MODE=prisma
-      - JWT_ACCESS_SECRET=your-super-secret-jwt-key-min-32-chars-long
+      - STORAGE_MODE=server
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET (min 32 random chars)}
       - JWT_ACCESS_EXPIRES_IN=15m
-      - JWT_REFRESH_SECRET=your-refresh-secret-jwt-key-min-32-chars-long
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET (min 32 random chars)}
       - JWT_REFRESH_EXPIRES_IN=7d
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GEMINI_MODEL=gemini-2.5-flash
-      - FRONTEND_URL=http://localhost:5173
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
     volumes:
       - backend_data:/app/prisma
 
