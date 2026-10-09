@@ -700,7 +700,21 @@ Gold/Jewel loans (`loan_type == 'jewel'` or `'gold'`) operate as running-balance
    - **Debt Strategy Engine Integration**:
      - The baseline monthly obligation for a Gold Loan is defined as the monthly accrued interest (servicing the interest prevents the balance from compounding).
      - Extra surplus allocation directly reduces the principal balance, lowering all subsequent daily interest charges and future capitalized amounts.
-     - Final month requires full bullet payoff of remaining balance.
+      - Final month requires full bullet payoff of remaining balance.
+
+4. **Current Outstanding Principal / Payoff Balance Determination:**
+   - For Gold / Jewel Loans, `current_outstanding_principal` represents the net payoff closing amount required to clear the debt at maturity under actual payments made (`totals.finalClosingYours` / `scenarios.scenarioB.finalDueAtMaturity`).
+   - Prior logic incorrectly took `scenarioB.totalCost` (which added back past payments already completed).
+   - Any part-payment directly reduces the outstanding principal balance and lowers the final maturity due.
+
+### 7.14 Amortization Balance Trajectory Engine (Outstanding Balance Over Time)
+For standard amortizing loans (home, car, personal, education, business, other), the system generates an interactive comparative trajectory:
+1. **Scheduled Baseline Trajectory (Red Curve / Original Plan):**
+   - Projects the contractual closing balance month-by-month over the original tenure without prepayments.
+2. **Actual / Payment-Adjusted Trajectory (Green Curve / Your Payments):**
+   - Projects the live closing balance trajectory directly reflecting all recorded prepayments/part-payments and schedule recalibrations.
+   - When a part-payment is recorded (reducing tenure or reducing EMI), the green trajectory drops immediately, demonstrating accelerated debt payoff and earlier closure.
+   - Reactively re-renders upon any prepayment addition, rate reset, or deletion.
 
 ---
 
@@ -719,6 +733,10 @@ Debt-to-Income    = Monthly EMI / Monthly Income × 100
 Available Surplus (engine input) = Monthly Savings (user-overridable per suggestion run)
 ```
 All currency conversion uses the Family's `base_currency` and the latest `CurrencyRate` effective on/before the calculation date.
+
+**Expense Display & Status Styling Guarantee:**
+- Standard household expenses (manual and recurring) are always rendered with full opacity and standard foreground typography.
+- Dimming (`opacity-60`) and strikethrough styling are strictly restricted to auto-queued loan EMI expenses (`loan_emi_auto`) that have been marked as paid. Normal household expenses must never be styled with strikethrough or muted opacity.
 
 ---
 

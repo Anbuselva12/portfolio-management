@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loansApi } from '../../api/endpoints/loans.api';
 import { Loan, LoanType } from '../../types';
 import { formatINR } from '../../utils/currency';
+import { formatDate } from '../../utils/date';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import {
   CreditCard,
@@ -135,6 +136,7 @@ export const LoansPage: React.FC = () => {
 
   type SortOption = 'highest' | 'lowest' | 'newest' | 'oldest';
   const [sortBy, setSortBy] = useState<SortOption>('highest');
+  const [activeTab, setActiveTab] = useState<'active' | 'closed'>('active');
 
   const isGoldLoan = (l: Loan) => {
     const t = (l.type || '').toLowerCase();
@@ -157,32 +159,48 @@ export const LoansPage: React.FC = () => {
     return Math.max(0, totalTenure - elapsedMonths);
   };
 
-  const sortedLoans = [...loans].sort((a, b) => {
-    const principalA = Number((a.current_outstanding_principal ?? (a as any).currentOutstandingPrincipal ?? a.principal) || 0);
-    const principalB = Number((b.current_outstanding_principal ?? (b as any).currentOutstandingPrincipal ?? b.principal) || 0);
-    const dateA = new Date((a as any).createdAt || (a as any).created_at || a.startDate || a.start_date || 0).getTime();
-    const dateB = new Date((b as any).createdAt || (b as any).created_at || b.startDate || b.start_date || 0).getTime();
+  const validLoans: Loan[] = useMemo(() => {
+    return loans.filter((l: Loan) => !(l as any).deleted_at && !(l as any).deletedAt);
+  }, [loans]);
 
-    if (sortBy === 'highest') {
-      return principalB - principalA;
-    }
-    if (sortBy === 'lowest') {
-      return principalA - principalB;
-    }
-    if (sortBy === 'oldest') {
-      return dateA - dateB;
-    }
-    // 'newest'
-    return dateB - dateA;
-  });
+  const activeLoans: Loan[] = useMemo(() => {
+    return validLoans.filter((l: Loan) => l.status !== 'closed' && l.status !== 'paid_off');
+  }, [validLoans]);
 
-  const totalOutstanding = loans.reduce(
-    (sum, l) => sum + Number((l.current_outstanding_principal ?? (l as any).currentOutstandingPrincipal ?? l.principal) || 0),
+  const closedLoans: Loan[] = useMemo(() => {
+    return validLoans.filter((l: Loan) => l.status === 'closed' || l.status === 'paid_off');
+  }, [validLoans]);
+
+  const displayedLoans: Loan[] = activeTab === 'active' ? activeLoans : closedLoans;
+
+  const sortedLoans: Loan[] = useMemo(() => {
+    return [...displayedLoans].sort((a: Loan, b: Loan) => {
+      const principalA = Number((a.current_outstanding_principal ?? (a as any).currentOutstandingPrincipal ?? a.principal) || 0);
+      const principalB = Number((b.current_outstanding_principal ?? (b as any).currentOutstandingPrincipal ?? b.principal) || 0);
+      const dateA = new Date((a as any).createdAt || (a as any).created_at || a.startDate || a.start_date || 0).getTime();
+      const dateB = new Date((b as any).createdAt || (b as any).created_at || b.startDate || b.start_date || 0).getTime();
+
+      if (sortBy === 'highest') {
+        return principalB - principalA;
+      }
+      if (sortBy === 'lowest') {
+        return principalA - principalB;
+      }
+      if (sortBy === 'oldest') {
+        return dateA - dateB;
+      }
+      // 'newest'
+      return dateB - dateA;
+    });
+  }, [displayedLoans, sortBy]);
+
+  const totalOutstanding = activeLoans.reduce(
+    (sum: number, l: Loan) => sum + Number((l.current_outstanding_principal ?? (l as any).currentOutstandingPrincipal ?? l.principal) || 0),
     0,
   );
-  const totalMonthlyEmi = loans
-    .filter((l) => !isGoldLoan(l))
-    .reduce((sum, l) => sum + Number(l.emiAmount ?? l.emi_amount ?? 0), 0);
+  const totalMonthlyEmi = activeLoans
+    .filter((l: Loan) => !isGoldLoan(l))
+    .reduce((sum: number, l: Loan) => sum + Number(l.emiAmount ?? l.emi_amount ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -197,7 +215,7 @@ export const LoansPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
-          {loans.length > 1 && (
+          {displayedLoans.length > 1 && (
             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">Sort:</span>
@@ -236,31 +254,81 @@ export const LoansPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabs: Active Loans vs Closed Loans */}
+      <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 pt-1">
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+            activeTab === 'active'
+              ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <span>Active Loans</span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+            activeTab === 'active'
+              ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300'
+              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+          }`}>
+            {activeLoans.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('closed')}
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+            activeTab === 'closed'
+              ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <span>Closed Loans</span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+            activeTab === 'closed'
+              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+          }`}>
+            {closedLoans.length}
+          </span>
+        </button>
+      </div>
+
       {/* Loans Grid */}
       {isLoading ? (
         <div className="p-12 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-          Loading active loans...
+          Loading loans...
         </div>
-      ) : loans.length === 0 ? (
+      ) : displayedLoans.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4">
             <CreditCard className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">No loans recorded yet</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-            Track your home loan, car EMI, or personal debts to model reducing balances and run prepayment simulations.
-          </p>
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Your First Loan</span>
-          </button>
+          {activeTab === 'active' ? (
+            <>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">No active loans</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                Track your home loan, car EMI, or personal debts to model reducing balances and run prepayment simulations.
+              </p>
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Your First Loan</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">No closed loans yet</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                Loans marked as closed or paid off in full will appear here with closure reasons and settlement dates.
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedLoans.map((loan) => {
+          {sortedLoans.map((loan: Loan) => {
             const typeObj = LOAN_TYPES.find((t) => t.type === loan.type);
             const Icon = typeObj?.icon || CreditCard;
             const isGold = isGoldLoan(loan);
@@ -329,11 +397,25 @@ export const LoansPage: React.FC = () => {
                   <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
                     <div>
                       <div className="text-[11px] text-slate-400 uppercase font-semibold">
-                        {isGold ? 'Current Debt (with Interest)' : 'Outstanding Principal'}
+                        {loan.status === 'closed' || loan.status === 'paid_off'
+                          ? 'Settled Balance'
+                          : isGold
+                          ? 'Current Debt (with Interest)'
+                          : 'Outstanding Principal'}
                       </div>
-                      <div className="text-xl font-bold font-mono text-rose-600 dark:text-rose-400">
+                      <div className={`text-xl font-bold font-mono ${loan.status === 'closed' || loan.status === 'paid_off' ? 'text-slate-500 line-through' : 'text-rose-600 dark:text-rose-400'}`}>
                         {formatINR(loan.current_outstanding_principal ?? (loan as any).currentOutstandingPrincipal ?? loan.principal)}
                       </div>
+                      {(loan.closure_reason || (loan as any).closureReason) && (
+                        <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+                          Reason: {loan.closure_reason || (loan as any).closureReason}
+                        </div>
+                      )}
+                      {(loan.closed_at || (loan as any).closedAt) && (
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Closed: {formatDate(loan.closed_at || (loan as any).closedAt)}
+                        </div>
+                      )}
                       {(loan.original_principal || (loan as any).originalPrincipal) && (
                         <div className="text-[11px] text-slate-400 font-mono mt-0.5">
                           Original: {formatINR(loan.original_principal || (loan as any).originalPrincipal)}

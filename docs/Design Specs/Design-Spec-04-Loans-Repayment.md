@@ -8,6 +8,9 @@
 ## 1. Screen: Loan List
 - **Header & Controls**:
   - Top Summary Metrics: Total active debt sum, Total monthly EMI obligation sum (excluding Gold/Jewel loans with bullet repayment), and Total Lifetime Interest across loans.
+  - **Tabs Filter (Active Loans / Closed Loans)**:
+    - **Active Loans Tab**: Displays all currently active, non-closed, non-deleted loans. Computes active debt and monthly EMI totals.
+    - **Closed Loans Tab**: Displays fully closed, completed, and paid-off loans (`closed` or `paid_off` status). Excludes loans marked as soft-deleted. Shows closure reason, closure notes, and settled date badges.
   - **Sorting Controls**: Dropdown selector providing sorting by:
     - **Highest Loan**: Descending by loan principal amount.
     - **Lowest Loan**: Ascending by loan principal amount.
@@ -21,7 +24,7 @@
   - **Gold / Jewel Loans (`jewel` / `gold`)**:
     - **Repayment Characteristic**: Bullet payoff with no mandatory monthly installment.
     - **Header**: Gold icon, Loan Name, Place/Purpose, Lender, Bullet badge (`BULLET (NO EMI)` in amber/gold styling).
-    - **Metrics Grid**: Outstanding Principal, Interest Rate (`X.XX% p.a.`), **Repayment Mode: Bullet (No EMI)** (replaces Monthly EMI row), Tenure (Total) (`XX months`), and **Remaining Tenure** (`YY months left` or `Due for Payoff`).
+    - **Metrics Grid**: Outstanding Principal (net maturity closing balance under payments made), Interest Rate (`X.XX% p.a.`), **Repayment Mode: Bullet (No EMI)** (replaces Monthly EMI row), Tenure (Total) (`XX months`), and **Remaining Tenure** (`YY months left` or `Due for Payoff`).
     - **Footer Link**: `View Statement & Ledger →`.
   - Progress / status badges: "Almost there 🎉" for loans with $\le 3$ months remaining. Delete action with audit-trail safety.
 
@@ -44,6 +47,12 @@
   - **"Log Rate Revision"** (Indigo with Trending icon) → Launches Rate Revision Modal (§4).
   - **"Run Prepayment Calculator"** (Secondary) → Launches Simulation Calculator.
   - **"View in Strategy Comparison"** (Secondary) → Navigates to Debt Strategy Comparison (Design-Spec-05).
+- **Outstanding Balance Over Time Chart**:
+  - Displayed prominently directly above the Amortization Schedule for standard amortized loans.
+  - Visual comparison chart featuring two dynamic curves:
+    - **Scheduled Plan (Red line)**: The baseline contractual closing balance trajectory across the loan's original tenure.
+    - **Your Payments (Green line)**: The live closing balance trajectory reflecting actual recorded prepayments/part-payments and accelerated schedule payoffs.
+  - Immediately recalculates and visually contracts whenever a part-payment is logged or deleted.
 - **Repayment Schedule table** (core requirement):
   - Columns: #, Due Date, Opening Balance, EMI, Principal, Interest, Closing Balance, Status (`Paid` / `Unpaid`), and Action.
   - **Table Footer Summary Row (Accumulated Totals)**:
@@ -178,13 +187,17 @@ When `loan_type` is **Gold / Jewel Loan** (`jewel` / `gold`):
     - **Current Posted Balance**: Last month-end balance after capitalisation.
     - **Unposted Accrued Interest**: Daily interest accrued so far in the current month ($\text{Balance} \times \frac{R}{365} \times \text{Days}$).
     - **Total Payoff Quote Today**: Posted Balance + Current Unposted Accrued Interest.
+    - **Outstanding Principal / Net Debt**: Evaluated as the closing balance required at maturity under recorded payments (`finalClosingYours`), properly decrementing whenever a part-payment is made.
+  - **Outstanding Balance Over Time Chart**:
+    - Visualizes compounding balance growth with zero payments vs actual ad-hoc payments across the loan lifecycle.
+  - **Collapsible Month-by-Month Table**:
+    - Displays monthly interest capitalization, payments, and running closing balance.
+    - **Default State**: Collapsed by default to maintain a clean layout; expands smoothly on click.
+  - **Decommissioned Section**:
+    - The "What you will pay by maturity" section and its three scenario cards (A/B/C) are decommissioned and removed.
   - **"+ Add Payment" Action**:
     - Records manual payments of any amount on any date.
     - Payments immediately take effect from their payment date, segmenting the month's daily interest calculation.
-  - **Bullet Repayment Projection**:
-    - Projects future month-end interest additions and final payoff due at maturity assuming no further payments.
-  - **Compounding Cost Analysis**:
-    - Compares total capitalised interest vs true simple interest ($\text{Principal} \times R \times T$) and highlights the compounding penalty.
   - **Smart Advisory Banner**:
     - "Pay at least ₹X (this month's accrued interest) before month-end to stop your gold loan balance from compounding."
 

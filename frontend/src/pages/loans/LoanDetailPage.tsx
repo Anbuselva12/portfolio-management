@@ -14,6 +14,16 @@ import { CloseLoanModal } from '../../components/loans/CloseLoanModal';
 import { ZeroBalancePromptModal } from '../../components/loans/ZeroBalancePromptModal';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
+import {
   ArrowLeft,
   Calendar,
   Percent,
@@ -388,6 +398,102 @@ export const LoanDetailPage: React.FC = () => {
     return { totalEmi, totalPrincipal, totalInterest };
   }, [filteredSchedule]);
 
+  // Balance trajectory chart data (Baseline Scheduled Plan vs Actual Payments with prepayments)
+  const balanceChartData = useMemo(() => {
+    if (!loan || sortedSchedule.length === 0) return [];
+
+    const origPrincipal = Number((loan.original_principal || (loan as any).originalPrincipal || loan.principal) || 0);
+    const origTenure = Number((loan.original_tenure_months || (loan as any).originalTenureMonths || loan.tenure_months || (loan as any).tenureMonths || sortedSchedule.length) || 0);
+    const annualRate = Number((loan.interest_rate || (loan as any).interestRate || 0));
+    const r = annualRate / 12 / 100;
+    const isFlat = (loan.interest_type || (loan as any).interestType) === 'flat_simple';
+
+    // Baseline calculation: original scheduled plan without prepayments
+    const baselineBalances: number[] = [];
+    if (isFlat) {
+      const monthlyPrincipal = origTenure > 0 ? origPrincipal / origTenure : 0;
+      let curr = origPrincipal;
+      for (let m = 1; m <= origTenure; m++) {
+        curr = Math.max(0, curr - monthlyPrincipal);
+        baselineBalances.push(Math.round(curr));
+      }
+    } else {
+      let emi = 0;
+      if (r > 0 && origTenure > 0) {
+        emi = (origPrincipal * r * Math.pow(1 + r, origTenure)) / (Math.pow(1 + r, origTenure) - 1);
+      } else if (origTenure > 0) {
+        emi = origPrincipal / origTenure;
+      }
+      let curr = origPrincipal;
+      for (let m = 1; m <= origTenure; m++) {
+        const interest = curr * r;
+        const principalPaid = emi - interest;
+        curr = Math.max(0, curr - principalPaid);
+        baselineBalances.push(Math.round(curr));
+      }
+    }
+
+    const startDateStr = loan.start_date || (loan as any).startDate;
+    const sDate = startDateStr ? new Date(startDateStr) : new Date();
+
+    const points: Array<{
+      monthLabel: string;
+      noPayments: number;
+      yourPayments: number;
+    }> = [];
+
+    // Point 0: Disbursal / Start
+    points.push({
+      monthLabel: 'Start',
+      noPayments: Math.round(origPrincipal),
+      yourPayments: Math.round(origPrincipal),
+    });
+
+    const maxMonths = Math.max(origTenure, sortedSchedule.length);
+
+    for (let i = 0; i < maxMonths; i++) {
+      const inst = sortedSchedule[i];
+      let monthDate: Date;
+      if (inst && (inst.dueDate || inst.due_date)) {
+        monthDate = new Date(inst.dueDate || inst.due_date || '');
+      } else {
+        monthDate = new Date(sDate);
+        monthDate.setMonth(monthDate.getMonth() + i + 1);
+      }
+
+      const label = monthDate.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+      const baselineVal = i < baselineBalances.length ? baselineBalances[i] : 0;
+      
+      let actualVal = 0;
+      if (i < sortedSchedule.length) {
+        actualVal = Math.round(Number(sortedSchedule[i].closingBalance || sortedSchedule[i].closing_balance || 0));
+      } else {
+        actualVal = 0;
+      }
+
+      points.push({
+        monthLabel: label,
+        noPayments: baselineVal,
+        yourPayments: actualVal,
+      });
+    }
+
+    // Downsample if more than 36 points so Recharts renders crisply
+    if (points.length > 36) {
+      const step = Math.ceil(points.length / 30);
+      const sampled = [points[0]];
+      for (let j = 1; j < points.length - 1; j++) {
+        if (j % step === 0) {
+          sampled.push(points[j]);
+        }
+      }
+      sampled.push(points[points.length - 1]);
+      return sampled;
+    }
+
+    return points;
+  }, [loan, sortedSchedule]);
+
   // Jump to specific installment
   const handleJump = (e: React.FormEvent) => {
     e.preventDefault();
@@ -461,7 +567,7 @@ export const LoanDetailPage: React.FC = () => {
       currentOutstandingVal = Number(earliestUnpaid.openingBalance ?? earliestUnpaid.opening_balance ?? currentOutstandingVal);
     }
   } else if (isGoldLoan && goldLedger) {
-    currentOutstandingVal = Number(goldLedger.scenarios?.scenarioB?.totalCost ?? goldLedger.currentOutstandingToday ?? currentOutstandingVal);
+    currentOutstandingVal = Number(goldLedger.totals?.finalClosingYours ?? goldLedger.scenarios?.scenarioB?.finalDueAtMaturity ?? currentOutstandingVal);
   }
 
   const originalPrincipalVal = Number(loan.original_principal ?? (loan as any).originalPrincipal ?? loan.principal);
@@ -1330,6 +1436,67 @@ export const LoanDetailPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Outstanding Balance Over Time Chart */}
+      {balanceChartData.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                Outstanding balance over time
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Comparison between scheduled baseline trajectory vs your actual payments (reflecting part-payments & extra amortisation).
+              </p>
+            </div>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={balanceChartData} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.2} />
+                <XAxis dataKey="monthLabel" stroke="#94a3b8" fontSize={11} />
+                <YAxis
+                  stroke="#94a3b8"
+                  fontSize={11}
+                  tickFormatter={(v) => `₹${(v / 100000).toFixed(1)}L`}
+                  domain={['auto', 'auto']}
+                />
+                <Tooltip
+                  formatter={(val: any) => [formatINR(Number(val)), '']}
+                  labelFormatter={(label) => `Month: ${label}`}
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    borderColor: '#334155',
+                    borderRadius: '0.75rem',
+                    color: '#fff',
+                    fontSize: '12px',
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                <Line
+                  type="monotone"
+                  dataKey="noPayments"
+                  name="Scheduled plan"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="yourPayments"
+                  name="Your payments"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}

@@ -13,6 +13,7 @@
   - System-generated insurance-premium rows carry a small **"Auto (Insurance)"** badge; editing such a row only affects that month's logged expense, not the underlying InsurancePolicy record.
   - **Auto-Generated Loan EMI Rows**: Active loans with `emi_reminders_enabled: true` (excluding annual simple-interest gold loans) automatically queue an EMI expense row on their scheduled due date, carrying a distinct **"Auto (Loan EMI)"** indigo badge.
   - **Bi-Directional "Mark as Paid"**: Each queued EMI expense row features an actionable "Mark as Paid" toggle/button. Clicking it marks the expense paid AND immediately marks the linked `RepaymentInstallment` on the loan as paid (updating loan outstanding balance and audit trail). Likewise, marking an installment paid on the Loan Detail page marks the corresponding expense row as paid.
+  - **Row Styling Integrity**: Standard manual and recurring household expenses are rendered with 100% opacity, crisp foreground text, and non-strikethrough amounts. Strikethrough and dimmed `opacity-60` styling is strictly confined to loan EMI auto entries that have been marked as paid. Normal household expenses must never appear strikethrough or grayed out.
 
 ## 2. Screen: Insurance
 - **List view**: cards per policy — Type, Provider, Policy Number, Sum Assured (labeled "Not included in Net Worth"), Premium + Frequency, Next Due Date, Status.

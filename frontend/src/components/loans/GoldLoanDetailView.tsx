@@ -24,6 +24,8 @@ import {
   Edit2,
   CheckCircle2,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -71,6 +73,7 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
   const [quoteDate, setQuoteDate] = useState<string>('');
   const [quoteResult, setQuoteResult] = useState<any>(null);
   const [isCalculatingQuote, setIsCalculatingQuote] = useState<boolean>(false);
+  const [isMonthTableOpen, setIsMonthTableOpen] = useState<boolean>(false);
 
   // Prepare input for shared calculator
   const calculatorInput: GoldLoanInput = useMemo(() => {
@@ -392,86 +395,6 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
         <span className="font-medium leading-relaxed">{summary.smartTip}</span>
       </div>
 
-      {/* What You Will Pay by Maturity (3 Scenarios) */}
-      <div className="space-y-3">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white">
-          What you will pay by maturity
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Scenario A */}
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col justify-between">
-            <div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white">
-                A. Pay nothing till maturity
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                Principal {formatINR(summary.scenarios.scenarioA.principal)} + interest {formatINR(summary.scenarios.scenarioA.totalInterest)} in one bullet payment on {formatDate(summary.maturityDate)}.
-              </p>
-            </div>
-            <div>
-              <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-                {formatINR(summary.scenarios.scenarioA.totalCost)}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Total cost</div>
-            </div>
-          </div>
-
-          {/* Scenario B */}
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-emerald-500/40 dark:border-emerald-600/40 shadow-sm space-y-3 flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-2 right-2">
-              <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                Your plan
-              </span>
-            </div>
-            <div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white">
-                B. Your payments
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                {formatINR(summary.scenarios.scenarioB.totalPaidAlongWay)} along the way + {formatINR(summary.scenarios.scenarioB.finalDueAtMaturity)} at maturity (interest: {formatINR(summary.scenarios.scenarioB.totalInterest)}).
-              </p>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
-                  {formatINR(summary.scenarios.scenarioB.totalCost)}
-                </span>
-                {summary.scenarios.scenarioB.interestSavedVsA > 0 && (
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    (saved {formatINR(summary.scenarios.scenarioB.interestSavedVsA)})
-                  </span>
-                )}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Total cost</div>
-            </div>
-          </div>
-
-          {/* Scenario C */}
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col justify-between">
-            <div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white">
-                C. Pay each month's interest
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                Pay interest as it accrues (~{formatINR(summary.scenarios.scenarioC.monthlyInterestApprox)}/mo). Balance stays {formatINR(summary.scenarios.scenarioC.principalDueAtMaturity)}.
-              </p>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
-                  {formatINR(summary.scenarios.scenarioC.totalCost)}
-                </span>
-                <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">
-                  (saved {formatINR(summary.scenarios.scenarioC.interestSavedVsA)})
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Total cost</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Outstanding Balance Over Time Chart */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -666,78 +589,94 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
 
       {/* Month-by-Month Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden space-y-0">
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-amber-600" />
-            <span>Month-by-month table</span>
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Shows monthly interest capitalization, payment impact, and balance comparison against the zero-payment baseline.
-          </p>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsMonthTableOpen(!isMonthTableOpen)}
+          className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+        >
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-amber-600" />
+              <span>Month-by-month table</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Shows monthly interest capitalization, payment impact, and balance comparison against the zero-payment baseline.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+            <span>{isMonthTableOpen ? 'Collapse' : 'Expand'}</span>
+            {isMonthTableOpen ? (
+              <ChevronUp className="w-4 h-4 text-slate-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            )}
+          </div>
+        </button>
 
-        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-          <table className="w-full text-left border-collapse text-xs min-w-[760px]">
-            <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px]">Month End</th>
-                <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-[10px] text-center">Days</th>
-                <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right">Opening</th>
-                <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right text-emerald-600 dark:text-emerald-400">Payment</th>
-                <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right text-rose-500">Interest</th>
-                <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right">Closing (Yours)</th>
-                <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right text-slate-400">Closing (No Pay)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
-              {summary.monthByMonth.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/60">
-                  <td className="py-2 px-4 font-sans text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
-                    {row.monthEndLabel}
+        {isMonthTableOpen && (
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto border-t border-slate-200 dark:border-slate-800">
+            <table className="w-full text-left border-collapse text-xs min-w-[760px]">
+              <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px]">Month End</th>
+                  <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-[10px] text-center">Days</th>
+                  <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right">Opening</th>
+                  <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right text-emerald-600 dark:text-emerald-400">Payment</th>
+                  <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right text-rose-500">Interest</th>
+                  <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right">Closing (Yours)</th>
+                  <th className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-right text-slate-400">Closing (No Pay)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                {summary.monthByMonth.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                    <td className="py-2 px-4 font-sans text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                      {row.monthEndLabel}
+                    </td>
+                    <td className="py-2 px-3 text-center text-slate-400">
+                      {row.days}
+                    </td>
+                    <td className="py-2 px-4 text-right text-slate-700 dark:text-slate-300">
+                      {formatINR(row.opening)}
+                    </td>
+                    <td className="py-2 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                      {row.payment > 0 ? formatINR(row.payment) : '-'}
+                    </td>
+                    <td className="py-2 px-4 text-right text-rose-500">
+                      {formatINR(row.interest)}
+                    </td>
+                    <td className="py-2 px-4 text-right font-bold text-slate-900 dark:text-white">
+                      {formatINR(row.closingYours)}
+                    </td>
+                    <td className="py-2 px-4 text-right text-slate-400">
+                      {formatINR(row.closingNoPay)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              {/* Totals Footer Row */}
+              <tfoot className="bg-slate-100 dark:bg-slate-800/80 font-mono font-bold text-slate-900 dark:text-white border-t-2 border-slate-200 dark:border-slate-700 sticky bottom-0">
+                <tr>
+                  <td className="py-2.5 px-4 font-sans uppercase text-[11px]">Totals</td>
+                  <td className="py-2.5 px-3 text-center">{summary.totals.totalDays}</td>
+                  <td className="py-2.5 px-4 text-right">-</td>
+                  <td className="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">
+                    {formatINR(summary.totals.totalPayments)}
                   </td>
-                  <td className="py-2 px-3 text-center text-slate-400">
-                    {row.days}
+                  <td className="py-2.5 px-4 text-right text-rose-500">
+                    {formatINR(summary.totals.totalInterestYours)}
                   </td>
-                  <td className="py-2 px-4 text-right text-slate-700 dark:text-slate-300">
-                    {formatINR(row.opening)}
+                  <td className="py-2.5 px-4 text-right font-black">
+                    {formatINR(summary.totals.finalClosingYours)}
                   </td>
-                  <td className="py-2 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                    {row.payment > 0 ? formatINR(row.payment) : '-'}
-                  </td>
-                  <td className="py-2 px-4 text-right text-rose-500">
-                    {formatINR(row.interest)}
-                  </td>
-                  <td className="py-2 px-4 text-right font-bold text-slate-900 dark:text-white">
-                    {formatINR(row.closingYours)}
-                  </td>
-                  <td className="py-2 px-4 text-right text-slate-400">
-                    {formatINR(row.closingNoPay)}
+                  <td className="py-2.5 px-4 text-right text-slate-400">
+                    {formatINR(summary.totals.finalClosingNoPay)}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-            {/* Totals Footer Row */}
-            <tfoot className="bg-slate-100 dark:bg-slate-800/80 font-mono font-bold text-slate-900 dark:text-white border-t-2 border-slate-200 dark:border-slate-700 sticky bottom-0">
-              <tr>
-                <td className="py-2.5 px-4 font-sans uppercase text-[11px]">Totals</td>
-                <td className="py-2.5 px-3 text-center">{summary.totals.totalDays}</td>
-                <td className="py-2.5 px-4 text-right">-</td>
-                <td className="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">
-                  {formatINR(summary.totals.totalPayments)}
-                </td>
-                <td className="py-2.5 px-4 text-right text-rose-500">
-                  {formatINR(summary.totals.totalInterestYours)}
-                </td>
-                <td className="py-2.5 px-4 text-right font-black">
-                  {formatINR(summary.totals.finalClosingYours)}
-                </td>
-                <td className="py-2.5 px-4 text-right text-slate-400">
-                  {formatINR(summary.totals.finalClosingNoPay)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+              </tfoot>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Statement Ledger & Custom Payoff Quote */}

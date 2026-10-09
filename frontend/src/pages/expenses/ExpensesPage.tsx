@@ -229,16 +229,16 @@ export const ExpensesPage: React.FC = () => {
                   const cat = categories.find((c) => c.id === exp.categoryId);
                   const isAutoInsurance = exp.source === 'insurance_auto';
                   const isAutoEmi = (exp as any).source === 'loan_emi_auto';
-                  const isPaid = (exp as any).is_paid ?? false;
+                  const isPaidEmi = isAutoEmi && Boolean((exp as any).is_paid);
 
                   return (
                     <tr
                       key={exp.id}
-                      className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${isPaid ? 'opacity-60' : ''}`}
+                      className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${isPaidEmi ? 'opacity-60' : ''}`}
                     >
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`font-semibold ${isPaid ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
+                          <span className={`font-semibold ${isPaidEmi ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
                             {cat?.name || (isAutoEmi ? 'Loan EMI' : 'General Expense')}
                           </span>
                           {isAutoInsurance && (
@@ -247,19 +247,19 @@ export const ExpensesPage: React.FC = () => {
                             </span>
                           )}
                           {isAutoEmi && (
-                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isPaid ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950' : 'text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950'}`}>
-                              <Sparkles className="w-3 h-3" /> {isPaid ? '✓ EMI Paid' : 'Auto (Loan EMI)'}
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isPaidEmi ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950' : 'text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950'}`}>
+                              <Sparkles className="w-3 h-3" /> {isPaidEmi ? '✓ EMI Paid' : 'Auto (Loan EMI)'}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-slate-600 dark:text-slate-300 text-xs">
+                      <td className="py-4 px-6 text-slate-700 dark:text-slate-200 text-xs">
                         {exp.notes || <span className="text-slate-400 italic">No notes</span>}
                       </td>
-                      <td className="py-4 px-6 text-slate-500 dark:text-slate-400 text-xs">
-                        {new Date(exp.date).toLocaleDateString()}
+                      <td className="py-4 px-6 text-slate-600 dark:text-slate-400 text-xs font-mono">
+                        {new Date(exp.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className={`py-4 px-6 font-bold font-mono text-base ${isPaid ? 'text-slate-400 line-through' : 'text-rose-600 dark:text-rose-400'}`}>
+                      <td className={`py-4 px-6 font-bold font-mono text-base ${isPaidEmi ? 'text-slate-400 line-through' : 'text-rose-600 dark:text-rose-400'}`}>
                         -{formatINR(exp.amount)}
                       </td>
                       <td className="py-4 px-6 text-right">
@@ -268,14 +268,14 @@ export const ExpensesPage: React.FC = () => {
                             <button
                               onClick={async () => {
                                 try {
-                                  await expensesApi.markEmiPaid(exp.id, !isPaid);
+                                  await expensesApi.markEmiPaid(exp.id, !isPaidEmi);
                                   await loadData();
                                 } catch { alert('Failed to update EMI payment status.'); }
                               }}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-colors ${isPaid ? 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-950' : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'}`}
-                              title={isPaid ? 'Mark as Unpaid' : 'Mark as Paid'}
+                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-colors ${isPaidEmi ? 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-950' : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'}`}
+                              title={isPaidEmi ? 'Mark as Unpaid' : 'Mark as Paid'}
                             >
-                              {isPaid ? 'Unmark' : 'Mark Paid'}
+                              {isPaidEmi ? 'Unmark' : 'Mark Paid'}
                             </button>
                           )}
                           <button

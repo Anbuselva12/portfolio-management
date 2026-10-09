@@ -181,7 +181,7 @@ export class LoansService {
         targetDate,
       );
 
-      outstanding = new Decimal(summary.scenarios.scenarioB.totalCost);
+      outstanding = new Decimal(summary.totals.finalClosingYours);
     } else {
       const schedule = await this.scheduleRepository.findByLoanId(loanId);
       const unpaid = schedule.filter((i) => !i.is_paid);
