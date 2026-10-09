@@ -693,7 +693,7 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
           </div>
 
           {/* Payoff Quote Calculator */}
-          <form onSubmit={handleCalculateQuote} className="flex items-center gap-2">
+          <form onSubmit={handleCalculateQuote} className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <input
               type="date"
               value={quoteDate}

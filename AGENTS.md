@@ -166,6 +166,12 @@ Features must be built in story order. Do not implement Story 2 items while Stor
 - No `console.log` in production code — use a structured logger.
 - Environment variables must be validated at startup (e.g., via `class-validator` + NestJS `ConfigModule`) — the app must fail fast with a clear error if required env vars are missing.
 
+### Universal Cross-Device Responsiveness (MANDATORY GUARDRAIL)
+- **All UI components, views, modals, forms, tables, charts, and user flows MUST be designed and implemented in a fully responsive manner supporting all device formats (Mobile, Tablet, Laptop, and Desktop).**
+- UI layouts must adapt fluidly using Tailwind responsive variants (`sm:`, `md:`, `lg:`, `xl:`), mobile-first flex/grid layouts, touch-friendly target sizes (min 44px height), and horizontal scroll wrappers (`overflow-x-auto`) for dense tables and navigation tabs so that content never overflows or breaks viewports on narrow screens.
+- Charts must always utilize `ResponsiveContainer width="100%"` with responsive container heights.
+- Modals and drawers must enforce max-height constraints (`max-h-[90vh]` / `max-h-[92vh] overflow-y-auto`) and comfortable padding across all screen dimensions.
+
 ---
 
 ## 10. Interaction Protocol (for AI Agents)
@@ -176,5 +182,7 @@ Features must be built in story order. Do not implement Story 2 items while Stor
 4. **After completing a sub-task**, summarise what was built and explicitly list any assumptions made, so the owner can verify or correct them.
 5. **Never output a large block of code speculatively** ("here's what I think it might look like") — only output code that has been confirmed against the spec and approved scope.
 6. **Update documentation before implementing requested requirement changes**: When the owner asks for new capabilities or modifications not in the specs, update the relevant files in `docs/` first before touching code.
-7. **Post-Push Workspace Cleansing (MANDATORY)**: Immediately after pushing any commit to GitHub `origin/main`, the agent must run `git status`. If any stale in-memory editor buffers or ghost modifications appear in the working tree, the agent must execute `git reset --hard HEAD` and verify that `git status` reports `nothing to commit, working tree clean` before concluding the turn. This completely eliminates data rollback caused by editor auto-saves.
+7. **Universal Responsive Design for All Changes**: Whenever modifying or adding frontend screens, verify responsiveness across mobile, tablet, and desktop viewports before concluding the task.
+8. **Post-Push Workspace Cleansing (MANDATORY)**: Immediately after pushing any commit to GitHub `origin/main`, the agent must run `git status`. If any stale in-memory editor buffers or ghost modifications appear in the working tree, the agent must execute `git reset --hard HEAD` and verify that `git status` reports `nothing to commit, working tree clean` before concluding the turn. This completely eliminates data rollback caused by editor auto-saves.
+
 

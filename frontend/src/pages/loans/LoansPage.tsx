@@ -255,7 +255,7 @@ export const LoansPage: React.FC = () => {
       </div>
 
       {/* Tabs: Active Loans vs Closed Loans */}
-      <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 pt-1">
+      <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 pt-1 overflow-x-auto scrollbar-none whitespace-nowrap">
         <button
           onClick={() => setActiveTab('active')}
           className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
