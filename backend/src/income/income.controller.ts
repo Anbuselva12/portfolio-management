@@ -8,6 +8,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { StopIncomeDto } from './dto/stop-income.dto';
+import { ConfirmIncomeReceiptDto } from './dto/confirm-receipt.dto';
+import { UpdateIncomeReceiptDto } from './dto/update-receipt.dto';
 
 @UseGuards(JwtAuthGuard, ActiveMemberGuard, FamilyScopeGuard)
 @FamilyScoped()
@@ -23,6 +25,16 @@ export class IncomeController {
   @Post()
   async createIncome(@CurrentUser() user: any, @Body() dto: CreateIncomeDto) {
     return this.incomeService.createIncome(user.sub, user.familyId, dto);
+  }
+
+  @Patch('receipts/:receiptId')
+  async updateReceipt(@CurrentUser() user: any, @Param('receiptId') receiptId: string, @Body() dto: UpdateIncomeReceiptDto) {
+    return this.incomeService.updateReceipt(user.sub, user.familyId, receiptId, dto);
+  }
+
+  @Delete('receipts/:receiptId')
+  async revertReceipt(@CurrentUser() user: any, @Param('receiptId') receiptId: string) {
+    return this.incomeService.revertReceipt(user.sub, user.familyId, receiptId);
   }
 
   @Patch(':id')
@@ -45,7 +57,7 @@ export class IncomeController {
     @CurrentUser() user: any,
     @Param('id') id: string,
     @Param('yearMonth') yearMonth: string,
-    @Body() dto: any,
+    @Body() dto: ConfirmIncomeReceiptDto,
   ) {
     return this.incomeService.confirmReceipt(user.sub, user.familyId, id, yearMonth, dto);
   }

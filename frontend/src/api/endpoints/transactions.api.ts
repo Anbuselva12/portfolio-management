@@ -35,6 +35,8 @@ export interface TransactionItem {
   memberName: string;
   source: 'income' | 'expense' | 'loan';
   rawEntityId: string;
+  label: string | null;
+  notes: string | null;
   projects: Array<{ id: string; name: string }>;
   /** Source edited by the Tag action; null when the row cannot be tagged. */
   tagTarget: { kind: 'income' | 'loan'; id: string } | null;

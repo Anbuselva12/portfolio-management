@@ -28,6 +28,10 @@
   - If recurring is OFF: single Date.
 - **Monthly Variation Tracking**: For incomes that vary from month to month (such as partial rent collection or fluctuating salary bonuses/overtime), the member confirms the actual received amount directly on the monthly dashboard reminder. This writes a monthly receipt record for that month/year while leaving the base contract/expected recurring amount intact.
 
+## Record a past receipt (added 2026-10-19)
+- Every recurring stream row has a *Record a past receipt* action (calendar-plus icon). It opens a dialog: **Month** (month picker, current or earlier), **Amount received** (defaults to the stream amount), **Received on** (defaults to the due day of that month) and optional **Notes**. After saving, the month steps back by one so several missing months can be entered quickly; a success note lists what was recorded. Recording an existing month replaces its receipt.
+- Dialog is a labelled `role=dialog`, closes on Esc, and its buttons stack full-width on mobile.
+
 ## States
 - Empty state per tab: "No recurring income yet — add your salary to get started" / "No one-off income logged yet."
 - Asset type with no applicable interest-rate field (e.g., bank balance) simply hides that field rather than showing it disabled.

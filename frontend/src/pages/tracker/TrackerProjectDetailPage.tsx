@@ -740,7 +740,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Workspace Tabs Navigation */}
-      <div className="border-b border-slate-200 dark:border-slate-800 flex items-center gap-6 overflow-x-auto whitespace-nowrap" role="tablist">
+      <div className="border-b border-slate-200 dark:border-slate-800 flex items-center gap-6 overflow-x-auto overflow-y-hidden whitespace-nowrap" role="tablist">
         <button
           onClick={() => setActiveTab('funding')}
           className={clsx(

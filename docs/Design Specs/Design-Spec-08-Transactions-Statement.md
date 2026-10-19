@@ -117,3 +117,10 @@ Four responsive metric cards reflecting the currently filtered time range and cr
 - A **Project** column shows a chip with the project name for tagged income and loan rows; untagged income/loan rows show a dashed "+ Tag project" chip. Household expenses and insurance rows are not taggable.
 - **Tagging edits the source**, not the single row: for income rows it sets `IncomeEntry.project_id` (all receipts of that stream follow); for loan rows it opens the **Loan → Project allocation** dialog (one loan may fund several projects, each with an amount). The dialog states this explicitly.
 - A **Project** filter (All / each project / Untagged) joins the existing filters. Mobile: the chip appears as a labelled row in the stacked card.
+
+## 9. Edit & Delete (added 2026-10-19)
+- A trailing **Actions** column holds an Edit (pencil) and a Delete-style (trash) button per row, 44px touch targets; on mobile they appear in the stacked card's action row. Rows that cannot be changed show the reason instead (insurance premiums: managed from Insurance).
+- The destructive action is named for what it does to the source: *Delete income*, *Undo receipt*, *Delete expense*, *Mark EMI unpaid*, *Delete payment*. The confirmation dialog states the effect (e.g. "The month goes back to pending in the home-page reminders").
+- Edit fields by type: one-off income (name, amount, date); recurring receipt (amount, received date, notes); household expense (amount, date, notes); loan EMI (paid on). Loan part-payments and gold-loan payments are delete-only (delete and re-add to change).
+- Changes apply to the source record, then the statement and its summary strip reload.
+

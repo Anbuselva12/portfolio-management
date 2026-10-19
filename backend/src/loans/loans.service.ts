@@ -375,7 +375,10 @@ export class LoansService {
     const updateData: any = { is_manually_edited: true };
     if (dto.isPaid !== undefined) {
       updateData.is_paid = dto.isPaid;
-      updateData.paid_date = dto.isPaid ? new Date() : null;
+      updateData.paid_date = dto.isPaid ? (dto.paidDate ? new Date(dto.paidDate) : new Date()) : null;
+    } else if (dto.paidDate && installment.is_paid) {
+      // Correcting the paid date of an instalment that is already paid
+      updateData.paid_date = new Date(dto.paidDate);
     }
     if (dto.emiAmount) updateData.emi_amount = new Decimal(dto.emiAmount).toString();
     if (dto.principalComponent) updateData.principal_component = new Decimal(dto.principalComponent).toString();

@@ -11,6 +11,7 @@ import { Decimal } from 'decimal.js';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { StopIncomeDto } from './dto/stop-income.dto';
+import { UpdateIncomeReceiptDto } from './dto/update-receipt.dto';
 import { diffObjects } from '../common/utils/audit.util';
 
 @Injectable()
@@ -153,6 +154,12 @@ export class IncomeService {
       if (dto.currency) updateData.currency = dto.currency;
       if (dto.amount) updateData.amount = new Decimal(dto.amount);
       if (dto.endDate) updateData.end_date = new Date(dto.endDate);
+      if (dto.startDate) {
+        if (existing.recurrence !== 'one_off') {
+          throw new BadRequestException('Only one-off income can change its date; revise a recurring stream instead');
+        }
+        updateData.start_date = new Date(dto.startDate);
+      }
       if (dto.remindersEnabled !== undefined) updateData.reminders_enabled = dto.remindersEnabled;
       if (dto.dueDayOfMonth !== undefined) updateData.due_day_of_month = dto.dueDayOfMonth;
 
@@ -180,6 +187,15 @@ export class IncomeService {
     yearMonth: string,
     dto: any,
   ) {
+    const now = new Date();
+    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(yearMonth)) {
+      throw new BadRequestException('yearMonth must be in YYYY-MM format');
+    }
+    if (yearMonth > currentYearMonth) {
+      throw new BadRequestException('Receipts can be recorded for the current and past months only');
+    }
+
     const income = await this.incomeRepository.findById(incomeId);
     if (!income || income.family_id !== familyId) {
       throw new NotFoundException('Income entry not found');
@@ -214,6 +230,72 @@ export class IncomeService {
       }),
     });
 
+    return receipt;
+  }
+
+  /** Corrects a recorded receipt (amount, date, notes). The change flows to reminders, dashboard and project returns. */
+  async updateReceipt(memberId: string, familyId: string, receiptId: string, dto: UpdateIncomeReceiptDto) {
+    const existing = await this.requireReceipt(familyId, receiptId);
+    const receivedAmount = dto.receivedAmount !== undefined ? new Decimal(dto.receivedAmount) : new Decimal(existing.received_amount.toString());
+    if (receivedAmount.isNegative()) throw new BadRequestException('Received amount cannot be negative');
+
+    const updated = await this.incomeRepository.upsertReceipt({
+      income_id: existing.income_id,
+      family_id: familyId,
+      member_id: existing.member_id,
+      year_month: existing.year_month,
+      scheduled_amount: existing.scheduled_amount,
+      received_amount: receivedAmount,
+      status: 'received',
+      received_date: dto.receivedDate ? new Date(dto.receivedDate) : existing.received_date,
+      notes: dto.notes !== undefined ? dto.notes : existing.notes,
+    });
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'income_receipt',
+      entity_id: receiptId,
+      action: 'update',
+      field_changes: diffObjects(existing, updated),
+    });
+    return updated;
+  }
+
+  /** Undoes a receipt: the month goes back to "pending" in reminders and leaves transactions and totals. */
+  async revertReceipt(memberId: string, familyId: string, receiptId: string) {
+    const existing = await this.requireReceipt(familyId, receiptId);
+    await this.incomeRepository.upsertReceipt({
+      income_id: existing.income_id,
+      family_id: familyId,
+      member_id: existing.member_id,
+      year_month: existing.year_month,
+      scheduled_amount: existing.scheduled_amount,
+      received_amount: new Decimal(0),
+      status: 'pending',
+      received_date: existing.received_date,
+      notes: existing.notes,
+    });
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'income_receipt',
+      entity_id: receiptId,
+      action: 'delete',
+      field_changes: JSON.stringify({
+        yearMonth: existing.year_month,
+        received: existing.received_amount.toString(),
+        status: { old: existing.status, new: 'pending' },
+      }),
+    });
+    return { message: 'Receipt reverted to pending' };
+  }
+
+  private async requireReceipt(familyId: string, receiptId: string) {
+    const receipts = await this.incomeRepository.findAllReceiptsByFamily(familyId);
+    const receipt = receipts.find((r) => r.id === receiptId && r.status === 'received');
+    if (!receipt) throw new NotFoundException('Receipt not found');
     return receipt;
   }
 

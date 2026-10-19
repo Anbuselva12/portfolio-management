@@ -444,6 +444,8 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-72: Outflow transactions are displayed in red with a `-` symbol, tracking household expenses, insurance premium payments, loan EMIs marked as paid (as of `paid_date`/`due_date`), loan part-payments, and gold loan cash payments.
 - FR-73: Transactions can be filtered by duration (`1 Month`, `Quarterly`, `Yearly`, `All Time`), flow direction (`All`, `Inflow (+)`, `Outflow (-)`), category/source, member scope, and free-text search.
 - FR-74: A top summary strip computes Total Inflow, Total Outflow, Net Cash Flow, and Transaction Count for the active filters.
+- FR-75: **Edit / delete from the statement (2026-10-19).** Each row can be corrected or removed, and the change is applied to the **source record** so every screen stays in step: one-off income (name, amount, date; delete removes the income), recurring receipt (amount, received date, notes; *Undo receipt* returns the month to `pending`), household expense (amount, date, notes; delete), loan EMI (paid date; *Mark EMI unpaid* reverts the instalment and the linked expense), loan part-payment and gold-loan payment (delete only, which recalculates the loan). Insurance premiums are managed from Insurance and are not editable here. Every change is family-scoped and audit-logged.
+- FR-76: Routes used: `PATCH /income/receipts/:receiptId` (correct a receipt), `DELETE /income/receipts/:receiptId` (undo a receipt: `status = pending`, `received_amount = 0`), `PATCH /income/:id` with `startDate` (one-off only), plus the existing expense, loan-schedule and prepayment routes.
 
 ### 4.9 Multi-App Architecture & Modular Expense Tracker
 > **Amended 2026-10-19 (owner decision):** the Expense Tracker is no longer a separate application. Its projects now live inside
@@ -690,9 +692,12 @@ To give families complete real-time control over variable cash flows (e.g. fluct
    - Action 2: **Inline Amount Modification** (enter actual amount received, e.g. tenant paid ₹10,000 instead of ₹12,000, or salary included overtime ₹1,65,000).
    - Upon confirmation, a `MonthlyIncomeReceipt` is stored for that month (`year_month`, `received_amount`, `status: received`).
    - Dashboard KPI aggregation incorporates confirmed `MonthlyIncomeReceipt` actuals for the current month while continuing baseline projections for upcoming months.
+   - **Month navigator (2026-10-19):** the card has previous / next controls and a *Current month* shortcut. Any **current or past** month can be opened, and every item in it can be confirmed or marked paid exactly as in the current month. Future months are not available (`GET /dashboard/reminders?month=YYYY-MM` rejects them with 400, as does `confirm-receipt` for a future `yearMonth`). A past month lists every recurring stream whose active window overlaps it (including streams since stopped or revised) plus any stream that already holds a receipt for it; settling a past month records the **due date** as the received/paid date, not today.
+   - **Recording history:** from Income, *Record a past receipt* adds a receipt for any past month (also months before the stream was set up in the app) with amount, date and notes. Recording a month that already has a receipt replaces it.
 2. **Loan EMI Reminders**:
    - Displays all active monthly EMIs with `emi_reminders_enabled = true` due in the active month.
    - Action: **"Mark EMI Paid"** executes bi-directional synchronization with both the Loan Repayment Schedule and the Expense ledger.
+   - For a past month the instalment due in that month is shown (no fallback to the next unpaid instalment, which only applies to the current month); closed loans keep their past instalments visible.
 
    - If an installment is edited or corrected, the linked expense record amount updates to reflect the authoritative figure.
 

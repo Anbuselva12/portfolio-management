@@ -24,8 +24,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Tag,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import clsx from 'clsx';
+import {
+  TransactionActionModal,
+  TransactionActionMode,
+  getTransactionCapabilities,
+} from '../../components/transactions/TransactionActionModal';
 
 export const TransactionsPage: React.FC = () => {
   const [data, setData] = useState<TransactionsResponse | null>(null);
@@ -41,6 +48,7 @@ export const TransactionsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [projects, setProjects] = useState<TrackerProject[]>([]);
   const [tagTarget, setTagTarget] = useState<ProjectTagTarget | null>(null);
+  const [actionTarget, setActionTarget] = useState<{ tx: TransactionItem; mode: TransactionActionMode } | null>(null);
 
   const fetchTransactions = async () => {
     setIsLoading(true);
@@ -474,12 +482,15 @@ export const TransactionsPage: React.FC = () => {
                 <th scope="col" className="px-5 py-3.5 font-bold text-right">
                   Amount
                 </th>
+                <th scope="col" className="px-5 py-3.5 font-bold text-right">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-gray-400">
+                  <td colSpan={7} className="px-5 py-12 text-center text-gray-400">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <RefreshCw className="w-6 h-6 animate-spin text-cyan-600" />
                       <span>Loading statement entries...</span>
@@ -488,7 +499,7 @@ export const TransactionsPage: React.FC = () => {
                 </tr>
               ) : !data?.transactions || data.transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center">
+                  <td colSpan={7} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center justify-center gap-2 text-gray-400">
                       <Receipt className="w-10 h-10 stroke-1 text-gray-300 dark:text-gray-600" />
                       <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
@@ -582,6 +593,42 @@ export const TransactionsPage: React.FC = () => {
                           </div>
                         )}
                       </td>
+
+                      {/* Edit / delete the source record */}
+                      <td data-actions className="px-3 py-4 whitespace-nowrap text-right">
+                        {(() => {
+                          const caps = getTransactionCapabilities(tx);
+                          if (!caps.canEdit && !caps.canDelete) {
+                            return <span className="text-[11px] text-gray-400">{caps.lockedReason}</span>;
+                          }
+                          return (
+                            <div className="inline-flex items-center gap-1">
+                              {caps.canEdit && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActionTarget({ tx, mode: 'edit' })}
+                                  aria-label={`Edit transaction ${tx.title}`}
+                                  title="Edit"
+                                  className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-cyan-700 dark:hover:text-cyan-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                              )}
+                              {caps.canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActionTarget({ tx, mode: 'delete' })}
+                                  aria-label={`${caps.deleteLabel}: ${tx.title}`}
+                                  title={caps.deleteLabel}
+                                  className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
                     </tr>
                   );
                 })
@@ -620,6 +667,15 @@ export const TransactionsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {actionTarget && (
+        <TransactionActionModal
+          tx={actionTarget.tx}
+          mode={actionTarget.mode}
+          onClose={() => setActionTarget(null)}
+          onDone={fetchTransactions}
+        />
+      )}
 
       {tagTarget && (
         <ProjectTagModal target={tagTarget} onClose={() => setTagTarget(null)} onSaved={fetchTransactions} />

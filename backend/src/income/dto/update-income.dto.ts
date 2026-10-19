@@ -22,6 +22,11 @@ export class UpdateIncomeDto {
   @IsOptional()
   endDate?: string;
 
+  /** One-off income only: corrects the date the income was received. */
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
+
   @IsDateString()
   @IsOptional()
   effectiveDate?: string;

@@ -44,6 +44,9 @@ export interface TransactionItem {
   memberName: string;
   source: 'income' | 'expense' | 'loan';
   rawEntityId: string;
+  /** Editable raw fields, so the Edit action can prefill the source record. */
+  label: string | null;
+  notes: string | null;
   /** Projects this row's source is tagged to (income stream project, or the loan's allocations). */
   projects: Array<{ id: string; name: string }>;
   /** Source entity edited by the "Tag project" action; null for rows that cannot be tagged. */
@@ -160,6 +163,8 @@ export class TransactionsService {
           memberName: memberMap.get(inc.member_id) || 'Family Member',
           source: 'income',
           rawEntityId: inc.id,
+          label: inc.label || null,
+          notes: null,
           projects: projectsForIncome((inc as any).project_id),
           tagTarget: { kind: 'income', id: inc.id },
         });
@@ -199,6 +204,8 @@ export class TransactionsService {
         memberName: memberMap.get(rec.member_id) || 'Family Member',
         source: 'income',
         rawEntityId: rec.id,
+        label: null,
+        notes: rec.notes || null,
         projects: projectsForIncome(linkedIncome?.project_id),
         tagTarget: linkedIncome ? { kind: 'income', id: linkedIncome.id } : null,
       });
@@ -230,6 +237,8 @@ export class TransactionsService {
         memberName: memberMap.get(exp.member_id) || 'Family Member',
         source: 'expense',
         rawEntityId: exp.id,
+        label: null,
+        notes: exp.notes || null,
         projects: [],
         tagTarget: null,
       });
@@ -265,6 +274,8 @@ export class TransactionsService {
           memberName: memberMap.get(loan.member_id) || 'Family Member',
           source: 'loan',
           rawEntityId: inst.id,
+          label: null,
+          notes: (inst as any).notes || null,
           projects: projectsForLoan(loan.id),
           tagTarget: { kind: 'loan', id: loan.id },
         });
@@ -295,6 +306,8 @@ export class TransactionsService {
           memberName: memberMap.get(loan.member_id) || 'Family Member',
           source: 'loan',
           rawEntityId: prepay.id,
+          label: null,
+          notes: prepay.notes || null,
           projects: projectsForLoan(loan.id),
           tagTarget: { kind: 'loan', id: loan.id },
         });

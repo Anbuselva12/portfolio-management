@@ -34,8 +34,9 @@ export class DashboardController {
   async getReminders(
     @CurrentUser() user: any,
     @Query('scope') scope: string,
+    @Query('month') month?: string,
   ) {
     const memberId = scope === 'me' ? user.sub : null;
-    return this.dashboardService.getReminders(user.familyId, memberId);
+    return this.dashboardService.getReminders(user.familyId, memberId, month);
   }
 }

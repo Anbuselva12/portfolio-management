@@ -4,6 +4,7 @@ import { trackerApi } from '../../api/endpoints/tracker.api';
 import { IncomeEntry, IncomeType, IncomeRecurrence, TrackerProject } from '../../types';
 import { formatINR } from '../../utils/currency';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
+import { RecordReceiptModal } from '../../components/income/RecordReceiptModal';
 import {
   TrendingUp,
   Plus,
@@ -19,6 +20,7 @@ import {
   XCircle,
   Trash2,
   Tag,
+  CalendarPlus,
 } from 'lucide-react';
 
 const INCOME_TYPES: { type: IncomeType; label: string }[] = [
@@ -36,6 +38,7 @@ export const IncomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeEntry | null>(null);
+  const [receiptIncome, setReceiptIncome] = useState<IncomeEntry | null>(null);
 
   // Form state
   const [label, setLabel] = useState('');
@@ -331,6 +334,17 @@ export const IncomePage: React.FC = () => {
                     </td>
                     <td data-actions className="py-4 px-6 text-right">
                       <div className="inline-flex items-center gap-1">
+                        {item.recurrence === 'recurring_monthly' && (
+                          <button
+                            type="button"
+                            onClick={() => setReceiptIncome(item)}
+                            className="min-h-[38px] min-w-[38px] flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                            title="Record a past receipt"
+                            aria-label={`Record a past receipt for ${item.label}`}
+                          >
+                            <CalendarPlus className="w-4 h-4" />
+                          </button>
+                        )}
                         {item.status === 'active' && (
                           <>
                             <button
@@ -367,6 +381,10 @@ export const IncomePage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {receiptIncome && (
+        <RecordReceiptModal income={receiptIncome} onClose={() => setReceiptIncome(null)} onSaved={() => undefined} />
+      )}
 
       {/* Add / Edit Drawer */}
       <SlideDrawer

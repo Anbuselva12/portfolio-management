@@ -69,3 +69,9 @@ Top-right: "Whole Family" (default) vs "Just Me" — switches all KPIs/charts on
 - **Empty state** (new family, no data yet): each chart area shows a lightweight illustration + CTA ("Add your first asset", "Add your first loan") instead of an empty chart.
 - **Loading**: skeleton cards/charts while aggregation queries run (see Foundations §5).
 - **Pending-approval members**: never reach this screen (see Design-Spec-01 §4).
+
+## Reminders month navigator (added 2026-10-19)
+- The Pending Reminders card header shows `‹ September 2026 ›` with a *Current month* link when browsing the past. `›` is disabled on the current month; future months are never shown. Buttons are at least 44px tall on touch screens, the month label is an `aria-live="polite"` region, and the lists dim (`aria-busy`) while a month loads.
+- Choosing a past month expands the card. All actions (Confirm Received with editable amount, Mark EMI Paid / Undo) work as for the current month; the pending badge and "all caught up" texts name the month shown.
+- A past month with nothing due still renders the card (so the navigator stays reachable) with the empty-state messages.
+

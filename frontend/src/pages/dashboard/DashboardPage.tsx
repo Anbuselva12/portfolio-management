@@ -32,6 +32,7 @@ import {
   Edit3,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -64,6 +65,9 @@ export const DashboardPage: React.FC = () => {
   const [processingActionId, setProcessingActionId] = useState<string | null>(null);
   const [showAllReminders, setShowAllReminders] = useState(false);
   const [isRemindersCollapsed, setIsRemindersCollapsed] = useState(true);
+  /** `YYYY-MM` being reviewed; null means the current month. Only current and past months are allowed. */
+  const [reminderMonth, setReminderMonth] = useState<string | null>(null);
+  const [isRemindersLoading, setIsRemindersLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [nwViewMode, setNwViewMode] = useState<'chart' | 'table'>('chart');
   const [cfViewMode, setCfViewMode] = useState<'chart' | 'table'>('chart');
@@ -73,13 +77,49 @@ export const DashboardPage: React.FC = () => {
     loadDashboardData();
   }, [scope]);
 
+  useEffect(() => {
+    if (reminderMonth === null) return;
+    setIsRemindersLoading(true);
+    dashboardApi
+      .getReminders(scope === 'me' ? 'me' : undefined, reminderMonth)
+      .then(applyReminders)
+      .catch(() => undefined)
+      .finally(() => setIsRemindersLoading(false));
+  }, [reminderMonth]);
+
+  const applyReminders = (remData: any) => {
+    setReminders(remData);
+    if (remData?.incomes) {
+      const initial: { [id: string]: string } = {};
+      remData.incomes.forEach((inc: any) => {
+        initial[inc.id] = inc.actualAmount || inc.scheduledAmount;
+      });
+      setIncomeAmounts(initial);
+    }
+  };
+
+  const shiftReminderMonth = (delta: number) => {
+    const base = reminders?.yearMonth as string | undefined;
+    if (!base) return;
+    const [y, m] = base.split('-').map(Number);
+    const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+    const next = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    setIsRemindersCollapsed(false);
+    setReminderMonth(next);
+  };
+
+  const goToCurrentReminderMonth = () => {
+    setReminderMonth(null);
+    dashboardApi.getReminders(scope === 'me' ? 'me' : undefined).then(applyReminders).catch(() => undefined);
+  };
+
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
       const [sumData, anaData, remData, pendingData] = await Promise.all([
         dashboardApi.getSummary(scope === 'me' ? 'me' : undefined),
         dashboardApi.getAnalytics(scope === 'me' ? 'me' : undefined),
-        dashboardApi.getReminders(scope === 'me' ? 'me' : undefined),
+        dashboardApi.getReminders(scope === 'me' ? 'me' : undefined, reminderMonth ?? undefined),
         user?.role === 'admin' ? adminApi.getPending().catch(() => []) : Promise.resolve([]),
       ]);
       setSummary(sumData);
@@ -104,17 +144,25 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
+  /** Today for the current month; the scheduled due date when settling an earlier month. */
+  const receivedDateFor = (inc: any): string => {
+    if (reminders?.isCurrentMonth !== false) return new Date().toISOString().split('T')[0];
+    const [y, m] = (inc.yearMonth as string).split('-').map(Number);
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return `${inc.yearMonth}-${String(Math.min(Number(inc.dueDay) || 1, lastDay)).padStart(2, '0')}`;
+  };
+
   const handleConfirmIncome = async (inc: any) => {
     setProcessingActionId(`income-${inc.id}`);
     try {
       const amountVal = incomeAmounts[inc.id] || inc.actualAmount || inc.scheduledAmount;
       await incomeApi.confirmReceipt(inc.id, inc.yearMonth, {
         receivedAmount: Number(amountVal),
-        receivedDate: new Date().toISOString().split('T')[0],
+        receivedDate: receivedDateFor(inc),
       });
       setEditingIncomeId(null);
       const [remData, sumData, anaData] = await Promise.all([
-        dashboardApi.getReminders(scope === 'me' ? 'me' : undefined),
+        dashboardApi.getReminders(scope === 'me' ? 'me' : undefined, reminderMonth ?? undefined),
         dashboardApi.getSummary(scope === 'me' ? 'me' : undefined),
         dashboardApi.getAnalytics(scope === 'me' ? 'me' : undefined),
       ]);
@@ -133,9 +181,11 @@ export const DashboardPage: React.FC = () => {
     try {
       await loansApi.updateInstallment(loanItem.id, loanItem.installmentId, {
         isPaid: !loanItem.isPaid,
+        // Settling an earlier month records the payment on its due date, not today
+        ...(!loanItem.isPaid && reminders?.isCurrentMonth === false ? { paidDate: loanItem.dueDate } : {}),
       });
       const [remData, sumData, anaData] = await Promise.all([
-        dashboardApi.getReminders(scope === 'me' ? 'me' : undefined),
+        dashboardApi.getReminders(scope === 'me' ? 'me' : undefined, reminderMonth ?? undefined),
         dashboardApi.getSummary(scope === 'me' ? 'me' : undefined),
         dashboardApi.getAnalytics(scope === 'me' ? 'me' : undefined),
       ]);
@@ -436,7 +486,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Pending Reminders & Monthly Action Queue */}
-      {reminders && (reminders.incomes?.length > 0 || reminders.loans?.length > 0) && (
+      {reminders && (reminders.incomes?.length > 0 || reminders.loans?.length > 0 || reminderMonth !== null) && (
         <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all ${
           isRemindersCollapsed ? 'p-4 sm:p-5' : 'p-5 sm:p-6 space-y-6'
         }`}>
@@ -452,9 +502,40 @@ export const DashboardPage: React.FC = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
                     Monthly Action Queue & Reminders
                   </h2>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    {reminders.monthName}
-                  </span>
+                  <div className="inline-flex items-center gap-0.5" role="group" aria-label="Reminder month">
+                    <button
+                      type="button"
+                      onClick={() => shiftReminderMonth(-1)}
+                      aria-label="Previous month"
+                      className="min-h-[44px] min-w-[44px] sm:min-h-8 sm:min-w-8 inline-flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span
+                      aria-live="polite"
+                      className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 min-w-[7.5rem] text-center"
+                    >
+                      {reminders.monthName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => shiftReminderMonth(1)}
+                      disabled={reminders.isCurrentMonth}
+                      aria-label="Next month"
+                      className="min-h-[44px] min-w-[44px] sm:min-h-8 sm:min-w-8 inline-flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    {!reminders.isCurrentMonth && (
+                      <button
+                        type="button"
+                        onClick={goToCurrentReminderMonth}
+                        className="ml-1 text-xs font-semibold text-cyan-700 dark:text-cyan-400 hover:underline min-h-[44px] sm:min-h-8 px-2 cursor-pointer"
+                      >
+                        Current month
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {!isRemindersCollapsed ? (
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -463,8 +544,8 @@ export const DashboardPage: React.FC = () => {
                 ) : (
                   <p className="text-xs text-slate-400 mt-0.5">
                     {reminders.totalPendingCount > 0
-                      ? `${reminders.totalPendingCount} pending task${reminders.totalPendingCount === 1 ? '' : 's'} to verify this month`
-                      : 'All income arrivals & loan EMIs recorded for this month'}
+                      ? `${reminders.totalPendingCount} pending task${reminders.totalPendingCount === 1 ? '' : 's'} to verify for ${reminders.monthName}`
+                      : `All income arrivals & loan EMIs recorded for ${reminders.monthName}`}
                   </p>
                 )}
               </div>
@@ -510,7 +591,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {!isRemindersCollapsed && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity ${isRemindersLoading ? 'opacity-50 pointer-events-none' : ''}`} aria-busy={isRemindersLoading}>
             {/* Column 1: Recurring Income Arrivals */}
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-1">
@@ -671,7 +752,7 @@ export const DashboardPage: React.FC = () => {
 
               {reminders.loans.length === 0 ? (
                 <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 text-center">
-                  No active loan EMIs scheduled for this month.
+                  No loan EMIs scheduled for this month.
                 </div>
               ) : (
                 <div className="space-y-2.5">

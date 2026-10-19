@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import {
   I_ASSET_REPOSITORY,
   IAssetRepository,
@@ -361,26 +361,44 @@ export class DashboardService {
     };
   }
 
-  async getReminders(familyId: string, memberId: string | null) {
+  /**
+   * Reminders for one calendar month. `month` is `YYYY-MM`; omitted means the current month.
+   * Future months are rejected - only the current and past months can be reviewed or settled.
+   */
+  async getReminders(familyId: string, memberId: string | null, month?: string) {
     const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonthNum = today.getMonth() + 1;
-    const yearMonth = `${currentYear}-${currentMonthNum.toString().padStart(2, '0')}`;
+    const currentYearMonth = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+    const yearMonth = month ?? currentYearMonth;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(yearMonth)) {
+      throw new BadRequestException('month must be in YYYY-MM format');
+    }
+    if (yearMonth > currentYearMonth) {
+      throw new BadRequestException('Reminders are available for the current and past months only');
+    }
+    const isCurrentMonth = yearMonth === currentYearMonth;
+    const [year, monthNum] = yearMonth.split('-').map(Number);
+    const monthStart = new Date(Date.UTC(year, monthNum - 1, 1));
+    const monthEnd = new Date(Date.UTC(year, monthNum, 0, 23, 59, 59, 999));
 
-    // 1. Fetch recurring incomes
+    // 1. Recurring incomes whose active window overlaps the month (or that already hold a receipt for it)
     const incomes = memberId
       ? await this.incomeRepository.findByMemberId(memberId)
       : await this.incomeRepository.findByFamilyId(familyId);
-
-    const activeRecurringIncomes = incomes.filter(
-      (i) => i.status === 'active' && i.recurrence === 'recurring_monthly' && (i as any).reminders_enabled !== false,
-    );
 
     const receipts = await this.incomeRepository.findReceiptsByFamilyAndMonth(familyId, yearMonth);
     const receiptsMap = new Map<string, any>();
     for (const r of receipts) {
       receiptsMap.set(r.income_id, r);
     }
+
+    const activeRecurringIncomes = incomes.filter((i) => {
+      if (i.recurrence !== 'recurring_monthly') return false;
+      if (receiptsMap.get(i.id)?.status === 'received') return true;
+      if ((i as any).reminders_enabled === false) return false;
+      const startsBeforeMonthEnd = new Date(i.start_date) <= monthEnd;
+      const endsAfterMonthStart = !i.end_date || new Date(i.end_date) >= monthStart;
+      return startsBeforeMonthEnd && endsAfterMonthStart && (isCurrentMonth ? i.status === 'active' : true);
+    });
 
     const incomeReminders = activeRecurringIncomes.map((inc) => {
       const rec = receiptsMap.get(inc.id);
@@ -405,23 +423,28 @@ export class DashboardService {
       };
     });
 
-    // 2. Fetch loan EMIs for current month
+    // 2. Loan EMIs due in the month
     const loans = memberId
       ? await this.loanRepository.findByMemberId(memberId)
       : await this.loanRepository.findByFamilyId(familyId);
 
-    const activeLoans = loans.filter(
-      (l) => l.status === 'active' && (l as any).emi_reminders_enabled !== false && l.type !== 'jewel' && l.type !== 'gold',
+    const eligibleLoans = loans.filter(
+      (l) =>
+        (isCurrentMonth ? l.status === 'active' : true) &&
+        (l as any).emi_reminders_enabled !== false &&
+        l.type !== 'jewel' &&
+        l.type !== 'gold',
     );
 
     const loanEmiReminders: any[] = [];
-    for (const loan of activeLoans) {
+    for (const loan of eligibleLoans) {
       const schedule = await this.scheduleRepository.findByLoanId(loan.id);
-      // Find installment for current month
-      const currentInst = schedule.find((inst) => {
+      const dueInMonth = schedule.find((inst) => {
         const d = new Date(inst.due_date);
-        return d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonthNum;
-      }) || schedule.find((inst) => !inst.is_paid);
+        return d.getFullYear() === year && d.getMonth() + 1 === monthNum;
+      });
+      // The current month keeps its legacy fallback to the next unpaid instalment; past months show only what was due then.
+      const currentInst = dueInMonth ?? (isCurrentMonth ? schedule.find((inst) => !inst.is_paid) : undefined);
 
       if (currentInst) {
         loanEmiReminders.push({
@@ -446,7 +469,12 @@ export class DashboardService {
 
     return {
       yearMonth,
-      monthName: today.toLocaleString('default', { month: 'long', year: 'numeric' }),
+      isCurrentMonth,
+      monthName: new Date(Date.UTC(year, monthNum - 1, 1)).toLocaleString('en-IN', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      }),
       totalPendingCount: pendingIncomesCount + pendingLoansCount,
       incomes: incomeReminders,
       loans: loanEmiReminders,
