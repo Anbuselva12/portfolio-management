@@ -18,6 +18,7 @@
 ## 2. Information Architecture
 
 ```
+├── Public Landing Site (static, SEO-indexed, `/`)                    — Design-Spec-11
 ├── Login
 ├── Register (username/password only)
 ├── Family Selection (Create New | Join Existing)  — see Design-Spec-01
@@ -25,7 +26,8 @@
 ```
 ├── App Switcher (Top-Left Appian-style Launcher)
 │   ├── FinFamily (Family Wealth & Debt App)
-│   └── Expense Tracker (Project & Commercial Procurement App) — Design-Spec-09
+│   └── FairShare (Trips & Events)                              — Design-Spec-10
+│   (Expense Tracker merged into FinFamily → Expenses → Projects, 2026-10-19)
 │
 ├── App 1: FinFamily
 │   ├── Dashboard (Family | My view)                                      — Design-Spec-02
@@ -35,7 +37,7 @@
 │   │   ├── Loan List / Detail / Repayment Schedule
 │   │   └── Prepayment Calculator
 │   ├── Debt Strategy Comparison                                          — Design-Spec-05
-│   ├── Expenses                                                          — Design-Spec-06
+│   ├── Expenses (Household | Projects tabs)            — Design-Spec-06, 09, 12
 │   ├── Transactions (Statement of All Cashflows)                         — Design-Spec-08
 │   ├── Insurance                                                         — Design-Spec-06
 │   ├── Audit Trail                                                       — Design-Spec-07

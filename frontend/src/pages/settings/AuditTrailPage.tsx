@@ -158,7 +158,7 @@ export const AuditTrailPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="stack-mobile w-full text-left border-collapse text-xs">
               <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-3 px-4 font-semibold uppercase tracking-wider text-[10px]">Timestamp</th>
@@ -179,17 +179,17 @@ export const AuditTrailPage: React.FC = () => {
                   return (
                     <React.Fragment key={log.id}>
                       <tr className="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition-colors">
-                        <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                        <td data-label="When" className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                           {new Date(log.timestamp).toLocaleString()}
                         </td>
 
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <td data-label="Member" className="py-3 px-4 whitespace-nowrap">
                           <span className="font-semibold text-slate-800 dark:text-slate-200">
                             {log.member?.display_name || 'System'}
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <td data-label="Action" className="py-3 px-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                               log.action === 'create'
@@ -207,16 +207,18 @@ export const AuditTrailPage: React.FC = () => {
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="font-semibold text-slate-900 dark:text-white capitalize">
-                            {log.entity_type}
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-400 ml-1.5">
-                            #{log.entity_id.slice(0, 8)}
+                        <td data-label="Entity" className="py-3 px-4 whitespace-nowrap">
+                          <span>
+                            <span className="font-semibold text-slate-900 dark:text-white capitalize">
+                              {log.entity_type}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 ml-1.5">
+                              #{log.entity_id.slice(0, 8)}
+                            </span>
                           </span>
                         </td>
 
-                        <td className="py-3 px-4">
+                        <td data-label="Changes" className="py-3 px-4">
                           {fieldDiffs ? (
                             <button
                               type="button"
@@ -232,7 +234,7 @@ export const AuditTrailPage: React.FC = () => {
                         </td>
 
                         {isAdmin && (
-                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <td data-actions className="py-3 px-4 text-right whitespace-nowrap">
                             {isSoftDelete && (
                               <button
                                 type="button"

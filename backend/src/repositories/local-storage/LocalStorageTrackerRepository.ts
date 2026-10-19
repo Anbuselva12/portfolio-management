@@ -6,6 +6,7 @@ import {
   TrackerTagItem,
   TrackerUnit,
   TrackerExpense,
+  ProjectLoanAllocation,
   Prisma,
 } from '@prisma/client';
 import { ITrackerRepository } from '../interfaces';
@@ -35,6 +36,10 @@ export class LocalStorageTrackerRepository implements ITrackerRepository {
 
   private get expenses(): TrackerExpense[] {
     return LocalStorageStore.getCollection<TrackerExpense>('tracker_expenses');
+  }
+
+  private get allocations(): ProjectLoanAllocation[] {
+    return LocalStorageStore.getCollection<ProjectLoanAllocation>('tracker_project_loan_allocations');
   }
 
   // Projects
@@ -69,6 +74,7 @@ export class LocalStorageTrackerRepository implements ITrackerRepository {
       code: data.code || null,
       description: data.description || null,
       total_area_sqft: data.total_area_sqft ? new Prisma.Decimal(data.total_area_sqft) : null,
+      current_value: data.current_value ? new Prisma.Decimal(data.current_value) : null,
       currency: data.currency || 'INR',
       is_active: true,
       created_at: new Date(),
@@ -87,6 +93,9 @@ export class LocalStorageTrackerRepository implements ITrackerRepository {
       total_area_sqft: data.total_area_sqft !== undefined
         ? (data.total_area_sqft ? new Prisma.Decimal(data.total_area_sqft as any) : null)
         : this.projects[idx].total_area_sqft,
+      current_value: data.current_value !== undefined
+        ? (data.current_value ? new Prisma.Decimal(data.current_value as any) : null)
+        : this.projects[idx].current_value,
       updated_at: new Date(),
     };
     this.projects[idx] = updated;
@@ -332,5 +341,43 @@ export class LocalStorageTrackerRepository implements ITrackerRepository {
     if (idx !== -1) {
       this.expenses[idx].is_active = false;
     }
+  }
+
+  // Loan → project allocations
+  async findAllocationsByProjectId(projectId: string): Promise<ProjectLoanAllocation[]> {
+    return this.allocations.filter((a) => a.project_id === projectId).map((a) => ({ ...a }));
+  }
+
+  async findAllocationsByFamilyId(familyId: string): Promise<ProjectLoanAllocation[]> {
+    const projectIds = new Set(
+      this.projects.filter((p) => p.family_id === familyId && p.is_active).map((p) => p.id),
+    );
+    return this.allocations.filter((a) => projectIds.has(a.project_id)).map((a) => ({ ...a }));
+  }
+
+  async findAllocationsByLoanId(loanId: string): Promise<ProjectLoanAllocation[]> {
+    return this.allocations.filter((a) => a.loan_id === loanId).map((a) => ({ ...a }));
+  }
+
+  async replaceLoanAllocations(
+    loanId: string,
+    rows: Array<{ project_id: string; amount: string }>,
+  ): Promise<ProjectLoanAllocation[]> {
+    const store = this.allocations;
+    for (let i = store.length - 1; i >= 0; i--) {
+      if (store[i].loan_id === loanId) store.splice(i, 1);
+    }
+    const now = new Date();
+    for (const r of rows) {
+      store.push({
+        id: LocalStorageStore.generateId(),
+        project_id: r.project_id,
+        loan_id: loanId,
+        amount: new Prisma.Decimal(r.amount),
+        created_at: now,
+        updated_at: now,
+      });
+    }
+    return this.findAllocationsByLoanId(loanId);
   }
 }

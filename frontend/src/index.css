@@ -5,6 +5,17 @@
   --color-negative: #dc2626;
   --color-warning: #d97706;
   --color-accent: #0891b2;
+  /* Expense Tracker brand colour (referenced as bg-primary / text-primary) */
+  --color-primary: #ea580c;
+
+  /* Intermediate shades used across the UI that Tailwind's default palette omits.
+     Without these, classes such as dark:bg-gray-850 silently generate no CSS. */
+  --color-gray-150: #eceef2;
+  --color-gray-750: #333b4b;
+  --color-gray-850: #151b28;
+  --color-slate-150: #e8edf3;
+  --color-slate-750: #2b3648;
+  --color-slate-850: #172033;
 }
 
 :root {
@@ -22,4 +33,73 @@ html {
 .tabular-nums {
   font-feature-settings: 'tnum';
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Mobile-stacked tables. On viewports below md each <tr> becomes a card and every
+ * <td data-label="..."> renders "label ... value", so no column or action is clipped.
+ * Cells without a data-label (primary cell) render full-width above the labelled ones.
+ */
+@media (max-width: 767px) {
+  table.stack-mobile,
+  table.stack-mobile tbody,
+  table.stack-mobile tr,
+  table.stack-mobile td {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+  table.stack-mobile thead {
+    display: none;
+  }
+  table.stack-mobile tr {
+    padding: 0.75rem 1rem;
+  }
+  table.stack-mobile td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0 !important;
+    text-align: right;
+    white-space: normal !important;
+  }
+  table.stack-mobile td:not([data-label]) {
+    display: block;
+    text-align: left;
+  }
+  table.stack-mobile td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--color-gray-500, #6b7280);
+  }
+  table.stack-mobile td[data-actions] {
+    justify-content: flex-end;
+    padding-top: 0.5rem !important;
+  }
+  table.stack-mobile td[data-actions]::before {
+    content: none;
+  }
+}
+
+@media (max-width: 767px) {
+  table.stack-mobile tfoot {
+    display: block;
+  }
+  table.stack-mobile tfoot td:empty {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  table.stack-mobile td[colspan] {
+    display: block;
+    text-align: center;
+  }
 }

@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loansApi } from '../../api/endpoints/loans.api';
+import { trackerApi } from '../../api/endpoints/tracker.api';
+import { ProjectTagModal } from '../../components/projects/ProjectTagModal';
 import { Loan, LoanType } from '../../types';
 import { formatINR } from '../../utils/currency';
 import { formatDate } from '../../utils/date';
@@ -24,6 +26,7 @@ import {
   Trash2,
   ArrowUpDown,
   RefreshCw,
+  Tag,
 } from 'lucide-react';
 
 const LOAN_TYPES: { type: LoanType; label: string; icon: any }[] = [
@@ -58,9 +61,17 @@ export const LoansPage: React.FC = () => {
   const [emiType, setEmiType] = useState<'fixed' | 'flexible'>('fixed');
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allocations, setAllocations] = useState<Array<{ loanId: string; projectId: string; projectName: string; amount: string }>>([]);
+  const [tagLoan, setTagLoan] = useState<{ id: string; label: string } | null>(null);
+
+  const loadAllocations = () => {
+    // Project tags are optional context: loans still render if this fails.
+    trackerApi.listLoanAllocations().then(setAllocations).catch(() => setAllocations([]));
+  };
 
   useEffect(() => {
     loadLoans();
+    loadAllocations();
   }, []);
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -393,6 +404,30 @@ export const LoansPage: React.FC = () => {
                   <div className="text-[11px] text-slate-400 capitalize mt-0.5">
                     {typeObj?.label || loan.type}
                   </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {allocations
+                      .filter((a) => a.loanId === loan.id)
+                      .map((a) => (
+                        <span
+                          key={a.projectId}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400"
+                          title={`Used for ${a.projectName}: ${formatINR(a.amount)}`}
+                        >
+                          <Tag className="w-3 h-3" /> {a.projectName} · {formatINR(a.amount)}
+                        </span>
+                      ))}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTagLoan({ id: loan.id, label: `${loanName} · ${loan.lender}` });
+                      }}
+                      className="min-h-[32px] px-2 inline-flex items-center gap-1 rounded-full text-[11px] font-semibold text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-600 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-400 cursor-pointer"
+                    >
+                      <Tag className="w-3 h-3" />
+                      {allocations.some((a) => a.loanId === loan.id) ? 'Edit project funding' : 'Tag project'}
+                    </button>
+                  </div>
 
                   <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
                     <div>
@@ -480,6 +515,14 @@ export const LoansPage: React.FC = () => {
             );
           })}
         </div>
+      )}
+
+      {tagLoan && (
+        <ProjectTagModal
+          target={{ kind: 'loan', id: tagLoan.id, label: tagLoan.label }}
+          onClose={() => setTagLoan(null)}
+          onSaved={loadAllocations}
+        />
       )}
 
       {/* Add Loan Drawer */}

@@ -1,11 +1,13 @@
-import { Injectable, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { I_TRACKER_REPOSITORY, ITrackerRepository } from '../repositories/interfaces';
 import Decimal from 'decimal.js';
+import { ProjectFundingService } from './project-funding.service';
 
 @Injectable()
 export class TrackerService {
   constructor(
     @Inject(I_TRACKER_REPOSITORY) private readonly trackerRepo: ITrackerRepository,
+    private readonly fundingService: ProjectFundingService,
   ) {}
 
   // ─── Projects ─────────────────────────────────────────────────────────────
@@ -14,13 +16,23 @@ export class TrackerService {
     const projects = await this.trackerRepo.findProjectsByFamilyId(familyId);
 
     // Attach summary stats for each project
+    const expensesByProject = new Map(
+      await Promise.all(
+        projects.map(async (p) => [p.id, await this.trackerRepo.findExpensesByProjectId(p.id)] as const),
+      ),
+    );
+    const investedByProject = new Map(
+      [...expensesByProject].map(([id, list]) => [
+        id,
+        list.reduce((sum, e) => sum.plus(new Decimal(e.total_cost.toString())), new Decimal(0)),
+      ]),
+    );
+    const funding = await this.fundingService.getHubSummaries(familyId, projects, investedByProject);
+
     const enriched = await Promise.all(
       projects.map(async (project) => {
-        const expenses = await this.trackerRepo.findExpensesByProjectId(project.id);
-        const totalSpend = expenses.reduce(
-          (sum, e) => sum.plus(new Decimal(e.total_cost.toString())),
-          new Decimal(0),
-        );
+        const expenses = expensesByProject.get(project.id) ?? [];
+        const totalSpend = investedByProject.get(project.id) ?? new Decimal(0);
 
         let pricePerSqFt: string | null = null;
         if (project.total_area_sqft && Number(project.total_area_sqft) > 0) {
@@ -36,11 +48,13 @@ export class TrackerService {
         return {
           ...project,
           total_area_sqft: project.total_area_sqft ? project.total_area_sqft.toString() : null,
+          current_value: project.current_value ? project.current_value.toString() : null,
           totalSpend: totalSpend.toFixed(2),
           itemsCount: expenses.length,
           pricePerSqFt,
           avgCostPerItem,
           lastActivityDate: expenses[0]?.purchase_date || project.created_at,
+          funding: funding.get(project.id) ?? null,
         };
       }),
     );
@@ -79,6 +93,7 @@ export class TrackerService {
     return {
       ...project,
       total_area_sqft: project.total_area_sqft ? project.total_area_sqft.toString() : null,
+      current_value: project.current_value ? project.current_value.toString() : null,
       totalSpend: totalSpend.toFixed(2),
       itemsCount: expenses.length,
       pricePerSqFt,
@@ -128,6 +143,17 @@ export class TrackerService {
     if (dto.currency !== undefined) updateData.currency = dto.currency;
     if (dto.totalAreaSqFt !== undefined) {
       updateData.total_area_sqft = dto.totalAreaSqFt ? new Decimal(dto.totalAreaSqFt) : null;
+    }
+    if (dto.currentValue !== undefined) {
+      if (dto.currentValue === null || dto.currentValue === '') {
+        updateData.current_value = null;
+      } else {
+        const value = new Decimal(dto.currentValue);
+        if (!value.isFinite() || value.isNegative()) {
+          throw new BadRequestException('currentValue must be a non-negative number');
+        }
+        updateData.current_value = value;
+      }
     }
 
     await this.trackerRepo.updateProject(projectId, updateData);

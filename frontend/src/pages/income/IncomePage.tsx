@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { incomeApi } from '../../api/endpoints/income.api';
-import { IncomeEntry, IncomeType, IncomeRecurrence } from '../../types';
+import { trackerApi } from '../../api/endpoints/tracker.api';
+import { IncomeEntry, IncomeType, IncomeRecurrence, TrackerProject } from '../../types';
 import { formatINR } from '../../utils/currency';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import {
@@ -17,6 +18,7 @@ import {
   CheckCircle2,
   XCircle,
   Trash2,
+  Tag,
 } from 'lucide-react';
 
 const INCOME_TYPES: { type: IncomeType; label: string }[] = [
@@ -46,10 +48,16 @@ export const IncomePage: React.FC = () => {
   const [dueDayOfMonth, setDueDayOfMonth] = useState<number>(5);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [projectId, setProjectId] = useState('');
+  const [projects, setProjects] = useState<TrackerProject[]>([]);
 
   useEffect(() => {
     loadIncomes();
+    // Projects are optional context: income still works if they fail to load.
+    trackerApi.getProjects().then((list) => setProjects(list || [])).catch(() => setProjects([]));
   }, []);
+
+  const projectNameById = (id?: string | null) => projects.find((p) => p.id === id)?.name;
 
   const loadIncomes = async () => {
     setIsLoading(true);
@@ -73,6 +81,7 @@ export const IncomePage: React.FC = () => {
     setEffectiveDate(new Date().toISOString().split('T')[0]);
     setRemindersEnabled(true);
     setDueDayOfMonth(new Date().getDate());
+    setProjectId('');
     setFormError(null);
     setIsDrawerOpen(true);
   };
@@ -87,6 +96,7 @@ export const IncomePage: React.FC = () => {
     setEffectiveDate(new Date().toISOString().split('T')[0]);
     setRemindersEnabled(income.reminders_enabled !== undefined ? income.reminders_enabled : true);
     setDueDayOfMonth(income.due_day_of_month || 5);
+    setProjectId(income.project_id || '');
     setFormError(null);
     setIsDrawerOpen(true);
   };
@@ -109,6 +119,7 @@ export const IncomePage: React.FC = () => {
           type,
           remindersEnabled,
           dueDayOfMonth: Number(dueDayOfMonth),
+          projectId: projectId || null,
           effectiveDate: recurrence === 'recurring_monthly' ? effectiveDate : undefined,
         });
       } else {
@@ -121,6 +132,7 @@ export const IncomePage: React.FC = () => {
           dueDayOfMonth: Number(dueDayOfMonth),
           startDate: new Date(startDate).toISOString(),
           currency: 'INR',
+          projectId: projectId || undefined,
         });
       }
       setIsDrawerOpen(false);
@@ -252,7 +264,7 @@ export const IncomePage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm min-w-[640px]">
+            <table className="stack-mobile w-full text-left border-collapse text-sm min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Source & Label</th>
@@ -268,14 +280,21 @@ export const IncomePage: React.FC = () => {
                     <td className="py-4 px-6">
                       <div className="font-semibold text-slate-900 dark:text-white">{item.label}</div>
                       <div className="text-xs text-slate-400 capitalize">{item.type}</div>
+                      {projectNameById(item.project_id) && (
+                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">
+                          <Tag className="w-3 h-3" /> {projectNameById(item.project_id)}
+                        </span>
+                      )}
                     </td>
-                    <td className="py-4 px-6 font-bold text-slate-900 dark:text-white font-mono text-base">
-                      {formatINR(item.amount)}
-                      <span className="text-xs font-normal text-slate-400">
-                        {item.recurrence === 'recurring_monthly' ? '/mo' : ''}
+                    <td data-label="Amount" className="py-4 px-6 font-bold text-slate-900 dark:text-white font-mono text-base">
+                      <span>
+                        {formatINR(item.amount)}
+                        <span className="text-xs font-normal text-slate-400">
+                          {item.recurrence === 'recurring_monthly' ? '/mo' : ''}
+                        </span>
                       </span>
                     </td>
-                    <td className="py-4 px-6">
+                    <td data-label="Status" className="py-4 px-6">
                       {item.status === 'active' ? (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
                           <CheckCircle2 className="w-3 h-3" /> Active
@@ -290,7 +309,7 @@ export const IncomePage: React.FC = () => {
                         </span>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-xs text-slate-500 dark:text-slate-400">
+                    <td data-label="Start" className="py-4 px-6 text-xs text-slate-500 dark:text-slate-400">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
                         <span>{formatDisplayDate(item.startDate || (item as any).start_date)}</span>
@@ -310,7 +329,7 @@ export const IncomePage: React.FC = () => {
                         </div>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td data-actions className="py-4 px-6 text-right">
                       <div className="inline-flex items-center gap-1">
                         {item.status === 'active' && (
                           <>
@@ -407,6 +426,26 @@ export const IncomePage: React.FC = () => {
               placeholder="85000"
               className="mt-1 block w-full px-3 py-2 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
             />
+          </div>
+
+          <div>
+            <label htmlFor="income-project" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Project (optional)
+            </label>
+            <select
+              id="income-project"
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="mt-1 block w-full px-3 py-2.5 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">No project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-400">Tag rent or business income to a project to track its return. All receipts of this stream follow the tag.</p>
           </div>
 
           {!editingIncome && (

@@ -47,4 +47,9 @@ export class CreateIncomeDto {
 
   @IsOptional()
   dueDayOfMonth?: number;
+
+  /** Optional project tag (TrackerProject id). */
+  @IsOptional()
+  @IsString()
+  projectId?: string | null;
 }

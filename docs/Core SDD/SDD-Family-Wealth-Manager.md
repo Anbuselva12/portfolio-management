@@ -188,6 +188,10 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 | last_amount_change_date | date | tracks e.g. "rent increased" edits (see 3.2.1) |
 | created_at, updated_at, deleted_at | datetime | |
 
+> **Project tag fields (added 2026-10-19):** `IncomeEntry.project_id` (nullable FK → `TrackerProject`); `TrackerProject.current_value` (nullable decimal);
+> new table `ProjectLoanAllocation { id, project_id, loan_id, amount, created_at, updated_at }` with `UNIQUE(project_id, loan_id)`.
+> All changes are **additive** (no rename, no data rewrite); the SQL for production is delivered as `backend/prisma/manual-migrations/` for the owner to run.
+
 #### MonthlyIncomeReceipt (Monthly Actuals & Variance Log)
 | Field | Type | Notes |
 |---|---|---|
@@ -442,6 +446,10 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-74: A top summary strip computes Total Inflow, Total Outflow, Net Cash Flow, and Transaction Count for the active filters.
 
 ### 4.9 Multi-App Architecture & Modular Expense Tracker
+> **Amended 2026-10-19 (owner decision):** the Expense Tracker is no longer a separate application. Its projects now live inside
+> FinFamily under **Expenses → Projects** (see §4.11). FR-80/FR-81 are superseded: the App Switcher lists **FinFamily** and **FairShare** only,
+> and `preferred_app = 'expense_tracker'` is interpreted as FinFamily with a landing route of `/expenses/projects`. Tracker table names are unchanged.
+
 - FR-80: The system supports an Appian-style top navigation App Switcher enabling one-click switching between FinFamily and the independent **Expense Tracker** application.
 - FR-81: Members can configure and persist their preferred default app (`preferred_app: 'finfamily' | 'expense_tracker'`), automatically loading on login or root navigation.
 - FR-82: Expense Tracker provides a Project/Category Hub displaying cards for configured project categories (e.g., "SK Complex", "Retail Business") with summary metrics.
@@ -450,6 +458,17 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-85: Expense Tracker provides phase breakdown reports, stacked horizontal phase bar charts, donut charts with color-coded tags, and a "Show Labour Cost" toggle to inspect material vs labor distribution without skew.
 - FR-86: All Expense Tracker projects, phases, types, tags, and expenses are family-scoped (`family_id`), isolating each family's commercial and project data.
 - FR-87: Historical construction data is ingested and accessible under project "SK Complex" (Area: 3,058 sq ft) for the designated production member and family.
+
+### 4.11 Projects Inside Expenses: Funding, Tagging & Returns
+- FR-90: **Expenses** has two tabs — *Household* (daily spending, unchanged) and *Projects* (the former Expense Tracker hub). Legacy `/tracker/*` URLs redirect to `/expenses/projects/*`.
+- FR-91: A **Project tag** links money records to a project at the *source* level. `IncomeEntry.project_id` (nullable) tags an income stream; every past and future receipt of that stream, and every superseding amount revision, inherits the tag.
+- FR-92: A loan may fund **one or more projects**. `ProjectLoanAllocation(project_id, loan_id, amount)` records how much of a loan was used for each project. Rules: `amount > 0`; unique per (project, loan); the sum of a loan's allocations must not exceed its original principal; the project and loan must belong to the caller's family. A loan with no allocation is untagged.
+- FR-93: Per project, **Funding** is derived (Option A): `Invested = Σ project expense entries`; `Funded by loans = Σ allocated amounts`; `Own funds = max(Invested − Funded by loans, 0)`. Own cash is recorded simply by adding expense entries to the project; no separate cash ledger exists.
+- FR-94: Loan-linked metrics use the project's **share** of each loan, `share = min(1, allocated ÷ original principal)`: outstanding = `share × current outstanding`, EMI = `share × EMI`, interest paid = `share × Σ interest of paid installments`.
+- FR-95: **Returns**: `Monthly rent = Σ active recurring tagged income`; `Total income received = Σ confirmed receipts + one-off tagged income dated ≤ today`; `Gross yield % = 12 × Monthly rent ÷ Invested × 100`; `Payback years = Invested ÷ (12 × Monthly rent)`; `Net monthly after EMI = Monthly rent − Σ project EMI share`.
+- FR-96: A project has an optional **current market value** (`TrackerProject.current_value`). When set: `Appreciation = Current value − Invested`; `Total return = Total income received + Appreciation`; `Total return % = Total return ÷ Invested × 100`; `Yield on current value % = 12 × Monthly rent ÷ Current value × 100`.
+- FR-97: The **Statement of Transactions** shows a Project column and offers a *Tag* action on income and loan rows that edits the **source** (income stream or loan allocations), plus a Project filter.
+- FR-98: All monetary maths uses `Decimal`; all project, allocation and tag operations are family-scoped and audit-logged.
 
 ### 4.10 FairShare — Trip & Event Group Expense Splitter
 - FR-88: **Independent Trip Tenancy & Security Boundary**: FairShare trips/events (`FairShareTrip`) operate under a separate security domain from FinFamily. Non-family trip participants and temporary guests have zero visibility or access to FinFamily wealth portfolios, income, loans, or household expenses.
@@ -770,6 +789,11 @@ POST   /admin/members/:id/reject
 
 GET    /assets            POST /assets            PATCH /assets/:id      DELETE /assets/:id
 GET    /income            POST /income            PATCH /income/:id      DELETE /income/:id
+                                       (income body accepts optional projectId — nullable — to tag/untag)
+GET    /tracker/projects/:id/funding-returns   (funding mix, linked loans/income, yield & return KPIs)
+GET    /tracker/loans/:loanId/allocations      PUT /tracker/loans/:loanId/allocations  (replace a loan's project allocations)
+PATCH  /tracker/projects/:id                   (now also accepts currentValue)
+GET    /transactions                           (adds projectId filter; items carry projectId/projectName and tag target)
 POST   /income/:id/stop
 
 GET    /loans             POST /loans             PATCH /loans/:id       DELETE /loans/:id

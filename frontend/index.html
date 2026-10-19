@@ -2,15 +2,431 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>FinFamily — Family Wealth Manager</title>
+    <title>FinFamily — Family Wealth, Loan &amp; Expense Manager</title>
+    <meta
+      name="description"
+      content="FinFamily helps Indian families track net worth, loans and EMIs, income and expenses in one place. Compare debt-payoff strategies and manage everything together."
+    />
+    <link rel="canonical" href="%SITE_URL%/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#0891b2" />
+    <!--GOOGLE_SITE_VERIFICATION-->
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FinFamily" />
+    <meta property="og:title" content="FinFamily — Family Wealth, Loan &amp; Expense Manager" />
+    <meta
+      property="og:description"
+      content="Track net worth, loans, EMIs, income and expenses for your whole family. Compare debt-payoff strategies side by side."
+    />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="FinFamily — your family's wealth, loans and expenses in one place" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FinFamily — Family Wealth, Loan &amp; Expense Manager" />
+    <meta
+      name="twitter:description"
+      content="Track net worth, loans, EMIs, income and expenses for your whole family."
+    />
+    <meta name="twitter:image" content="%SITE_URL%/og-image.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "%SITE_URL%/#website",
+            "url": "%SITE_URL%/",
+            "name": "FinFamily",
+            "inLanguage": "en-IN"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "%SITE_URL%/#app",
+            "name": "FinFamily",
+            "url": "%SITE_URL%/",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web",
+            "description": "Family wealth, loan and expense manager: net worth dashboard, loan and EMI engine, debt-payoff strategies, income and expense tracking, insurance tracking and an audit trail.",
+            "image": "%SITE_URL%/og-image.jpg",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+            "featureList": [
+              "Family net worth dashboard",
+              "Loan and EMI engine with prepayment calculator",
+              "Gold loan tracking",
+              "Debt-payoff strategy comparison",
+              "Income and household expense tracking",
+              "Project and construction expense tracker",
+              "Trip expense splitting"
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is FinFamily?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "FinFamily is a web application that brings a family's assets, loans, income, expenses and insurance into a single dashboard so you can see your real net worth and plan how to clear debt."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can several family members use the same account?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. You create a family workspace, invite members or let them request to join, and an admin approves access. Every change is recorded in an audit trail."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does FinFamily support Indian loans such as gold loans and EMIs?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. The loan engine calculates EMIs and repayment schedules, supports part-payments and rate revisions, and includes dedicated gold loan tracking. Amounts are shown in Indian rupees."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I get started?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Sign up with a username and password, create or join a family, then add your assets, income and loans."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+
+    <style>
+      :root {
+        --bg: #ffffff;
+        --bg-alt: #f1f5f9;
+        --surface: #ffffff;
+        --text: #0f172a;
+        --muted: #475569;
+        --border: #e2e8f0;
+        --accent: #0e7490;
+        --accent-strong: #155e75;
+        --accent-soft: #ecfeff;
+        --on-accent: #ffffff;
+        --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #020617;
+          --bg-alt: #0b1220;
+          --surface: #0f172a;
+          --text: #f1f5f9;
+          --muted: #a5b4c8;
+          --border: #1e293b;
+          --accent: #22d3ee;
+          --accent-strong: #67e8f9;
+          --accent-soft: #083344;
+          --on-accent: #082f49;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      img { max-width: 100%; height: auto; display: block; }
+      a { color: inherit; }
+      :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+      .skip-link {
+        position: absolute; left: 1rem; top: -4rem; background: var(--accent); color: var(--on-accent);
+        padding: .6rem 1rem; border-radius: 8px; z-index: 100; font-weight: 600; text-decoration: none;
+      }
+      .skip-link:focus { top: 1rem; }
+      .container { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+
+      /* Header */
+      .site-header {
+        position: sticky; top: 0; z-index: 50;
+        background: color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
+      .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.15rem; text-decoration: none; }
+      .brand img { width: 34px; height: 34px; }
+      .main-nav { display: none; gap: 24px; }
+      .main-nav a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: .95rem; }
+      .main-nav a:hover { color: var(--text); }
+      .header-actions { display: flex; align-items: center; gap: 8px; }
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        min-height: 44px; padding: 0 18px; border-radius: 12px; font-weight: 600; font-size: .95rem;
+        text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: background .15s, border-color .15s;
+      }
+      .btn-primary { background: var(--accent); color: var(--on-accent); }
+      .btn-primary:hover { background: var(--accent-strong); }
+      .btn-ghost { color: var(--text); border-color: var(--border); background: var(--surface); }
+      .btn-ghost:hover { border-color: var(--accent); }
+      .btn-lg { min-height: 52px; padding: 0 26px; font-size: 1.02rem; }
+
+      /* Hero */
+      .hero { padding: 48px 0 24px; background: radial-gradient(1200px 400px at 50% -10%, var(--accent-soft), transparent 70%); }
+      .eyebrow {
+        display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--accent-soft);
+        color: var(--accent); font-weight: 600; font-size: .82rem; border: 1px solid var(--border);
+      }
+      h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.1; letter-spacing: -0.02em; margin: 16px 0; font-weight: 800; }
+      .lead { font-size: clamp(1.02rem, 2.4vw, 1.25rem); color: var(--muted); max-width: 680px; margin: 0 0 28px; }
+      .hero-copy { text-align: center; display: flex; flex-direction: column; align-items: center; }
+      .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+      .hero-shot {
+        margin: 40px auto 0; max-width: 1040px; border-radius: 16px; overflow: hidden;
+        border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface);
+      }
+
+      /* Sections */
+      section { padding: 64px 0; }
+      .alt { background: var(--bg-alt); }
+      h2 { font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.2; letter-spacing: -0.01em; margin: 0 0 12px; font-weight: 800; text-align: center; }
+      .section-lead { text-align: center; color: var(--muted); max-width: 640px; margin: 0 auto 40px; }
+      h3 { font-size: 1.1rem; margin: 0 0 8px; font-weight: 700; }
+      .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+      .card p { margin: 0; color: var(--muted); font-size: .96rem; }
+      .icon {
+        width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); color: var(--accent);
+        display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;
+      }
+      .icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; grid-template-columns: 1fr; }
+      .steps li { counter-increment: step; }
+      .steps li::before {
+        content: counter(step); display: inline-flex; align-items: center; justify-content: center;
+        width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--on-accent);
+        font-weight: 700; margin-bottom: 12px;
+      }
+
+      /* FAQ */
+      .faq { max-width: 760px; margin: 0 auto; display: grid; gap: 12px; }
+      details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 0 20px; }
+      summary { cursor: pointer; font-weight: 600; padding: 16px 0; min-height: 44px; list-style-position: outside; }
+      details p { margin: 0 0 16px; color: var(--muted); }
+
+      /* CTA + footer */
+      .cta-band { text-align: center; }
+      .site-footer { border-top: 1px solid var(--border); padding: 28px 0; color: var(--muted); font-size: .9rem; }
+      .footer-row { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+      .footer-row nav { display: flex; gap: 20px; }
+      .footer-row a { text-decoration: none; }
+      .footer-row a:hover { color: var(--text); text-decoration: underline; }
+
+      @media (min-width: 640px) {
+        .container { padding: 0 24px; }
+        .main-nav { display: flex; }
+        .grid.cols { grid-template-columns: repeat(2, 1fr); }
+        .steps { grid-template-columns: repeat(3, 1fr); }
+        .hero { padding: 72px 0 32px; }
+      }
+      @media (min-width: 1024px) {
+        .grid.cols { grid-template-columns: repeat(3, 1fr); }
+      }
+      @media (max-width: 380px) {
+        .btn { padding: 0 12px; font-size: .88rem; }
+        .brand span { display: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .btn { transition: none; }
+      }
+    </style>
   </head>
+
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/" aria-label="FinFamily home">
+          <img src="/logo.svg" width="34" height="34" alt="" />
+          <span>FinFamily</span>
+        </a>
+        <nav class="main-nav" aria-label="Page sections">
+          <a href="#features">Features</a>
+          <a href="#apps">Apps</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <div class="header-actions">
+          <a class="btn btn-ghost" href="/login">Sign in</a>
+          <a class="btn btn-primary" href="/register">Sign up</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container">
+          <div class="hero-copy">
+            <span class="eyebrow">Family finance, together</span>
+            <h1 id="hero-title">Your family's wealth, loans and expenses in one place</h1>
+            <p class="lead">
+              FinFamily brings assets, income, loans, EMIs, insurance and everyday spending into one shared dashboard —
+              so your whole household can see the real picture and plan how to become debt-free.
+            </p>
+            <div class="cta-row">
+              <a class="btn btn-primary btn-lg" href="/register">Create free account</a>
+              <a class="btn btn-ghost btn-lg" href="/login">Sign in</a>
+            </div>
+          </div>
+          <div class="hero-shot">
+            <img
+              src="/dashboard-preview.jpg"
+              width="1280"
+              height="800"
+              alt="FinFamily family portfolio dashboard showing net worth, total assets, total debt and monthly inflow"
+              fetchpriority="high"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section id="features" aria-labelledby="features-title">
+        <div class="container">
+          <h2 id="features-title">Everything your household money needs</h2>
+          <p class="section-lead">One workspace for the whole family, built around how Indian households actually manage money.</p>
+          <div class="grid cols">
+            <article class="card">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="m7 15 4-4 3 3 5-6" /></svg></span>
+              <h3>Net worth dashboard</h3>
+              <p>See assets, debt, monthly cash flow and savings rate at a glance, with trends over the last 12 months.</p>
+            </article>
+            <article class="card">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg></span>
+              <h3>Loan &amp; EMI engine</h3>
+              <p>Accurate EMI schedules, part-payments, rate revisions and a prepayment calculator — plus dedicated gold loan tracking.</p>
+            </article>
+            <article class="card">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" /></svg></span>
+              <h3>Debt-payoff strategies</h3>
+              <p>Compare repayment strategies side by side and see how much interest and time each one saves you.</p>
+            </article>
+            <article class="card">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20" /><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></span>
+              <h3>Income &amp; expenses</h3>
+              <p>Track salary, rent and one-off income against daily household spending, with monthly confirmation of receipts.</p>
+            </article>
+            <article class="card">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h13l-3-3" /><path d="M17 17H4l3 3" /></svg></span>
+              <h3>Unified statement</h3>
+              <p>A single chronological passbook of every inflow, expense and loan payment, filterable by period and source.</p>
+            </article>
+            <article class="card">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /></svg></span>
+              <h3>Insurance &amp; audit trail</h3>
+              <p>Keep policies and renewals in view. Every change by every family member is logged and can be restored.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="apps" class="alt" aria-labelledby="apps-title">
+        <div class="container">
+          <h2 id="apps-title">Three apps, one login</h2>
+          <p class="section-lead">Switch between workspaces without signing in again.</p>
+          <div class="grid cols">
+            <article class="card">
+              <h3>FinFamily</h3>
+              <p>Wealth, debt, income and household expenses for the whole family.</p>
+            </article>
+            <article class="card">
+              <h3>Expense Tracker</h3>
+              <p>Track projects such as house construction or a new business: materials, phases, tags and cost per square foot.</p>
+            </article>
+            <article class="card">
+              <h3>FairShare</h3>
+              <p>Split trip and event expenses between households and see exactly who pays whom.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="how-title">
+        <div class="container">
+          <h2 id="how-title">Get started in three steps</h2>
+          <p class="section-lead">No spreadsheets, no setup fees.</p>
+          <ol class="steps">
+            <li class="card"><h3>Create your family</h3><p>Sign up, then create a family workspace or request to join an existing one.</p></li>
+            <li class="card"><h3>Add what you own and owe</h3><p>Enter assets, income streams and loans. EMI schedules are generated for you.</p></li>
+            <li class="card"><h3>See the full picture</h3><p>Follow your net worth, review cash flow and compare ways to clear debt faster.</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="faq" class="alt" aria-labelledby="faq-title">
+        <div class="container">
+          <h2 id="faq-title">Frequently asked questions</h2>
+          <p class="section-lead">Quick answers about FinFamily.</p>
+          <div class="faq">
+            <details>
+              <summary>What is FinFamily?</summary>
+              <p>FinFamily is a web application that brings a family's assets, loans, income, expenses and insurance into a single dashboard so you can see your real net worth and plan how to clear debt.</p>
+            </details>
+            <details>
+              <summary>Can several family members use the same account?</summary>
+              <p>Yes. You create a family workspace, invite members or let them request to join, and an admin approves access. Every change is recorded in an audit trail.</p>
+            </details>
+            <details>
+              <summary>Does FinFamily support Indian loans such as gold loans and EMIs?</summary>
+              <p>Yes. The loan engine calculates EMIs and repayment schedules, supports part-payments and rate revisions, and includes dedicated gold loan tracking. Amounts are shown in Indian rupees.</p>
+            </details>
+            <details>
+              <summary>How do I get started?</summary>
+              <p>Sign up with a username and password, create or join a family, then add your assets, income and loans.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-band" aria-labelledby="cta-title">
+        <div class="container">
+          <h2 id="cta-title">Bring your family's finances together</h2>
+          <p class="section-lead">Create your account and start with a clear view of what you own and owe.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary btn-lg" href="/register">Sign up</a>
+            <a class="btn btn-ghost btn-lg" href="/login">Sign in</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <span>&copy; <span id="year">2026</span> FinFamily</span>
+        <nav aria-label="Account">
+          <a href="/login">Sign in</a>
+          <a href="/register">Sign up</a>
+        </nav>
+      </div>
+    </footer>
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
   </body>
 </html>

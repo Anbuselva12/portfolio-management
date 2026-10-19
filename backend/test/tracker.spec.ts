@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TrackerService } from '../src/tracker/tracker.service';
+import { ProjectFundingService } from '../src/tracker/project-funding.service';
 import {
   LocalStorageTrackerRepository,
+  LocalStorageLoanRepository,
+  LocalStorageIncomeRepository,
+  LocalStorageRepaymentScheduleRepository,
+  LocalStoragePrepaymentRepository,
+  LocalStorageAuditRepository,
   LocalStorageStore,
 } from '../src/repositories/local-storage';
 
@@ -14,7 +20,17 @@ describe('TrackerService — Modular Expense Tracker Engine', () => {
   beforeEach(() => {
     LocalStorageStore.clear();
     repo = new LocalStorageTrackerRepository();
-    service = new TrackerService(repo);
+    service = new TrackerService(
+      repo,
+      new ProjectFundingService(
+        repo,
+        new LocalStorageLoanRepository(),
+        new LocalStorageIncomeRepository(),
+        new LocalStorageRepaymentScheduleRepository(),
+        new LocalStoragePrepaymentRepository(),
+        new LocalStorageAuditRepository(),
+      ),
+    );
   });
 
   it('creates a project with sq ft and calculates price per sq ft dynamically', async () => {

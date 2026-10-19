@@ -18,6 +18,8 @@ import {
   IFamilyRepository,
   I_CURRENCY_RATE_REPOSITORY,
   ICurrencyRateRepository,
+  I_TRACKER_REPOSITORY,
+  ITrackerRepository,
 } from '../repositories/interfaces';
 import Decimal from 'decimal.js';
 
@@ -42,6 +44,10 @@ export interface TransactionItem {
   memberName: string;
   source: 'income' | 'expense' | 'loan';
   rawEntityId: string;
+  /** Projects this row's source is tagged to (income stream project, or the loan's allocations). */
+  projects: Array<{ id: string; name: string }>;
+  /** Source entity edited by the "Tag project" action; null for rows that cannot be tagged. */
+  tagTarget: { kind: 'income' | 'loan'; id: string } | null;
 }
 
 export interface TransactionsQueryDto {
@@ -51,6 +57,8 @@ export interface TransactionsQueryDto {
   flow?: 'all' | 'inflow' | 'outflow';
   source?: 'all' | 'income' | 'expense' | 'loan';
   memberId?: string;
+  /** `all` (default), `untagged`, or a project id. */
+  projectId?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -68,6 +76,7 @@ export class TransactionsService {
     @Inject(I_MEMBER_REPOSITORY) private readonly memberRepository: IMemberRepository,
     @Inject(I_FAMILY_REPOSITORY) private readonly familyRepository: IFamilyRepository,
     @Inject(I_CURRENCY_RATE_REPOSITORY) private readonly currencyRateRepository: ICurrencyRateRepository,
+    @Inject(I_TRACKER_REPOSITORY) private readonly trackerRepository: ITrackerRepository,
   ) {}
 
   private convert(
@@ -92,14 +101,24 @@ export class TransactionsService {
     const family = await this.familyRepository.findById(familyId);
     const baseCurrency = family?.base_currency || 'INR';
 
-    const [members, categories, rates, incomes, expenses, loans] = await Promise.all([
+    const [members, categories, rates, incomes, expenses, loans, projects, allocations] = await Promise.all([
       this.memberRepository.findByFamilyId(familyId),
       this.categoryRepository.findByFamilyId(familyId),
       this.currencyRateRepository.findByFamilyId(familyId),
       this.incomeRepository.findByFamilyId(familyId),
       this.expenseRepository.findByFamilyId(familyId),
       this.loanRepository.findByFamilyId(familyId),
+      this.trackerRepository.findProjectsByFamilyId(familyId),
+      this.trackerRepository.findAllocationsByFamilyId(familyId),
     ]);
+
+    const projectNameById = new Map(projects.map((p) => [p.id, p.name]));
+    const projectsForIncome = (projectId: string | null | undefined) =>
+      projectId && projectNameById.has(projectId) ? [{ id: projectId, name: projectNameById.get(projectId)! }] : [];
+    const projectsForLoan = (loanId: string) =>
+      allocations
+        .filter((a) => a.loan_id === loanId && projectNameById.has(a.project_id))
+        .map((a) => ({ id: a.project_id, name: projectNameById.get(a.project_id)! }));
 
     const memberMap = new Map<string, string>();
     for (const m of members) {
@@ -141,6 +160,8 @@ export class TransactionsService {
           memberName: memberMap.get(inc.member_id) || 'Family Member',
           source: 'income',
           rawEntityId: inc.id,
+          projects: projectsForIncome((inc as any).project_id),
+          tagTarget: { kind: 'income', id: inc.id },
         });
       }
     }
@@ -178,6 +199,8 @@ export class TransactionsService {
         memberName: memberMap.get(rec.member_id) || 'Family Member',
         source: 'income',
         rawEntityId: rec.id,
+        projects: projectsForIncome(linkedIncome?.project_id),
+        tagTarget: linkedIncome ? { kind: 'income', id: linkedIncome.id } : null,
       });
     }
 
@@ -207,6 +230,8 @@ export class TransactionsService {
         memberName: memberMap.get(exp.member_id) || 'Family Member',
         source: 'expense',
         rawEntityId: exp.id,
+        projects: [],
+        tagTarget: null,
       });
     }
 
@@ -240,6 +265,8 @@ export class TransactionsService {
           memberName: memberMap.get(loan.member_id) || 'Family Member',
           source: 'loan',
           rawEntityId: inst.id,
+          projects: projectsForLoan(loan.id),
+          tagTarget: { kind: 'loan', id: loan.id },
         });
       }
 
@@ -268,6 +295,8 @@ export class TransactionsService {
           memberName: memberMap.get(loan.member_id) || 'Family Member',
           source: 'loan',
           rawEntityId: prepay.id,
+          projects: projectsForLoan(loan.id),
+          tagTarget: { kind: 'loan', id: loan.id },
         });
       }
     }
@@ -291,6 +320,14 @@ export class TransactionsService {
     // Filter by source
     if (query.source && query.source !== 'all') {
       filtered = filtered.filter((t) => t.source === query.source);
+    }
+
+    // Filter by project tag
+    if (query.projectId && query.projectId !== 'all') {
+      filtered =
+        query.projectId === 'untagged'
+          ? filtered.filter((t) => t.projects.length === 0)
+          : filtered.filter((t) => t.projects.some((p) => p.id === query.projectId));
     }
 
     // Filter by duration / date range
@@ -323,6 +360,7 @@ export class TransactionsService {
           t.title.toLowerCase().includes(q) ||
           t.subtitle.toLowerCase().includes(q) ||
           t.memberName.toLowerCase().includes(q) ||
+          t.projects.some((p) => p.name.toLowerCase().includes(q)) ||
           t.amount.includes(q),
       );
     }

@@ -187,7 +187,7 @@ export const AssetsPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm min-w-[640px]">
+            <table className="stack-mobile w-full text-left border-collapse text-sm min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Asset Name & Type</th>
@@ -215,7 +215,7 @@ export const AssetsPage: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
+                      <td data-label="Value" className="py-4 px-6">
                         <div className="font-bold text-slate-900 dark:text-white font-mono text-base">
                           {formatINR(asset.currentValue)}
                         </div>
@@ -225,7 +225,7 @@ export const AssetsPage: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-slate-600 dark:text-slate-300">
+                      <td data-label="Rate" className="py-4 px-6 text-slate-600 dark:text-slate-300">
                         {asset.interestRate ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400">
                             {asset.interestRate}% p.a.
@@ -239,7 +239,7 @@ export const AssetsPage: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-slate-600 dark:text-slate-300 text-xs">
+                      <td data-label="Maturity" className="py-4 px-6 text-slate-600 dark:text-slate-300 text-xs">
                         {asset.maturityDate ? (
                           <div className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -249,7 +249,7 @@ export const AssetsPage: React.FC = () => {
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-right">
+                      <td data-actions className="py-4 px-6 text-right">
                         <div className="inline-flex items-center gap-1">
                           <button
                             onClick={() => handleOpenEdit(asset)}

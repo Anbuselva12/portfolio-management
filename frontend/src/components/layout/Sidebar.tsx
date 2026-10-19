@@ -16,9 +16,6 @@ import {
   Clock,
   Wallet,
   Users,
-  Building2,
-  FolderKanban,
-  SlidersHorizontal,
   Palmtree,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -35,7 +32,6 @@ export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
-  const isTracker = location.pathname.startsWith('/tracker');
   const isFairShare = location.pathname.startsWith('/fairshare');
 
   useEffect(() => {
@@ -64,17 +60,12 @@ export const Sidebar: React.FC = () => {
     { to: '/settings/profile', icon: Settings, label: 'Settings' },
   ];
 
-  const trackerLinks: NavItem[] = [
-    { to: '/tracker', icon: FolderKanban, label: 'Projects Hub' },
-    { to: '/tracker/settings', icon: Settings, label: 'Settings' },
-  ];
-
   const fairShareLinks: NavItem[] = [
     { to: '/fairshare', icon: Palmtree, label: 'Trips & Events' },
     { to: '/fairshare/settings', icon: Settings, label: 'Settings' },
   ];
 
-  const links = isFairShare ? fairShareLinks : isTracker ? trackerLinks : finFamilyLinks;
+  const links = isFairShare ? fairShareLinks : finFamilyLinks;
 
   return (
     <aside className="hidden md:flex flex-col w-60 lg:w-64 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shrink-0">

@@ -14,6 +14,7 @@ import {
   Loader2,
   FolderPlus,
 } from 'lucide-react';
+import { ExpensesHubTabs } from '../../components/expenses/ExpensesHubTabs';
 
 export const ExpensesPage: React.FC = () => {
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
@@ -134,6 +135,8 @@ export const ExpensesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ExpensesHubTabs />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -144,7 +147,7 @@ export const ExpensesPage: React.FC = () => {
             Total spending for {selectedMonth}: <span className="font-semibold text-rose-600 dark:text-rose-400 font-mono">{formatINR(totalMonthlySpend)}</span>
           </p>
         </div>
-        <div className="flex items-center gap-3 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
           <button
             onClick={() => setIsCategoryDrawerOpen(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -214,7 +217,7 @@ export const ExpensesPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm min-w-[640px]">
+            <table className="stack-mobile w-full text-left border-collapse text-sm min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Category</th>
@@ -253,16 +256,16 @@ export const ExpensesPage: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-slate-700 dark:text-slate-200 text-xs">
+                      <td data-label="Notes" className="py-4 px-6 text-slate-700 dark:text-slate-200 text-xs">
                         {exp.notes || <span className="text-slate-400 italic">No notes</span>}
                       </td>
-                      <td className="py-4 px-6 text-slate-600 dark:text-slate-400 text-xs font-mono">
+                      <td data-label="Date" className="py-4 px-6 text-slate-600 dark:text-slate-400 text-xs font-mono">
                         {new Date(exp.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className={`py-4 px-6 font-bold font-mono text-base ${isPaidEmi ? 'text-slate-400 line-through' : 'text-rose-600 dark:text-rose-400'}`}>
+                      <td data-label="Amount" className={`py-4 px-6 font-bold font-mono text-base ${isPaidEmi ? 'text-slate-400 line-through' : 'text-rose-600 dark:text-rose-400'}`}>
                         -{formatINR(exp.amount)}
                       </td>
-                      <td className="py-4 px-6 text-right">
+                      <td data-actions className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {isAutoEmi && (
                             <button

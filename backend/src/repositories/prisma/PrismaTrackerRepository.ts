@@ -6,6 +6,7 @@ import {
   TrackerTagItem,
   TrackerUnit,
   TrackerExpense,
+  ProjectLoanAllocation,
 } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ITrackerRepository } from '../interfaces';
@@ -207,5 +208,35 @@ export class PrismaTrackerRepository implements ITrackerRepository {
       where: { id },
       data: { is_active: false },
     });
+  }
+
+  // Loan → project allocations
+  async findAllocationsByProjectId(projectId: string): Promise<ProjectLoanAllocation[]> {
+    return this.prisma.projectLoanAllocation.findMany({ where: { project_id: projectId } });
+  }
+
+  async findAllocationsByFamilyId(familyId: string): Promise<ProjectLoanAllocation[]> {
+    return this.prisma.projectLoanAllocation.findMany({
+      where: { project: { family_id: familyId, is_active: true } },
+    });
+  }
+
+  async findAllocationsByLoanId(loanId: string): Promise<ProjectLoanAllocation[]> {
+    return this.prisma.projectLoanAllocation.findMany({ where: { loan_id: loanId } });
+  }
+
+  async replaceLoanAllocations(
+    loanId: string,
+    rows: Array<{ project_id: string; amount: string }>,
+  ): Promise<ProjectLoanAllocation[]> {
+    await this.prisma.$transaction([
+      this.prisma.projectLoanAllocation.deleteMany({ where: { loan_id: loanId } }),
+      ...rows.map((r) =>
+        this.prisma.projectLoanAllocation.create({
+          data: { loan_id: loanId, project_id: r.project_id, amount: r.amount },
+        }),
+      ),
+    ]);
+    return this.findAllocationsByLoanId(loanId);
   }
 }

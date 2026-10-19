@@ -7,6 +7,8 @@ import {
   TrackerTagItem,
   TrackerUnit,
   TrackerAnalytics,
+  FundingReturns,
+  LoanAllocations,
 } from '../../types';
 
 export interface ExpensesQueryParams {
@@ -52,6 +54,8 @@ export const trackerApi = {
       code: string;
       description: string;
       totalAreaSqFt: number | string;
+      /** Current market value; `null` clears it. */
+      currentValue: number | string | null;
       currency: string;
     }>,
   ): Promise<TrackerProject> =>
@@ -59,6 +63,23 @@ export const trackerApi = {
 
   deleteProject: async (id: string): Promise<{ success: boolean }> =>
     (await api.delete(`/tracker/projects/${id}`)).data,
+
+  // Funding & returns
+  getFundingReturns: async (projectId: string): Promise<FundingReturns> =>
+    (await api.get(`/tracker/projects/${projectId}/funding-returns`)).data,
+
+  // Loan → project allocations (a loan may fund several projects)
+  getLoanAllocations: async (loanId: string): Promise<LoanAllocations> =>
+    (await api.get(`/tracker/loans/${loanId}/allocations`)).data,
+
+  setLoanAllocations: async (
+    loanId: string,
+    allocations: Array<{ projectId: string; amount: string }>,
+  ): Promise<LoanAllocations> =>
+    (await api.put(`/tracker/loans/${loanId}/allocations`, { allocations })).data,
+
+  listLoanAllocations: async (): Promise<Array<{ loanId: string; projectId: string; projectName: string; amount: string }>> =>
+    (await api.get('/tracker/loan-allocations')).data,
 
   // Phases
   createPhase: async (projectId: string, data: { name: string; sortOrder?: number }): Promise<TrackerPhase> =>

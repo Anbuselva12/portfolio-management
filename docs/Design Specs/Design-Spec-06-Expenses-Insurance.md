@@ -15,6 +15,9 @@
   - **Bi-Directional "Mark as Paid"**: Each queued EMI expense row features an actionable "Mark as Paid" toggle/button. Clicking it marks the expense paid AND immediately marks the linked `RepaymentInstallment` on the loan as paid (updating loan outstanding balance and audit trail). Likewise, marking an installment paid on the Loan Detail page marks the corresponding expense row as paid.
   - **Row Styling Integrity**: Standard manual and recurring household expenses are rendered with 100% opacity, crisp foreground text, and non-strikethrough amounts. Strikethrough and dimmed `opacity-60` styling is strictly confined to loan EMI auto entries that have been marked as paid. Normal household expenses must never appear strikethrough or grayed out.
 
+## 1a. Expenses Hub — Household | Projects
+The Expenses page opens on a segmented control: **Household** (this section, unchanged) and **Projects** (former Expense Tracker hub; see Design-Spec-09 and Design-Spec-12). The selected tab is reflected in the URL (`/expenses` vs `/expenses/projects`) so it survives reloads and can be linked.
+
 ## 2. Screen: Insurance
 - **List view**: cards per policy — Type, Provider, Policy Number, Sum Assured (labeled "Not included in Net Worth"), Premium + Frequency, Next Due Date, Status.
 - Add/Edit form includes linking to an Expense Category so premiums flow into Expenses automatically.

@@ -7,6 +7,8 @@ export interface TransactionsQuery {
   flow?: 'all' | 'inflow' | 'outflow';
   source?: 'all' | 'income' | 'expense' | 'loan';
   memberId?: string;
+  /** `all` (default), `untagged`, or a project id. */
+  projectId?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -33,6 +35,9 @@ export interface TransactionItem {
   memberName: string;
   source: 'income' | 'expense' | 'loan';
   rawEntityId: string;
+  projects: Array<{ id: string; name: string }>;
+  /** Source edited by the Tag action; null when the row cannot be tagged. */
+  tagTarget: { kind: 'income' | 'loan'; id: string } | null;
 }
 
 export interface TransactionsResponse {

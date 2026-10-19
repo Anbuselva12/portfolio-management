@@ -108,10 +108,12 @@ model IncomeEntry {
   last_amount_change_date DateTime?
   reminders_enabled       Boolean   @default(true)
   due_day_of_month        Int?      @default(1)
+  project_id              String?   // Project tag (TrackerProject) — optional, inherited by receipts and revisions
   created_at              DateTime  @default(now())
   updated_at              DateTime  @updatedAt
   deleted_at              DateTime?
 
+  project       TrackerProject?        @relation(fields: [project_id], references: [id])
   superseded_by IncomeEntry?           @relation("SupersededBy", fields: [superseded_by_id], references: [id])
   supersedes    IncomeEntry[]          @relation("SupersededBy")
   family        Family                 @relation(fields: [family_id], references: [id])
@@ -228,6 +230,7 @@ model Loan {
   schedule     RepaymentInstallment[]
   prepayments  PrepaymentRecord[]
   rate_revisions RateRevisionRecord[]
+  project_allocations ProjectLoanAllocation[]
 }
 
 // ─── RepaymentInstallment ─────────────────────────────────────────────────────
@@ -388,6 +391,7 @@ model TrackerProject {
   code            String?
   description     String?
   total_area_sqft Decimal?
+  current_value   Decimal? // optional current market value (appreciation / total return)
   currency        String   @default("INR")
   is_active       Boolean  @default(true)
   created_at      DateTime @default(now())
@@ -399,6 +403,23 @@ model TrackerProject {
   types        TrackerExpenseType[]
   tags         TrackerTagItem[]
   expenses     TrackerExpense[]
+  incomes      IncomeEntry[]
+  loan_allocations ProjectLoanAllocation[]
+}
+
+// A loan may fund several projects; `amount` is the part of the loan used for that project.
+model ProjectLoanAllocation {
+  id         String   @id @default(uuid())
+  project_id String
+  loan_id    String
+  amount     Decimal
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  project TrackerProject @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  loan    Loan           @relation(fields: [loan_id], references: [id])
+
+  @@unique([project_id, loan_id])
 }
 
 model TrackerPhase {

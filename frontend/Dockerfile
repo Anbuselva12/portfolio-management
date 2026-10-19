@@ -7,6 +7,9 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+# Public origin used for canonical/OG/sitemap URLs on the landing page
+ARG VITE_SITE_URL
+ARG VITE_API_URL
 RUN npm run build
 
 # Stage 2: Serve
@@ -20,7 +23,7 @@ RUN echo 'server { \
     location / { \
         root /usr/share/nginx/html; \
         index index.html index.htm; \
-        try_files $uri $uri/ /index.html; \
+        try_files $uri $uri/ /app.html; \
     } \
 }' > /etc/nginx/conf.d/default.conf
 

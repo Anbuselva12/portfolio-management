@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../api/endpoints/auth.api';
-import { User, Lock, CheckCircle2, AlertCircle, Loader2, SlidersHorizontal, Palmtree } from 'lucide-react';
+import { User, Lock, CheckCircle2, AlertCircle, Loader2, Palmtree } from 'lucide-react';
 import { SettingsNav } from '../../components/layout/SettingsNav';
 
 export const MyProfilePage: React.FC = () => {
   const location = useLocation();
-  const isTracker = location.pathname.startsWith('/tracker');
   const isFairShare = location.pathname.startsWith('/fairshare');
   const { user, setUser } = useAuthStore();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
@@ -85,17 +84,14 @@ export const MyProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-3xl space-y-6">
-      {!isTracker && !isFairShare && <SettingsNav />}
+      {!isFairShare && <SettingsNav />}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          {isTracker && <SlidersHorizontal className="w-6 h-6 text-primary" />}
           {isFairShare && <Palmtree className="w-6 h-6 text-emerald-600" />}
-          <span>{isFairShare ? 'FairShare Settings' : isTracker ? 'Expense Tracker Settings' : 'Profile & Preferences'}</span>
+          <span>{isFairShare ? 'FairShare Settings' : 'Profile & Preferences'}</span>
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           {isFairShare
-            ? 'Manage your personal profile, credentials, and default landing workspace.'
-            : isTracker
             ? 'Manage your personal profile, credentials, and default landing workspace.'
             : 'Manage your personal display name, account credentials, and localized currency.'}
         </p>
@@ -171,7 +167,7 @@ export const MyProfilePage: React.FC = () => {
               className="mt-1 block w-full sm:w-64 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
               <option value="finfamily">FinFamily (Wealth & Debt)</option>
-              <option value="expense_tracker">Expense Tracker (Projects & Procurement)</option>
+              <option value="expense_tracker">FinFamily · Expense Projects (opens Expenses → Projects)</option>
               <option value="fairshare">FairShare (Trips & Event Expenses)</option>
             </select>
           </div>

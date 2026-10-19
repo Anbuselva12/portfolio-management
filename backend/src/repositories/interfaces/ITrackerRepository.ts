@@ -5,6 +5,7 @@ import {
   TrackerTagItem,
   TrackerUnit,
   TrackerExpense,
+  ProjectLoanAllocation,
 } from '@prisma/client';
 
 export interface ITrackerRepository {
@@ -49,6 +50,19 @@ export interface ITrackerRepository {
   createExpense(data: any): Promise<TrackerExpense>;
   updateExpense(id: string, data: Partial<TrackerExpense>): Promise<TrackerExpense>;
   deleteExpense(id: string): Promise<void>;
+
+  // Loan → project allocations (one loan may fund several projects)
+  /** All allocations of a project. */
+  findAllocationsByProjectId(projectId: string): Promise<ProjectLoanAllocation[]>;
+  /** All allocations for every active project of a family (single query; avoids N+1). */
+  findAllocationsByFamilyId(familyId: string): Promise<ProjectLoanAllocation[]>;
+  /** All allocations of a loan. */
+  findAllocationsByLoanId(loanId: string): Promise<ProjectLoanAllocation[]>;
+  /** Atomically replaces every allocation of a loan with the given rows (empty array clears the tag). */
+  replaceLoanAllocations(
+    loanId: string,
+    rows: Array<{ project_id: string; amount: string }>,
+  ): Promise<ProjectLoanAllocation[]>;
 }
 
 export const I_TRACKER_REPOSITORY = 'ITrackerRepository';

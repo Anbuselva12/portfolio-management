@@ -110,3 +110,10 @@ Four responsive metric cards reflecting the currently filtered time range and cr
   ]
 }
 ```
+
+---
+
+## 8. Project Tagging (added 2026-10-19)
+- A **Project** column shows a chip with the project name for tagged income and loan rows; untagged income/loan rows show a dashed "+ Tag project" chip. Household expenses and insurance rows are not taggable.
+- **Tagging edits the source**, not the single row: for income rows it sets `IncomeEntry.project_id` (all receipts of that stream follow); for loan rows it opens the **Loan → Project allocation** dialog (one loan may fund several projects, each with an amount). The dialog states this explicitly.
+- A **Project** filter (All / each project / Untagged) joins the existing filters. Mobile: the chip appears as a labelled row in the stacked card.

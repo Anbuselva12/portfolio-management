@@ -5,6 +5,9 @@ import {
   TransactionsResponse,
 } from '../../api/endpoints/transactions.api';
 import { formatCurrency } from '../../utils/currency';
+import { trackerApi } from '../../api/endpoints/tracker.api';
+import { TrackerProject } from '../../types';
+import { ProjectTagModal, ProjectTagTarget } from '../../components/projects/ProjectTagModal';
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -20,6 +23,7 @@ import {
   PiggyBank,
   ChevronLeft,
   ChevronRight,
+  Tag,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -33,7 +37,10 @@ export const TransactionsPage: React.FC = () => {
   const [flow, setFlow] = useState<'all' | 'inflow' | 'outflow'>('all');
   const [source, setSource] = useState<'all' | 'income' | 'expense' | 'loan'>('all');
   const [search, setSearch] = useState('');
+  const [projectFilter, setProjectFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [projects, setProjects] = useState<TrackerProject[]>([]);
+  const [tagTarget, setTagTarget] = useState<ProjectTagTarget | null>(null);
 
   const fetchTransactions = async () => {
     setIsLoading(true);
@@ -43,6 +50,7 @@ export const TransactionsPage: React.FC = () => {
         duration,
         flow,
         source,
+        projectId: projectFilter === 'all' ? undefined : projectFilter,
         search: search.trim() || undefined,
         page,
         limit: 50,
@@ -57,7 +65,12 @@ export const TransactionsPage: React.FC = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, [duration, flow, source, page]);
+  }, [duration, flow, source, projectFilter, page]);
+
+  useEffect(() => {
+    // Projects feed the filter only; the statement still works without them.
+    trackerApi.getProjects().then((list) => setProjects(list || [])).catch(() => setProjects([]));
+  }, []);
 
   // Handle search with debounce/submit
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -165,7 +178,7 @@ export const TransactionsPage: React.FC = () => {
       </div>
 
       {/* KPI Cards Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Inflow */}
         <div className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-emerald-100 dark:border-emerald-950/50 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
@@ -176,7 +189,7 @@ export const TransactionsPage: React.FC = () => {
               <ArrowDownLeft className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
+          <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2 whitespace-nowrap">
             +{formatCurrency(data?.summary?.totalInflow || '0', baseCurrency)}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -194,7 +207,7 @@ export const TransactionsPage: React.FC = () => {
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2">
+          <div className="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 mt-2 whitespace-nowrap">
             -{formatCurrency(data?.summary?.totalOutflow || '0', baseCurrency)}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -221,7 +234,7 @@ export const TransactionsPage: React.FC = () => {
           </div>
           <div
             className={clsx(
-              'text-2xl font-black mt-2',
+              'text-lg sm:text-2xl font-black mt-2 whitespace-nowrap',
               netCashFlowNum >= 0
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-rose-600 dark:text-rose-400'
@@ -255,7 +268,7 @@ export const TransactionsPage: React.FC = () => {
               <Layers className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-gray-900 dark:text-white mt-2">
+          <div className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white mt-2">
             {data?.summary?.transactionCount || 0}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -268,7 +281,7 @@ export const TransactionsPage: React.FC = () => {
       <div className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Duration Selector */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold self-start lg:self-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold max-w-full overflow-x-auto whitespace-nowrap self-start lg:self-auto">
             <button
               onClick={() => {
                 setDuration('1m');
@@ -328,7 +341,7 @@ export const TransactionsPage: React.FC = () => {
           </div>
 
           {/* Flow Direction Selector (All / Inflow + / Debt -) */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold self-start lg:self-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold max-w-full overflow-x-auto whitespace-nowrap self-start lg:self-auto">
             <button
               onClick={() => {
                 setFlow('all');
@@ -376,6 +389,7 @@ export const TransactionsPage: React.FC = () => {
 
         {/* Secondary Filter: Source & Search */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Source:</span>
             <select
@@ -391,6 +405,28 @@ export const TransactionsPage: React.FC = () => {
               <option value="expense">Expenses Only</option>
               <option value="loan">Loans & Debt Only</option>
             </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="tx-project-filter" className="text-xs font-medium text-gray-500 dark:text-gray-400">Project:</label>
+            <select
+              id="tx-project-filter"
+              value={projectFilter}
+              onChange={(e) => {
+                setProjectFilter(e.target.value);
+                setPage(1);
+              }}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+            >
+              <option value="all">All Projects</option>
+              <option value="untagged">Untagged</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
           </div>
 
           <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
@@ -417,7 +453,7 @@ export const TransactionsPage: React.FC = () => {
       {/* Transactions Feed / Table */}
       <div className="bg-white dark:bg-gray-850 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+          <table className="stack-mobile w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
               <tr>
                 <th scope="col" className="px-5 py-3.5 font-bold">
@@ -430,6 +466,9 @@ export const TransactionsPage: React.FC = () => {
                   Type / Category
                 </th>
                 <th scope="col" className="px-5 py-3.5 font-bold">
+                  Project
+                </th>
+                <th scope="col" className="px-5 py-3.5 font-bold">
                   Member
                 </th>
                 <th scope="col" className="px-5 py-3.5 font-bold text-right">
@@ -440,7 +479,7 @@ export const TransactionsPage: React.FC = () => {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-5 py-12 text-center text-gray-400">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <RefreshCw className="w-6 h-6 animate-spin text-cyan-600" />
                       <span>Loading statement entries...</span>
@@ -449,7 +488,7 @@ export const TransactionsPage: React.FC = () => {
                 </tr>
               ) : !data?.transactions || data.transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-16 text-center">
+                  <td colSpan={6} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center justify-center gap-2 text-gray-400">
                       <Receipt className="w-10 h-10 stroke-1 text-gray-300 dark:text-gray-600" />
                       <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
@@ -470,7 +509,7 @@ export const TransactionsPage: React.FC = () => {
                       className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
                     >
                       {/* Date */}
-                      <td className="px-5 py-4 whitespace-nowrap text-xs font-medium text-gray-600 dark:text-gray-300">
+                      <td data-label="Date" className="px-5 py-4 whitespace-nowrap text-xs font-medium text-gray-600 dark:text-gray-300">
                         {formatDate(tx.date)}
                       </td>
 
@@ -485,19 +524,47 @@ export const TransactionsPage: React.FC = () => {
                       </td>
 
                       {/* Type Badge */}
-                      <td className="px-5 py-4 whitespace-nowrap">
+                      <td data-label="Type" className="px-5 py-4 whitespace-nowrap">
                         {getTypeBadge(tx.type)}
                       </td>
 
+                      {/* Project tag (edits the source income stream / loan) */}
+                      <td data-label="Project" className="px-5 py-4">
+                        {tx.tagTarget ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTagTarget(
+                                tx.tagTarget!.kind === 'income'
+                                  ? { kind: 'income', id: tx.tagTarget!.id, label: tx.title, currentProjectId: tx.projects[0]?.id ?? null }
+                                  : { kind: 'loan', id: tx.tagTarget!.id, label: tx.title },
+                              )
+                            }
+                            aria-label={tx.projects.length ? `Edit project tag for ${tx.title}` : `Tag ${tx.title} to a project`}
+                            className={clsx(
+                              'min-h-[32px] inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold cursor-pointer text-left',
+                              tx.projects.length
+                                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+                                : 'border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-400',
+                            )}
+                          >
+                            <Tag className="w-3 h-3 shrink-0" />
+                            {tx.projects.length ? tx.projects.map((p) => p.name).join(', ') : 'Tag project'}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
+                        )}
+                      </td>
+
                       {/* Member */}
-                      <td className="px-5 py-4 whitespace-nowrap text-xs">
+                      <td data-label="Member" className="px-5 py-4 whitespace-nowrap text-xs">
                         <span className="font-medium text-gray-700 dark:text-gray-300">
                           {tx.memberName}
                         </span>
                       </td>
 
                       {/* Directional Amount */}
-                      <td className="px-5 py-4 whitespace-nowrap text-right">
+                      <td data-label="Amount" className="px-5 py-4 whitespace-nowrap text-right">
                         <div
                           className={clsx(
                             'text-sm font-extrabold tracking-tight',
@@ -553,6 +620,10 @@ export const TransactionsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {tagTarget && (
+        <ProjectTagModal target={tagTarget} onClose={() => setTagTarget(null)} onSaved={fetchTransactions} />
+      )}
     </div>
   );
 };

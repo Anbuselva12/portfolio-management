@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Put,
   Delete,
   Param,
   Body,
@@ -10,6 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TrackerService } from './tracker.service';
+import { ProjectFundingService } from './project-funding.service';
+import { SetLoanAllocationsDto } from './dto/set-loan-allocations.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ActiveMemberGuard } from '../common/guards/active-member.guard';
 import { FamilyScopeGuard } from '../common/guards/family-scope.guard';
@@ -20,7 +23,10 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @FamilyScoped()
 @Controller('api/v1/tracker')
 export class TrackerController {
-  constructor(private readonly trackerService: TrackerService) {}
+  constructor(
+    private readonly trackerService: TrackerService,
+    private readonly fundingService: ProjectFundingService,
+  ) {}
 
   // ─── Projects ─────────────────────────────────────────────────────────────
 
@@ -51,6 +57,32 @@ export class TrackerController {
   @Delete('projects/:id')
   async deleteProject(@CurrentUser() user: any, @Param('id') id: string) {
     return this.trackerService.deleteProject(user.familyId, id);
+  }
+
+  // ─── Funding, returns & loan allocations ──────────────────────────────────
+
+  @Get('projects/:id/funding-returns')
+  async getFundingReturns(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.fundingService.getFundingReturns(user.familyId, id);
+  }
+
+  @Get('loan-allocations')
+  async listFamilyAllocations(@CurrentUser() user: any) {
+    return this.fundingService.listFamilyAllocations(user.familyId);
+  }
+
+  @Get('loans/:loanId/allocations')
+  async getLoanAllocations(@CurrentUser() user: any, @Param('loanId') loanId: string) {
+    return this.fundingService.getLoanAllocations(user.familyId, loanId);
+  }
+
+  @Put('loans/:loanId/allocations')
+  async setLoanAllocations(
+    @CurrentUser() user: any,
+    @Param('loanId') loanId: string,
+    @Body() dto: SetLoanAllocationsDto,
+  ) {
+    return this.fundingService.setLoanAllocations(user.sub, user.familyId, loanId, dto);
   }
 
   // ─── Project Lookups (Phases, Types, Tags, Units) ─────────────────────────

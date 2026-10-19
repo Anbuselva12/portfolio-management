@@ -69,6 +69,8 @@ export interface IncomeEntry {
   endDate: string | null;
   status: IncomeStatus;
   createdAt: string;
+  /** Project tag (snake_case as returned by the API); null/absent when untagged. */
+  project_id?: string | null;
 }
 
 export interface ExpenseCategory {
@@ -479,6 +481,70 @@ export interface TrackerExpense {
   tag_item?: TrackerTagItem | null;
 }
 
+export interface ProjectHubFunding {
+  fundedByLoans: string;
+  fundedByLoansPct: string | null;
+  monthlyIncome: string;
+  totalIncomeReceived: string;
+  grossYieldPct: string | null;
+  linkedLoansCount: number;
+  linkedIncomeCount: number;
+}
+
+export interface FundingLoanRow {
+  loanId: string;
+  name: string;
+  lender: string;
+  type: string;
+  status: string;
+  allocated: string;
+  sharePct: string;
+  outstandingShare: string;
+  emiShare: string;
+  interestPaidShare: string;
+}
+
+export interface FundingIncomeRow {
+  id: string;
+  label: string;
+  type: string;
+  recurrence: string;
+  status: string;
+  monthlyAmount: string;
+  receivedTotal: string;
+}
+
+export interface FundingReturns {
+  invested: string;
+  fundedByLoans: string;
+  fundedByLoansPct: string | null;
+  ownFunds: string;
+  ownFundsPct: string | null;
+  loansExceedInvested: boolean;
+  loansExceedBy: string;
+  loans: FundingLoanRow[];
+  loanTotals: { allocated: string; outstandingShare: string; emiShare: string; interestPaidShare: string };
+  incomes: FundingIncomeRow[];
+  monthlyIncome: string;
+  totalIncomeReceived: string;
+  monthlySeries: Array<{ month: string; amount: string }>;
+  grossYieldPct: string | null;
+  paybackYears: string | null;
+  netMonthlyAfterEmi: string;
+  incomeCoversEmiPct: string | null;
+  currentValue: string | null;
+  appreciation: string | null;
+  totalReturn: string | null;
+  totalReturnPct: string | null;
+  yieldOnCurrentValuePct: string | null;
+}
+
+export interface LoanAllocations {
+  loanId: string;
+  loanPrincipal: string;
+  allocations: Array<{ projectId: string; amount: string }>;
+}
+
 export interface TrackerProject {
   id: string;
   family_id: string;
@@ -487,9 +553,11 @@ export interface TrackerProject {
   code?: string | null;
   description?: string | null;
   total_area_sqft?: string | null;
+  current_value?: string | null;
   currency: string;
   is_active: boolean;
   created_at: string;
+  funding?: ProjectHubFunding | null;
   totalSpend?: string;
   itemsCount?: number;
   pricePerSqFt?: string | null;

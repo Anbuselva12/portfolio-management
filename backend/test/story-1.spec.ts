@@ -9,6 +9,7 @@ import {
   LocalStorageExpenseRepository,
   LocalStorageInsurancePolicyRepository,
   LocalStorageAuditRepository,
+  LocalStorageTrackerRepository,
   LocalStorageStore,
 } from '../src/repositories/local-storage';
 import {
@@ -240,7 +241,7 @@ describe('Story 1 — Foundation, Family Onboarding & Core Portfolio Data', () =
         expect(Number(expenses[0].amount)).toBe(12500);
 
         // Income CRUD via IncomeService (accepts string amount)
-        const incomeService = new IncomeService(repos.incomeRepo, repos.auditRepo);
+        const incomeService = new IncomeService(repos.incomeRepo, repos.auditRepo, new LocalStorageTrackerRepository());
         const createdIncome = await incomeService.createIncome(member.id, family.id, {
           label: 'PB Income',
           amount: '110000' as any,

@@ -10,6 +10,7 @@ import {
   LocalStorageMemberRepository,
   LocalStorageFamilyRepository,
   LocalStorageCurrencyRateRepository,
+  LocalStorageTrackerRepository,
   LocalStorageStore,
 } from '../src/repositories/local-storage';
 
@@ -51,6 +52,7 @@ describe('TransactionsService — Unified Statement of Transactions', () => {
       memberRepo,
       familyRepo,
       currencyRepo,
+      new LocalStorageTrackerRepository(),
     );
 
     // Setup base family & member

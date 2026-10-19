@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuthStore } from './store/auth.store';
 import { AppShell } from './components/layout/AppShell';
 
@@ -25,16 +25,20 @@ import { TrackerProjectDetailPage } from './pages/tracker/TrackerProjectDetailPa
 import { FairShareTripHubPage } from './pages/fairshare/FairShareTripHubPage';
 import { FairShareTripDetailPage } from './pages/fairshare/FairShareTripDetailPage';
 
+/** Landing route for a user's preferred application (`expense_tracker` now means Expenses → Projects). */
+const landingRoute = (preferredApp?: string): string =>
+  preferredApp === 'fairshare' ? '/fairshare' : preferredApp === 'expense_tracker' ? '/expenses/projects' : '/dashboard';
+
+/** Legacy `/tracker/projects/:id` links. */
+const LegacyTrackerProjectRedirect: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/expenses/projects/${id}`} replace />;
+};
+
 // Root redirect respecting preferred application
 const RootRedirect: React.FC = () => {
   const { user } = useAuthStore();
-  const target =
-    user?.preferredApp === 'fairshare'
-      ? '/fairshare'
-      : user?.preferredApp === 'expense_tracker'
-      ? '/tracker'
-      : '/dashboard';
-  return <Navigate to={target} replace />;
+  return <Navigate to={landingRoute(user?.preferredApp)} replace />;
 };
 
 // For routes requiring an active member account
@@ -65,13 +69,7 @@ const RequireOnboarding: React.FC<{ children: React.ReactNode }> = ({ children }
   }
   if (!user) return <Navigate to="/login" replace />;
   if (user.status === 'active') {
-    const target =
-      user.preferredApp === 'fairshare'
-        ? '/fairshare'
-        : user.preferredApp === 'expense_tracker'
-        ? '/tracker'
-        : '/dashboard';
-    return <Navigate to={target} replace />;
+    return <Navigate to={landingRoute(user.preferredApp)} replace />;
   }
   return <>{children}</>;
 };
@@ -83,7 +81,7 @@ const RedirectIfAuthenticated: React.FC<{ children: React.ReactNode }> = ({ chil
   if (user) {
     if (user.status === 'unaffiliated') return <Navigate to="/onboarding/family-selection" replace />;
     if (user.status === 'pending_approval') return <Navigate to="/onboarding/pending" replace />;
-    return <Navigate to={user.preferredApp === 'expense_tracker' ? '/tracker' : '/dashboard'} replace />;
+    return <Navigate to={landingRoute(user.preferredApp)} replace />;
   }
   return <>{children}</>;
 };
@@ -139,14 +137,17 @@ export const App: React.FC = () => {
           <Route path="assets" element={<AssetsPage />} />
           <Route path="income" element={<IncomePage />} />
           <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="expenses/projects" element={<TrackerHubPage />} />
+          <Route path="expenses/projects/:id" element={<TrackerProjectDetailPage />} />
           <Route path="transactions" element={<TransactionsPage />} />
           <Route path="insurance" element={<InsurancePage />} />
           <Route path="loans" element={<LoansPage />} />
           <Route path="loans/:id" element={<LoanDetailPage />} />
           <Route path="strategies" element={<StrategyComparisonPage />} />
-          <Route path="tracker" element={<TrackerHubPage />} />
-          <Route path="tracker/projects/:id" element={<TrackerProjectDetailPage />} />
-          <Route path="tracker/settings" element={<MyProfilePage />} />
+          {/* Expense Tracker merged into Expenses → Projects (legacy URLs redirect) */}
+          <Route path="tracker" element={<Navigate to="/expenses/projects" replace />} />
+          <Route path="tracker/projects/:id" element={<LegacyTrackerProjectRedirect />} />
+          <Route path="tracker/settings" element={<Navigate to="/settings/profile" replace />} />
           <Route path="fairshare" element={<FairShareTripHubPage />} />
           <Route path="fairshare/trips/:id" element={<FairShareTripDetailPage />} />
           <Route path="fairshare/settings" element={<MyProfilePage />} />

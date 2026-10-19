@@ -17,7 +17,6 @@ import {
   X,
   Wallet,
   Users,
-  FolderKanban,
   Palmtree,
   LayoutGrid,
   ChevronDown,
@@ -84,29 +83,16 @@ export const AppShell: React.FC = () => {
     { to: '/settings/profile', icon: Settings, label: 'Settings' },
   ];
 
-  const trackerLinks: MobileNavLink[] = [
-    { to: '/tracker', icon: FolderKanban, label: 'Projects Hub' },
-    { to: '/tracker/settings', icon: Settings, label: 'Settings' },
-  ];
-
   const fairShareLinks: MobileNavLink[] = [
     { to: '/fairshare', icon: Palmtree, label: 'Trips & Events' },
     { to: '/fairshare/settings', icon: Settings, label: 'Settings' },
   ];
 
   const drawerNavLinks: MobileNavLink[] =
-    currentApp.id === 'fairshare'
-      ? fairShareLinks
-      : currentApp.id === 'expense_tracker'
-      ? trackerLinks
-      : finFamilyLinks;
+    currentApp.id === 'fairshare' ? fairShareLinks : finFamilyLinks;
 
   const profileSettingsRoute =
-    currentApp.id === 'fairshare'
-      ? '/fairshare/settings'
-      : currentApp.id === 'expense_tracker'
-      ? '/tracker/settings'
-      : '/settings/profile';
+    currentApp.id === 'fairshare' ? '/fairshare/settings' : '/settings/profile';
 
   return (
     <div className="flex h-screen w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-hidden">
@@ -234,7 +220,7 @@ export const AppShell: React.FC = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
                 {APP_CONFIGS.map((app) => {
                   const isActive = currentApp.id === app.id;
                   const Icon = app.icon;
@@ -379,57 +365,6 @@ export const AppShell: React.FC = () => {
               type="button"
               onClick={() => setIsMobileNavOpen(true)}
               className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer"
-            >
-              <Menu className="w-5 h-5 mb-0.5" />
-              <span>Menu</span>
-            </button>
-          </>
-        ) : currentApp.id === 'expense_tracker' ? (
-          <>
-            <NavLink
-              to="/tracker"
-              end
-              className={({ isActive }) =>
-                clsx(
-                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
-                  isActive
-                    ? 'text-amber-600 dark:text-amber-400 font-bold'
-                    : 'text-gray-500 dark:text-gray-400',
-                )
-              }
-            >
-              <FolderKanban className="w-5 h-5 mb-0.5" />
-              <span>Projects</span>
-            </NavLink>
-
-            <NavLink
-              to="/tracker/settings"
-              className={({ isActive }) =>
-                clsx(
-                  'flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium transition-colors',
-                  isActive
-                    ? 'text-amber-600 dark:text-amber-400 font-bold'
-                    : 'text-gray-500 dark:text-gray-400',
-                )
-              }
-            >
-              <Settings className="w-5 h-5 mb-0.5" />
-              <span>Settings</span>
-            </NavLink>
-
-            <button
-              type="button"
-              onClick={() => setIsAppSwitcherModalOpen(true)}
-              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
-            >
-              <LayoutGrid className="w-5 h-5 mb-0.5" />
-              <span>Switch</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsMobileNavOpen(true)}
-              className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
             >
               <Menu className="w-5 h-5 mb-0.5" />
               <span>Menu</span>

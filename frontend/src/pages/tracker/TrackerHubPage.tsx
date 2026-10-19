@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { ExpensesHubTabs } from '../../components/expenses/ExpensesHubTabs';
 
 export const TrackerHubPage: React.FC = () => {
   const [projects, setProjects] = useState<TrackerProject[]>([]);
@@ -72,7 +73,7 @@ export const TrackerHubPage: React.FC = () => {
       setDescription('');
       setTotalAreaSqFt('');
       await loadProjects();
-      navigate(`/tracker/projects/${created.id}`);
+      navigate(`/expenses/projects/${created.id}`);
     } catch (err: any) {
       setFormError(err?.response?.data?.message || 'Failed to create project');
     } finally {
@@ -104,10 +105,10 @@ export const TrackerHubPage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
-                Expense Tracker Hub
+                Expenses
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Commercial projects, construction procurement, material accounting & unit KPIs.
+                Projects: construction, business set-ups, material accounting, funding and returns.
               </p>
             </div>
           </div>
@@ -127,10 +128,12 @@ export const TrackerHubPage: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs cursor-pointer transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>New Category / Project</span>
+            <span>New Project</span>
           </button>
         </div>
       </div>
+
+      <ExpensesHubTabs />
 
       {/* Error notification */}
       {error && (
@@ -144,7 +147,7 @@ export const TrackerHubPage: React.FC = () => {
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3 text-gray-400">
           <RefreshCw className="w-8 h-8 animate-spin text-amber-600" />
-          <span>Loading expense tracker categories...</span>
+          <span>Loading projects...</span>
         </div>
       ) : projects.length === 0 ? (
         <div className="py-20 text-center bg-white dark:bg-gray-850 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 shadow-xs">
@@ -152,10 +155,10 @@ export const TrackerHubPage: React.FC = () => {
             <Building2 className="w-7 h-7" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            No Tracker Categories Found
+            No projects yet
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-1 mb-6">
-            Get started by creating your first expense tracker category such as Construction (SK Complex) or Business expenses.
+            Create your first project, such as a house construction or a new business, then tag the loans and income that belong to it.
           </p>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -172,7 +175,16 @@ export const TrackerHubPage: React.FC = () => {
             return (
               <div
                 key={proj.id}
-                onClick={() => navigate(`/tracker/projects/${proj.id}`)}
+                role="link"
+                tabIndex={0}
+                aria-label={`Open project ${proj.name}`}
+                onClick={() => navigate(`/expenses/projects/${proj.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/expenses/projects/${proj.id}`);
+                  }
+                }}
                 className="group relative bg-white dark:bg-gray-850 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-xs hover:shadow-md hover:border-amber-400 dark:hover:border-amber-500/50 transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
@@ -224,6 +236,32 @@ export const TrackerHubPage: React.FC = () => {
                       </div>
                     )}
 
+                    {proj.funding && Number(proj.funding.fundedByLoans) > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-gray-500 dark:text-gray-400">Funded by loans</span>
+                        <span className="font-bold text-gray-700 dark:text-gray-300">
+                          {formatCurrency(proj.funding.fundedByLoans, proj.currency)}
+                          {proj.funding.fundedByLoansPct ? ` · ${Number(proj.funding.fundedByLoansPct).toFixed(0)}%` : ''}
+                        </span>
+                      </div>
+                    )}
+
+                    {proj.funding && Number(proj.funding.monthlyIncome) > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-gray-500 dark:text-gray-400">Income / month</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(proj.funding.monthlyIncome, proj.currency)}
+                        </span>
+                      </div>
+                    )}
+
+                    {proj.funding && proj.funding.grossYieldPct !== null && Number(proj.funding.monthlyIncome) > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-gray-500 dark:text-gray-400">Gross yield</span>
+                        <span className="font-bold text-gray-700 dark:text-gray-300">{proj.funding.grossYieldPct}% p.a.</span>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                       <span>Entries Logged</span>
                       <span className="font-semibold text-gray-700 dark:text-gray-300">
@@ -252,7 +290,7 @@ export const TrackerHubPage: React.FC = () => {
       {/* New Project Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-800 space-y-5">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-800 space-y-5 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center">

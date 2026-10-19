@@ -1,5 +1,8 @@
 # Design Spec 09 — Multi-App Platform & Modular Expense Tracker
 
+> **SUPERSEDED IN PART — 2026-10-19.** The Expense Tracker is no longer a separate app. It is now **Expenses → Projects** inside FinFamily (routes `/expenses/projects` and `/expenses/projects/:id`; `/tracker/*` redirects). The App Switcher lists FinFamily and FairShare only. Project tabs, tables and data model below remain valid; the new **Funding & Returns** tab, Project tagging and current-value fields are specified in **Design-Spec-12-Project-Funding-Returns.md**.
+
+
 ## 1. Overview & Context
 
 This design specification establishes a **Multi-Application Platform** within FinFamily, inspired by enterprise platforms like Appian. It allows users to toggle seamlessly between independent applications via a top-left application launcher:

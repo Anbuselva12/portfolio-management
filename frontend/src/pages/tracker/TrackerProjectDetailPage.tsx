@@ -35,6 +35,7 @@ import {
   Maximize2,
   AlertCircle,
   Loader2,
+  Landmark,
   CheckCircle2,
   DollarSign,
   SlidersHorizontal,
@@ -64,13 +65,14 @@ import {
   Legend,
 } from 'recharts';
 import clsx from 'clsx';
+import { ProjectFundingReturns } from '../../components/projects/ProjectFundingReturns';
 
 export const TrackerProjectDetailPage: React.FC = () => {
   const { id: projectId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'expenses' | 'analytics' | 'settings'>('expenses');
+  const [activeTab, setActiveTab] = useState<'funding' | 'expenses' | 'analytics' | 'settings'>('funding');
 
   // Core Data
   const [project, setProject] = useState<TrackerProject | null>(null);
@@ -585,10 +587,10 @@ export const TrackerProjectDetailPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-red-800 dark:text-red-200">Unable to load project</h2>
           <p className="text-sm text-red-600 dark:text-red-300 mt-1">{pageError || 'Project not found.'}</p>
           <button
-            onClick={() => navigate('/tracker')}
+            onClick={() => navigate('/expenses/projects')}
             className="mt-4 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition"
           >
-            Return to Tracker Hub
+            Return to Projects
           </button>
         </div>
       </div>
@@ -601,7 +603,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
           <button
-            onClick={() => navigate('/tracker')}
+            onClick={() => navigate('/expenses/projects')}
             className="p-2 -ml-2 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             title="Back to Projects"
           >
@@ -738,7 +740,20 @@ export const TrackerProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Workspace Tabs Navigation */}
-      <div className="border-b border-slate-200 dark:border-slate-800 flex items-center gap-6">
+      <div className="border-b border-slate-200 dark:border-slate-800 flex items-center gap-6 overflow-x-auto whitespace-nowrap" role="tablist">
+        <button
+          onClick={() => setActiveTab('funding')}
+          className={clsx(
+            'flex items-center gap-2 pb-3 text-sm font-semibold border-b-2 transition -mb-px min-h-[44px]',
+            activeTab === 'funding'
+              ? 'border-primary text-primary dark:text-primary'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
+          )}
+        >
+          <Landmark className="w-4 h-4" />
+          <span>Funding & Returns</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('expenses')}
           className={clsx(
@@ -781,6 +796,10 @@ export const TrackerProjectDetailPage: React.FC = () => {
           <span>Configuration & Lookups</span>
         </button>
       </div>
+
+      {activeTab === 'funding' && (
+        <ProjectFundingReturns project={project} onProjectChanged={loadProjectAndLookups} />
+      )}
 
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* TAB 1: EXPENSES LOG                                                */}
@@ -873,7 +892,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
           {/* Expenses Table */}
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm">
+              <table className="stack-mobile w-full text-left text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
                     <th className="py-3 px-3 sm:px-4">Date</th>
@@ -909,7 +928,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
                         className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition group"
                       >
                         {/* Date */}
-                        <td className="py-3 px-3 sm:px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                        <td data-label="Date" className="py-3 px-3 sm:px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
                           {formatDateDisplay(item.purchase_date)}
                           {item.is_exception && (
                             <span
@@ -946,7 +965,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
                         </td>
 
                         {/* Phase */}
-                        <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
+                        <td data-label="Phase" className="py-3 px-3 sm:px-4 whitespace-nowrap">
                           {item.phase ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                               {item.phase.name}
@@ -957,7 +976,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
                         </td>
 
                         {/* Tag with color badge */}
-                        <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
+                        <td data-label="Tag" className="py-3 px-3 sm:px-4 whitespace-nowrap">
                           {item.tag_item ? (
                             <span
                               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium"
@@ -978,23 +997,23 @@ export const TrackerProjectDetailPage: React.FC = () => {
                         </td>
 
                         {/* Quantity & Unit */}
-                        <td className="py-3 px-3 sm:px-4 text-right whitespace-nowrap text-slate-700 dark:text-slate-300">
+                        <td data-label="Quantity" className="py-3 px-3 sm:px-4 text-right whitespace-nowrap text-slate-700 dark:text-slate-300">
                           <span className="font-medium">{item.quantity}</span>{' '}
                           <span className="text-xs text-slate-400">{item.unit?.name || ''}</span>
                         </td>
 
                         {/* Rate / Price per unit */}
-                        <td className="py-3 px-3 sm:px-4 text-right whitespace-nowrap text-slate-600 dark:text-slate-400">
+                        <td data-label="Rate" className="py-3 px-3 sm:px-4 text-right whitespace-nowrap text-slate-600 dark:text-slate-400">
                           {formatINR(item.price_per_qty)}
                         </td>
 
                         {/* Total Cost */}
-                        <td className="py-3 px-3 sm:px-4 text-right whitespace-nowrap font-bold text-slate-900 dark:text-white">
+                        <td data-label="Total" className="py-3 px-3 sm:px-4 text-right whitespace-nowrap font-bold text-slate-900 dark:text-white">
                           {formatINR(item.total_cost)}
                         </td>
 
                         {/* Actions */}
-                        <td className="py-3 px-3 sm:px-4 text-center whitespace-nowrap">
+                        <td data-actions className="py-3 px-3 sm:px-4 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={() => handleOpenEditExpense(item)}

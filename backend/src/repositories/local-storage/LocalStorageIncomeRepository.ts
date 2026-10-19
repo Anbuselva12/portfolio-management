@@ -43,6 +43,7 @@ export class LocalStorageIncomeRepository implements IIncomeRepository {
       status: data.status || 'active',
       superseded_by_id: data.superseded_by_id || null,
       last_amount_change_date: data.last_amount_change_date ? new Date(data.last_amount_change_date) : null,
+      project_id: data.project_id || null,
       created_at: new Date(),
       updated_at: new Date(),
       deleted_at: null,

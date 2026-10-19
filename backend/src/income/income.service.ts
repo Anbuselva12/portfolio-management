@@ -1,5 +1,12 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
-import { I_INCOME_REPOSITORY, IIncomeRepository, I_AUDIT_REPOSITORY, IAuditRepository } from '../repositories/interfaces';
+import {
+  I_INCOME_REPOSITORY,
+  IIncomeRepository,
+  I_AUDIT_REPOSITORY,
+  IAuditRepository,
+  I_TRACKER_REPOSITORY,
+  ITrackerRepository,
+} from '../repositories/interfaces';
 import { Decimal } from 'decimal.js';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
@@ -11,7 +18,36 @@ export class IncomeService {
   constructor(
     @Inject(I_INCOME_REPOSITORY) private readonly incomeRepository: IIncomeRepository,
     @Inject(I_AUDIT_REPOSITORY) private readonly auditRepository: IAuditRepository,
+    @Inject(I_TRACKER_REPOSITORY) private readonly trackerRepository: ITrackerRepository,
   ) {}
+
+  /** Ensures the project exists, is active and belongs to the family; returns its id (or null for "no project"). */
+  private async resolveProjectId(familyId: string, projectId: string | null | undefined): Promise<string | null> {
+    if (!projectId) return null;
+    const project = await this.trackerRepository.findProjectById(projectId);
+    if (!project || project.family_id !== familyId || !project.is_active) {
+      throw new BadRequestException('Project not found in your family');
+    }
+    return project.id;
+  }
+
+  /** Applies a project tag to every entry in the supersession chain so history and future revisions stay consistent. */
+  private async tagChain(familyId: string, entry: { id: string }, projectId: string | null): Promise<void> {
+    const all = await this.incomeRepository.findByFamilyId(familyId);
+    const byId = new Map(all.map((i) => [i.id, i]));
+    const chain = new Set<string>();
+    const walk = (id: string) => {
+      if (chain.has(id) || !byId.has(id)) return;
+      chain.add(id);
+      const current = byId.get(id)!;
+      if (current.superseded_by_id) walk(current.superseded_by_id);
+      all.filter((i) => i.superseded_by_id === id).forEach((i) => walk(i.id));
+    };
+    walk(entry.id);
+    for (const id of chain) {
+      await this.incomeRepository.update(id, { project_id: projectId });
+    }
+  }
 
   async getIncomes(familyId: string) {
     const incomes = await this.incomeRepository.findByFamilyId(familyId);
@@ -34,6 +70,7 @@ export class IncomeService {
       end_date: dto.endDate ? new Date(dto.endDate) : null,
       status: 'active',
       last_amount_change_date: new Date(),
+      project_id: await this.resolveProjectId(familyId, dto.projectId),
     });
 
     await this.auditRepository.create({
@@ -50,6 +87,22 @@ export class IncomeService {
   async updateIncome(memberId: string, familyId: string, id: string, dto: UpdateIncomeDto) {
     const existing = await this.incomeRepository.findById(id);
     if (!existing || existing.family_id !== familyId) throw new NotFoundException('Income entry not found');
+
+    let projectIdAfter: string | null = existing.project_id;
+    if (dto.projectId !== undefined) {
+      projectIdAfter = await this.resolveProjectId(familyId, dto.projectId);
+      if (projectIdAfter !== existing.project_id) {
+        await this.tagChain(familyId, existing, projectIdAfter);
+        await this.auditRepository.create({
+          member_id: memberId,
+          family_id: familyId,
+          entity_type: 'income',
+          entity_id: id,
+          action: 'update',
+          field_changes: JSON.stringify({ project_id: { old: existing.project_id, new: projectIdAfter } }),
+        });
+      }
+    }
 
     if (existing.recurrence === 'recurring_monthly' && dto.amount && new Decimal(dto.amount).cmp(existing.amount) !== 0) {
       if (!dto.effectiveDate) {
@@ -80,6 +133,7 @@ export class IncomeService {
         status: 'active',
         superseded_by_id: existing.id,
         last_amount_change_date: effectiveDate,
+        project_id: projectIdAfter,
       });
 
       await this.auditRepository.create({
@@ -103,7 +157,8 @@ export class IncomeService {
       if (dto.dueDayOfMonth !== undefined) updateData.due_day_of_month = dto.dueDayOfMonth;
 
       const updated = await this.incomeRepository.update(id, updateData);
-      const diff = diffObjects(existing, updated);
+      // The project tag is audited separately above; keep it out of the generic field diff.
+      const diff = diffObjects({ ...existing, project_id: projectIdAfter }, updated);
       if (diff !== '{}') {
         await this.auditRepository.create({
           member_id: memberId,

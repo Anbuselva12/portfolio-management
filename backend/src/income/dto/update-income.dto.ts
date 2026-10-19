@@ -31,4 +31,9 @@ export class UpdateIncomeDto {
 
   @IsOptional()
   dueDayOfMonth?: number;
+
+  /** Project tag: a project id sets it, `null` clears it, omitted leaves it unchanged. */
+  @IsOptional()
+  @IsString()
+  projectId?: string | null;
 }
