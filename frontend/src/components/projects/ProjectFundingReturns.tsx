@@ -77,6 +77,7 @@ const ChartCard: React.FC<{ title: string; caption: string; children: React.Reac
 );
 
 export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ project, onProjectChanged }) => {
+  const [linkedTab, setLinkedTab] = useState<'loans' | 'income'>('loans');
   const [data, setData] = useState<FundingReturns | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -397,8 +398,33 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
         </ChartCard>
       </div>
 
-      {/* Linked loans */}
-      <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      {/* Linked loans / income: one tabbed panel keeps the page short */}
+      <div role="tablist" aria-label="Linked records" className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+        {([
+          ['loans', 'Linked loans', data.loans.length],
+          ['income', 'Linked income', data.incomes.length],
+        ] as const).map(([key, label, count]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            id={`linked-tab-${key}`}
+            aria-selected={linkedTab === key}
+            aria-controls={`linked-panel-${key}`}
+            onClick={() => setLinkedTab(key)}
+            className={`min-h-[44px] px-4 text-sm font-semibold border-b-2 -mb-px cursor-pointer ${
+              linkedTab === key
+                ? 'border-amber-600 text-amber-700 dark:text-amber-400'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            }`}
+          >
+            {label} ({count})
+          </button>
+        ))}
+      </div>
+
+      {linkedTab === 'loans' && (
+      <section id="linked-panel-loans" role="tabpanel" aria-labelledby="linked-tab-loans" className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Landmark className="w-4 h-4 text-amber-600" /> Linked loans
@@ -461,9 +487,10 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
           </div>
         )}
       </section>
+      )}
 
-      {/* Linked income */}
-      <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      {linkedTab === 'income' && (
+      <section id="linked-panel-income" role="tabpanel" aria-labelledby="linked-tab-income" className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">Linked income</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -510,6 +537,7 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
           </div>
         )}
       </section>
+      )}
 
       {/* Accessible table alternative for the charts */}
       <details className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-sm">

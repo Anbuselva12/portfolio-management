@@ -95,7 +95,7 @@ export const AppShell: React.FC = () => {
     currentApp.id === 'fairshare' ? '/fairshare/settings' : '/settings/profile';
 
   return (
-    <div className="flex h-screen w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-hidden">
+    <div className="relative flex h-screen h-dvh w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-hidden">
       {/* Desktop / Tablet Sidebar (hidden on screens < 768px) */}
       <Sidebar />
 
