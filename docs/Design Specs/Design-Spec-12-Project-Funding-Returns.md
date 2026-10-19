@@ -22,10 +22,10 @@
 **Funding & Returns** (new, first tab) · Expenses Log · Reports & Analytics · Configuration (unchanged).
 
 ### 3.1 Funding & Returns layout
-1. **KPI strip** (2 columns on phones): Total invested · Funded by loans · Own funds · Rent/income per month · Gross yield · Net monthly after EMI. With a current value set: Current value · Appreciation · Total return % are appended.
+1. **KPI strip** (2 columns on phones): Total invested · Funded by loans (with interest paid) · Total income received · Rent/income per month · Gross yield · Net monthly after EMI. With a current value set: Current value · Appreciation · Total return % are appended.
 2. **Current market value** inline editor (pencil → input → save; clearing removes it).
 3. **Charts** (Recharts, `ResponsiveContainer width="100%"`):
-   - *How it was funded* — one stacked horizontal bar: each loan (own colour), then Own funds. Labelled with ₹ and %.
+   - *How it was funded* — one stacked horizontal bar of the tagged loans (own colour each), labelled with ₹ and %. Own funds are no longer shown (2026-10-19).
    - *Income received per month* — bars, one per month from the first receipt to the current month.
    - *Payback progress* — cumulative income received (line) against a reference line at Total invested.
    - *Income vs. loan EMIs, monthly* — two bars with the coverage % in the caption.
@@ -47,3 +47,7 @@ Name, type chip, **Total invested**, cost per sq ft (or avg per item), **Funded 
 
 ## 6. Accessibility & Responsiveness
 Charts have an `aria-label` summary and a "View as table" fallback (the linked tables); status is never colour-only; dark mode uses the existing token set (no undefined Tailwind shades).
+
+## Update 2026-10-19 — Project at a glance
+- The *Own funds* KPI is replaced by **Total income received** (accumulated receipts and one-off income, with % of cost recovered).
+- A full-width **Project at a glance** bar chart sits above the other charts: total invested (asset cost), current market value (when set), income received, interest paid on loans and loan still outstanding, each with a direct ₹ label. It is also in the *View chart data as a table* section.

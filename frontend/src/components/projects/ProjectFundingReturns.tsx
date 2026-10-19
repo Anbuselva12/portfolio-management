@@ -24,9 +24,12 @@ interface ProjectFundingReturnsProps {
   onProjectChanged: () => void;
 }
 
-// Fixed categorical order (dataviz palette): each loan keeps its colour; own funds and income are reserved.
+// Fixed categorical order (dataviz palette): each loan keeps its colour; the overview measures have reserved colours.
 const LOAN_COLORS = ['#2a78d6', '#eb6834', '#e87ba4', '#eda100', '#c98500', '#e34948'];
-const OWN_FUNDS_COLOR = '#6250d6';
+const ASSET_COLOR = '#2a78d6';
+const VALUE_COLOR = '#6250d6';
+const INTEREST_COLOR = '#e34948';
+const OUTSTANDING_COLOR = '#eda100';
 const INCOME_COLOR = '#1baf7a';
 const EMI_COLOR = '#eb6834';
 const AXIS_COLOR = '#94a3b8';
@@ -139,7 +142,6 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
       amount: Number(l.allocated),
       color: LOAN_COLORS[i % LOAN_COLORS.length],
     }));
-    segments.push({ key: 'own', label: 'Own funds', amount: Number(data.ownFunds), color: OWN_FUNDS_COLOR });
     return segments.filter((s) => s.amount > 0);
   }, [data]);
 
@@ -177,6 +179,17 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
   const fundingRow: Record<string, number> = { name: 0 };
   fundingSegments.forEach((s) => (fundingRow[s.key] = s.amount));
 
+  const interestPaid = Number(data.loanTotals.interestPaidShare);
+  const incomeReceived = Number(data.totalIncomeReceived);
+  // One glance at the project: what it cost, what it is worth, what it earned and what the loans cost.
+  const overviewRows = [
+    { name: 'Total invested (asset cost)', amount: invested, color: ASSET_COLOR },
+    ...(hasValue ? [{ name: 'Current market value', amount: Number(data.currentValue), color: VALUE_COLOR }] : []),
+    { name: 'Income received', amount: incomeReceived, color: INCOME_COLOR },
+    { name: 'Interest paid on loans', amount: interestPaid, color: INTEREST_COLOR },
+    { name: 'Loan still outstanding', amount: Number(data.loanTotals.outstandingShare), color: OUTSTANDING_COLOR },
+  ];
+
   const coverRows = [
     { name: 'Monthly EMI', amount: emiShare, color: EMI_COLOR },
     { name: 'Monthly income', amount: monthlyIncome, color: INCOME_COLOR },
@@ -190,12 +203,13 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
         <Kpi
           label="Funded by loans"
           value={formatKpiINR(data.fundedByLoans)}
-          hint={data.fundedByLoansPct ? `${data.fundedByLoansPct}% of cost` : undefined}
+          hint={`${data.fundedByLoansPct ? `${data.fundedByLoansPct}% of cost · ` : ''}${formatKpiINR(data.loanTotals.interestPaidShare)} interest paid`}
         />
         <Kpi
-          label="Own funds"
-          value={formatKpiINR(data.ownFunds)}
-          hint={data.ownFundsPct ? `${data.ownFundsPct}% · cash and income` : undefined}
+          label="Total income received"
+          value={formatKpiINR(data.totalIncomeReceived)}
+          hint={invested > 0 ? `${recoveredPct.toFixed(1)}% of cost recovered` : 'Accumulated so far'}
+          tone={incomeReceived > 0 ? 'good' : 'neutral'}
         />
         <Kpi label="Income / month" value={formatKpiINR(data.monthlyIncome)} hint={`${data.incomes.length} tagged stream(s)`} tone={monthlyIncome > 0 ? 'good' : 'neutral'} />
         <Kpi
@@ -285,15 +299,40 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
       {data.loansExceedInvested && (
         <div role="status" className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>Loans tagged to this project exceed its recorded spend by {formatINR(data.loansExceedBy)}. Own funds are shown as ₹0.</span>
+          <span>Loans tagged to this project exceed its recorded spend by {formatINR(data.loansExceedBy)}.</span>
         </div>
       )}
 
       {/* Charts */}
+      <ChartCard
+        title="Project at a glance"
+        caption="Asset cost, market value, income earned and loan interest side by side"
+      >
+        <div
+          className="h-56"
+          role="img"
+          aria-label={`Overview: ${overviewRows.map((r) => `${r.name} ${formatINR(r.amount)}`).join(', ')}`}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart layout="vertical" data={overviewRows} margin={{ top: 4, right: 80, bottom: 4, left: 8 }}>
+              <XAxis type="number" hide domain={[0, 'dataMax']} />
+              <YAxis type="category" dataKey="name" width={176} tick={{ fill: AXIS_COLOR, fontSize: 12 }} tickLine={false} axisLine={false} />
+              <Tooltip cursor={false} contentStyle={TOOLTIP_STYLE} formatter={(value) => [formatINR(Number(value)), '']} />
+              <Bar
+                dataKey="amount"
+                barSize={22}
+                label={{ position: 'right', fill: AXIS_COLOR, fontSize: 12, formatter: (v: unknown) => compactINR(Number(v)) }}
+                shape={(props: any) => <rect x={props.x} y={props.y} width={Math.max(props.width, 0)} height={props.height} rx={4} fill={props.payload.color} />}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </ChartCard>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ChartCard title="How the project was funded" caption={`Share of ${formatINR(data.invested)} total cost`}>
+        <ChartCard title="How the project was funded" caption={`Loans as a share of ${formatINR(data.invested)} total cost`}>
           {fundingSegments.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400 py-6">Add expenses to this project to see how it was funded.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 py-6">Tag loans to this project to see how it was funded.</p>
           ) : (
             <>
               <div className="h-24 text-white dark:text-slate-900" role="img" aria-label={`Funding mix: ${fundingSegments.map((s) => `${s.label} ${formatINR(s.amount)}`).join(', ')}`}>
@@ -544,7 +583,18 @@ export const ProjectFundingReturns: React.FC<ProjectFundingReturnsProps> = ({ pr
         <summary className="cursor-pointer font-semibold text-slate-700 dark:text-slate-200 min-h-[44px] flex items-center">View chart data as a table</summary>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
           <table className="w-full text-left text-xs">
-            <caption className="text-left font-semibold mb-1 text-slate-700 dark:text-slate-200">Funding</caption>
+            <caption className="text-left font-semibold mb-1 text-slate-700 dark:text-slate-200">Overview</caption>
+            <tbody className="tabular-nums">
+              {overviewRows.map((r) => (
+                <tr key={r.name} className="border-t border-slate-100 dark:border-slate-800">
+                  <th scope="row" className="py-1.5 font-medium text-slate-600 dark:text-slate-300">{r.name}</th>
+                  <td className="py-1.5 text-right">{formatINR(r.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <table className="w-full text-left text-xs">
+            <caption className="text-left font-semibold mb-1 text-slate-700 dark:text-slate-200">Funding by loan</caption>
             <tbody className="tabular-nums">
               {fundingSegments.map((s) => (
                 <tr key={s.key} className="border-t border-slate-100 dark:border-slate-800">
