@@ -218,7 +218,7 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 | place_or_purpose | string | nullable — property or purpose, e.g. "Chennai Home", "Plot #42" |
 | comments | string | nullable — personal notes/comments for the user |
 | loan_type | enum | home, car, personal, jewel, education, business, gold, other |
-| lender_name | string | e.g. "HDFC Bank", "SBI" |
+| lender_name | string | optional free-text label (no account numbers are stored); a blank value defaults to "<Type> loan" (2026-10-19) |
 | currency | enum | |
 | principal_amount | decimal | original sanctioned amount |
 | interest_type | enum | simple, compound |

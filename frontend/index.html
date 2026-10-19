@@ -6,20 +6,21 @@
     <title>FinFamily — Family Wealth, Loan &amp; Expense Manager</title>
     <meta
       name="description"
-      content="FinFamily helps Indian families track net worth, loans and EMIs, income and expenses in one place. Compare debt-payoff strategies and manage everything together."
+      content="Track your family's net worth, loans, EMIs, income, expenses and projects in one place. No bank login or account numbers needed — just amounts and durations. Compare debt-payoff strategies to close loans faster."
     />
     <link rel="canonical" href="%SITE_URL%/" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#0891b2" />
     <!--GOOGLE_SITE_VERIFICATION-->
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <script>document.documentElement.classList.add('js');</script>
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="FinFamily" />
     <meta property="og:title" content="FinFamily — Family Wealth, Loan &amp; Expense Manager" />
     <meta
       property="og:description"
-      content="Track net worth, loans, EMIs, income and expenses for your whole family. Compare debt-payoff strategies side by side."
+      content="Track net worth, loans, EMIs, income, expenses and projects for your whole family. No bank login needed. Compare debt-payoff strategies side by side."
     />
     <meta property="og:url" content="%SITE_URL%/" />
     <meta property="og:image" content="%SITE_URL%/og-image.jpg" />
@@ -30,7 +31,7 @@
     <meta name="twitter:title" content="FinFamily — Family Wealth, Loan &amp; Expense Manager" />
     <meta
       name="twitter:description"
-      content="Track net worth, loans, EMIs, income and expenses for your whole family."
+      content="Track net worth, loans, EMIs, income, expenses and projects for your whole family. No bank login needed."
     />
     <meta name="twitter:image" content="%SITE_URL%/og-image.jpg" />
 
@@ -59,7 +60,7 @@
             "url": "%SITE_URL%/",
             "applicationCategory": "FinanceApplication",
             "operatingSystem": "Web",
-            "description": "Family wealth, loan and expense manager: net worth dashboard, loan and EMI engine, debt-payoff strategies, income and expense tracking, insurance tracking and an audit trail.",
+            "description": "Family wealth, loan and expense manager: net worth dashboard, loan and EMI engine, debt-payoff strategies, income and expense tracking, project expense tracking with funding and returns, and trip expense splitting.",
             "image": "%SITE_URL%/og-image.jpg",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
             "featureList": [
@@ -68,7 +69,8 @@
               "Gold loan tracking",
               "Debt-payoff strategy comparison",
               "Income and household expense tracking",
-              "Project and construction expense tracker",
+              "Project expense tracking with loan funding and rental yield",
+              "Monthly reminders for income and EMIs",
               "Trip expense splitting"
             ]
           },
@@ -77,10 +79,42 @@
             "mainEntity": [
               {
                 "@type": "Question",
+                "name": "Do I need real loan account numbers or bank details?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. FinFamily is for your own reference. Add a loan with just the amount, interest rate, tenure and start date. The lender is optional and only a label, so leave it blank or type anything you like. There is no account-number field, no bank login and no statement upload."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does FinFamily connect to my bank?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. You enter the numbers yourself, so it works with any bank, lender or informal loan and nothing is shared with a bank."
+                }
+              },
+              {
+                "@type": "Question",
                 "name": "What is FinFamily?",
                 "acceptedAnswer": {
                   "@type": "Answer",
                   "text": "FinFamily is a web application that brings a family's assets, loans, income, expenses and insurance into a single dashboard so you can see your real net worth and plan how to clear debt."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does it help me close loans faster?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The debt strategy tools compare Debt Avalanche, Debt Snowball and a custom-weighted plan for a lump sum or a monthly surplus, and show the interest saved and months cut. A prepayment calculator and rate-revision tracking help you act on it."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I track house construction, a business or rental income?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Expenses has a Household tab for daily spending and a Projects tab for things like a house build or a new business. Link loans and rental income to a project to see how it was funded, the rental yield and the payback period."
                 }
               },
               {
@@ -101,10 +135,18 @@
               },
               {
                 "@type": "Question",
-                "name": "How do I get started?",
+                "name": "What is FairShare?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Sign up with a username and password, create or join a family, then add your assets, income and loans."
+                  "text": "FairShare is the second app in the same login. It splits trip and event expenses between households and shows exactly who pays whom."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is FinFamily free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Creating an account and using FinFamily is free."
                 }
               }
             ]
@@ -124,8 +166,14 @@
         --accent: #0e7490;
         --accent-strong: #155e75;
         --accent-soft: #ecfeff;
+        --accent-2: #7c3aed;
+        --good: #059669;
+        --bad: #e11d48;
+        --warn: #d97706;
         --on-accent: #ffffff;
         --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        --shadow-lg: 0 30px 80px rgba(8, 47, 73, 0.22);
+        --grad: linear-gradient(120deg, #0891b2 0%, #6366f1 55%, #a855f7 100%);
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -138,12 +186,18 @@
           --accent: #22d3ee;
           --accent-strong: #67e8f9;
           --accent-soft: #083344;
+          --accent-2: #a78bfa;
+          --good: #34d399;
+          --bad: #fb7185;
+          --warn: #fbbf24;
           --on-accent: #082f49;
           --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.7);
+          --grad: linear-gradient(120deg, #22d3ee 0%, #818cf8 55%, #c084fc 100%);
         }
       }
       *, *::before, *::after { box-sizing: border-box; }
-      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scroll-padding-top: 80px; }
       body {
         margin: 0;
         font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -151,6 +205,7 @@
         color: var(--text);
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
       }
       img { max-width: 100%; height: auto; display: block; }
       a { color: inherit; }
@@ -161,78 +216,267 @@
       }
       .skip-link:focus { top: 1rem; }
       .container { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+      .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 
       /* Header */
       .site-header {
         position: sticky; top: 0; z-index: 50;
-        background: color-mix(in srgb, var(--bg) 88%, transparent);
-        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        background: color-mix(in srgb, var(--bg) 85%, transparent);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--border);
       }
       .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
       .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.15rem; text-decoration: none; }
       .brand img { width: 34px; height: 34px; }
-      .main-nav { display: none; gap: 24px; }
-      .main-nav a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: .95rem; }
+      .main-nav { display: none; gap: 26px; }
+      .main-nav a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: .95rem; position: relative; padding: 6px 0; }
+      .main-nav a::after { content: ''; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .25s; }
       .main-nav a:hover { color: var(--text); }
+      .main-nav a:hover::after { transform: scaleX(1); }
       .header-actions { display: flex; align-items: center; gap: 8px; }
       .btn {
         display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         min-height: 44px; padding: 0 18px; border-radius: 12px; font-weight: 600; font-size: .95rem;
-        text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: background .15s, border-color .15s;
+        text-decoration: none; border: 1px solid transparent; cursor: pointer;
+        transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
       }
       .btn-primary { background: var(--accent); color: var(--on-accent); }
-      .btn-primary:hover { background: var(--accent-strong); }
+      .btn-primary:hover { background: var(--accent-strong); transform: translateY(-1px); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent); }
       .btn-ghost { color: var(--text); border-color: var(--border); background: var(--surface); }
-      .btn-ghost:hover { border-color: var(--accent); }
-      .btn-lg { min-height: 52px; padding: 0 26px; font-size: 1.02rem; }
+      .btn-ghost:hover { border-color: var(--accent); transform: translateY(-1px); }
+      .btn-lg { min-height: 54px; padding: 0 28px; font-size: 1.02rem; border-radius: 14px; }
+      .btn-glow { position: relative; overflow: hidden; }
+      .btn-glow::after {
+        content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
+        transform: translateX(-120%); animation: shine 3.6s ease-in-out infinite;
+      }
+      @keyframes shine { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 
       /* Hero */
-      .hero { padding: 48px 0 24px; background: radial-gradient(1200px 400px at 50% -10%, var(--accent-soft), transparent 70%); }
+      .hero { position: relative; padding: 48px 0 40px; overflow: hidden; isolation: isolate; }
+      .blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; z-index: -1; animation: drift 16s ease-in-out infinite alternate; }
+      .blob.b1 { width: 420px; height: 420px; background: #22d3ee; left: -120px; top: -60px; }
+      .blob.b2 { width: 380px; height: 380px; background: #a78bfa; right: -100px; top: 40px; animation-delay: -5s; }
+      .blob.b3 { width: 320px; height: 320px; background: #34d399; left: 38%; bottom: -160px; opacity: .3; animation-delay: -9s; }
+      @media (prefers-color-scheme: dark) { .blob { opacity: .28; } .blob.b3 { opacity: .15; } }
+      @keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(40px, 30px) scale(1.12); } }
       .eyebrow {
-        display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--accent-soft);
+        display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; background: var(--accent-soft);
         color: var(--accent); font-weight: 600; font-size: .82rem; border: 1px solid var(--border);
       }
-      h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.1; letter-spacing: -0.02em; margin: 16px 0; font-weight: 800; }
-      .lead { font-size: clamp(1.02rem, 2.4vw, 1.25rem); color: var(--muted); max-width: 680px; margin: 0 0 28px; }
+      .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); animation: pulse 2s infinite; }
+      @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent); } 70%, 100% { box-shadow: 0 0 0 9px transparent; } }
+      h1 { font-size: clamp(2.1rem, 6.4vw, 3.8rem); line-height: 1.08; letter-spacing: -0.025em; margin: 18px 0; font-weight: 800; }
+      .lead { font-size: clamp(1.02rem, 2.4vw, 1.25rem); color: var(--muted); max-width: 700px; margin: 0 0 26px; }
       .hero-copy { text-align: center; display: flex; flex-direction: column; align-items: center; }
       .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-      .hero-shot {
-        margin: 40px auto 0; max-width: 1040px; border-radius: 16px; overflow: hidden;
-        border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface);
+      .chips { display: flex; flex-wrap: wrap; gap: 8px 10px; justify-content: center; margin-top: 22px; padding: 0; list-style: none; }
+      .chips li { display: inline-flex; align-items: center; gap: 6px; font-size: .86rem; font-weight: 600; color: var(--muted); }
+      .chips svg { width: 16px; height: 16px; stroke: var(--good); fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+
+      .stage { position: relative; max-width: 1040px; margin: 48px auto 0; }
+      .browser { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow-lg); background: var(--surface); }
+      .browser-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--bg-alt); border-bottom: 1px solid var(--border); }
+      .browser-bar i { width: 10px; height: 10px; border-radius: 50%; background: #f87171; }
+      .browser-bar i:nth-child(2) { background: #fbbf24; }
+      .browser-bar i:nth-child(3) { background: #34d399; }
+      .browser-bar span { margin-left: 10px; font-size: .72rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 2px 14px; }
+      .float {
+        position: absolute; display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+        padding: 12px 16px; box-shadow: var(--shadow-lg); font-size: .82rem; animation: bob 6s ease-in-out infinite;
       }
+      .float strong { display: block; font-size: 1.05rem; letter-spacing: -.01em; }
+      .float small { color: var(--muted); font-weight: 500; }
+      .float .tick { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--good); align-items: center; justify-content: center; margin-right: 8px; vertical-align: middle; }
+      .float .tick svg { width: 12px; height: 12px; stroke: #fff; stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .f1 { left: -44px; top: 6%; }
+      .f2 { right: -40px; top: 52%; animation-delay: -2s; }
+      .f3 { left: 34%; bottom: -30px; animation-delay: -4s; }
+      .phone {
+        position: absolute; right: 5%; bottom: -44px; width: 150px; border-radius: 26px; border: 6px solid #0f172a; overflow: hidden;
+        box-shadow: var(--shadow-lg); display: none; animation: bob 7s ease-in-out infinite; animation-delay: -1s; background: #fff;
+      }
+      @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+      .spark { width: 110px; height: 34px; margin-top: 4px; }
+      .spark path { stroke: var(--good); stroke-width: 3; fill: none; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 3.2s ease-in-out infinite; }
+      @keyframes draw { 0% { stroke-dashoffset: 1; } 55%, 100% { stroke-dashoffset: 0; } }
+
+      /* Marquee */
+      .marquee { border-block: 1px solid var(--border); background: var(--bg-alt); overflow: hidden; padding: 14px 0; margin-top: 70px; }
+      .marquee-track { display: flex; gap: 44px; width: max-content; animation: scroll 38s linear infinite; }
+      .marquee:hover .marquee-track { animation-play-state: paused; }
+      .marquee-track span { font-weight: 700; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 44px; font-size: .95rem; }
+      .marquee-track span::after { content: '✦'; color: var(--accent); }
+      @keyframes scroll { to { transform: translateX(-50%); } }
 
       /* Sections */
-      section { padding: 64px 0; }
+      section { padding: 80px 0; }
       .alt { background: var(--bg-alt); }
-      h2 { font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.2; letter-spacing: -0.01em; margin: 0 0 12px; font-weight: 800; text-align: center; }
-      .section-lead { text-align: center; color: var(--muted); max-width: 640px; margin: 0 auto 40px; }
+      .kicker { display: block; text-align: center; font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+      h2 { font-size: clamp(1.7rem, 4.2vw, 2.5rem); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 12px; font-weight: 800; text-align: center; }
+      .section-lead { text-align: center; color: var(--muted); max-width: 660px; margin: 0 auto 44px; font-size: 1.04rem; }
       h3 { font-size: 1.1rem; margin: 0 0 8px; font-weight: 700; }
-      .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
-      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+      .grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; transition: transform .25s, box-shadow .25s, border-color .25s; }
+      .card.hover:hover { transform: translateY(-6px); box-shadow: var(--shadow); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
       .card p { margin: 0; color: var(--muted); font-size: .96rem; }
       .icon {
-        width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); color: var(--accent);
-        display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;
+        width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); color: var(--accent);
+        display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: transform .3s;
       }
-      .icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-      .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; grid-template-columns: 1fr; }
+      .card.hover:hover .icon { transform: rotate(-8deg) scale(1.1); }
+      .icon svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+      /* Scroll reveal (only when JS is available) */
+      .js .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; transition-delay: var(--d, 0s); }
+      .js .reveal.in { opacity: 1; transform: none; }
+
+      /* No-real-details band */
+      .nodetails { display: grid; gap: 36px; align-items: center; grid-template-columns: 1fr; }
+      .nodetails .copy h2, .nodetails .copy .kicker { text-align: left; }
+      .nodetails .copy p { color: var(--muted); font-size: 1.04rem; margin: 0 0 18px; }
+      .ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+      .ticks li { display: flex; gap: 12px; align-items: flex-start; font-weight: 500; }
+      .ticks .ok { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--good); display: inline-flex; align-items: center; justify-content: center; margin-top: 2px; }
+      .ticks .ok svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .ticks .no { background: var(--bad); }
+      .mock { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 22px; box-shadow: var(--shadow-lg); position: relative; }
+      .mock-title { display: flex; align-items: center; justify-content: space-between; font-weight: 700; margin-bottom: 14px; }
+      .mock-title small { font-weight: 600; color: var(--muted); background: var(--bg-alt); border-radius: 999px; padding: 3px 10px; font-size: .72rem; }
+      .field { display: grid; gap: 4px; margin-bottom: 12px; }
+      .field label { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+      .field .box { min-height: 44px; border: 1px solid var(--border); background: var(--bg); border-radius: 12px; padding: 10px 14px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+      .field .box.active { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+      .field .hint { font-size: .72rem; color: var(--good); font-weight: 600; min-height: 1em; }
+      .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); animation: blink 1s steps(1) infinite; margin-left: 1px; }
+      @keyframes blink { 50% { opacity: 0; } }
+      .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .result { margin-top: 6px; border-radius: 16px; padding: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), color-mix(in srgb, var(--accent-2) 12%, var(--surface))); border: 1px solid var(--border); opacity: 0; transform: translateY(10px); transition: opacity .6s, transform .6s; }
+      .result.show { opacity: 1; transform: none; }
+      .result b { font-size: 1.5rem; letter-spacing: -.02em; }
+      .meter { height: 8px; border-radius: 999px; background: var(--border); margin-top: 12px; overflow: hidden; }
+      .meter i { display: block; height: 100%; width: 0; background: var(--grad); border-radius: 999px; transition: width 1.6s cubic-bezier(.2,.8,.2,1); }
+      .result.show .meter i { width: 100%; }
+
+      /* Showcase */
+      .tabs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 26px; }
+      .tab {
+        min-height: 44px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface);
+        color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; transition: all .2s;
+      }
+      .tab:hover { color: var(--text); border-color: var(--accent); }
+      .tab[aria-selected="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 30%, transparent); }
+      .panel { display: none; }
+      .panel.active { display: block; animation: fadeUp .55s ease both; }
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+      .panel figure { margin: 0; }
+      .panel figcaption { text-align: center; color: var(--muted); max-width: 640px; margin: 20px auto 0; }
+      .panel figcaption b { color: var(--text); }
+      .showcase-frame { max-width: 980px; margin: 0 auto; }
+
+      /* Chart */
+      .chart-wrap { display: grid; gap: 30px; align-items: center; grid-template-columns: 1fr; }
+      .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 22px; box-shadow: var(--shadow); }
+      .chart-card svg { width: 100%; height: auto; display: block; }
+      .line { fill: none; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 2.2s cubic-bezier(.3,.7,.2,1); }
+      .line.slow { stroke: var(--bad); opacity: .85; }
+      .line.fast { stroke: var(--good); transition-delay: .5s; }
+      .chart-card.in .line { stroke-dashoffset: 0; }
+      .area { fill: color-mix(in srgb, var(--good) 14%, transparent); opacity: 0; transition: opacity 1s 2.4s; }
+      .chart-card.in .area { opacity: 1; }
+      .endpoint { opacity: 0; transition: opacity .5s 2.6s; }
+      .chart-card.in .endpoint { opacity: 1; }
+      .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .85rem; color: var(--muted); font-weight: 600; margin-top: 8px; }
+      .legend i { display: inline-block; width: 22px; height: 4px; border-radius: 4px; vertical-align: middle; margin-right: 8px; }
+      .strat { display: grid; gap: 12px; margin-top: 20px; }
+      .strat div { display: flex; gap: 14px; align-items: flex-start; }
+      .strat b { display: block; }
+      .strat span { color: var(--muted); font-size: .94rem; }
+      .badge { flex: none; width: 38px; height: 38px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
+      .chart-wrap .copy h2, .chart-wrap .copy .kicker { text-align: left; }
+      .chart-wrap .copy > p { color: var(--muted); font-size: 1.04rem; margin: 0; }
+
+      /* Apps + project funding */
+      .apps { display: grid; gap: 20px; grid-template-columns: 1fr; }
+      .app-card { padding: 30px; position: relative; overflow: hidden; }
+      .app-card::before { content: ''; position: absolute; width: 220px; height: 220px; right: -70px; top: -70px; border-radius: 50%; background: var(--grad); opacity: .12; }
+      .app-tag { display: inline-block; font-size: .74rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-bottom: 14px; }
+      .app-card ul { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+      .app-card li { display: flex; gap: 10px; color: var(--muted); font-size: .95rem; }
+      .app-card li::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 9px; }
+      .proj { margin-top: 46px; display: grid; gap: 28px; grid-template-columns: 1fr; align-items: center; }
+      .proj .copy h3 { font-size: 1.5rem; letter-spacing: -.01em; }
+      .proj .copy p { color: var(--muted); margin: 0 0 14px; }
+      .stackbar { display: flex; height: 22px; border-radius: 999px; overflow: hidden; background: var(--border); margin: 12px 0 8px; }
+      .stackbar i { display: block; height: 100%; width: 0; transition: width 1.6s cubic-bezier(.2,.8,.2,1); }
+      .stackbar .s1 { background: #6366f1; }
+      .stackbar .s2 { background: var(--warn); margin-left: 2px; }
+      .in .stackbar .s1 { width: var(--w1); }
+      .in .stackbar .s2 { width: var(--w2); }
+      .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+      .kpi { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+      .kpi small { display: block; color: var(--muted); font-weight: 600; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; }
+      .kpi b { font-size: 1.25rem; letter-spacing: -.02em; }
+      .kpi b.good { color: var(--good); }
+      .example { font-size: .74rem; color: var(--muted); font-weight: 600; }
+
+      /* Steps */
+      .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; grid-template-columns: 1fr; position: relative; }
       .steps li { counter-increment: step; }
       .steps li::before {
         content: counter(step); display: inline-flex; align-items: center; justify-content: center;
-        width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--on-accent);
-        font-weight: 700; margin-bottom: 12px;
+        width: 40px; height: 40px; border-radius: 50%; background: var(--grad); color: #fff;
+        font-weight: 800; margin-bottom: 14px; box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent);
       }
 
       /* FAQ */
-      .faq { max-width: 760px; margin: 0 auto; display: grid; gap: 12px; }
-      details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 0 20px; }
-      summary { cursor: pointer; font-weight: 600; padding: 16px 0; min-height: 44px; list-style-position: outside; }
-      details p { margin: 0 0 16px; color: var(--muted); }
+      .faq-wrap { display: grid; gap: 34px; grid-template-columns: 1fr; align-items: start; }
+      .faq-side h2, .faq-side .kicker { text-align: left; }
+      .faq-side p { color: var(--muted); margin: 0 0 20px; }
+      .faq-help { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 22px; }
+      .faq-help b { display: block; margin-bottom: 4px; font-size: 1.05rem; }
+      .faq-help p { margin: 0 0 14px; font-size: .94rem; }
+      .faq { display: grid; gap: 12px; counter-reset: q; }
+      .faq details {
+        counter-increment: q; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 0;
+        transition: border-color .25s, box-shadow .25s;
+      }
+      .faq details:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+      .faq details[open] { border-color: var(--accent); box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 12%, transparent); }
+      .faq summary {
+        list-style: none; cursor: pointer; display: flex; align-items: center; gap: 14px; padding: 16px 18px; min-height: 60px; font-weight: 650;
+        font-size: 1rem;
+      }
+      .faq summary::-webkit-details-marker { display: none; }
+      .faq summary::before {
+        content: counter(q, decimal-leading-zero); flex: none; font-size: .78rem; font-weight: 800; color: var(--accent);
+        background: var(--accent-soft); border-radius: 10px; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+      }
+      .faq summary .q { flex: 1; }
+      .faq summary .pm { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); position: relative; transition: transform .3s, background .3s, border-color .3s; }
+      .faq summary .pm::before, .faq summary .pm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 12px; height: 2px; background: var(--muted); border-radius: 2px; transform: translate(-50%, -50%); transition: transform .3s, background .3s; }
+      .faq summary .pm::after { transform: translate(-50%, -50%) rotate(90deg); }
+      .faq details[open] summary .pm { background: var(--accent); border-color: var(--accent); transform: rotate(180deg); }
+      .faq details[open] summary .pm::before, .faq details[open] summary .pm::after { background: var(--on-accent); }
+      .faq details[open] summary .pm::after { transform: translate(-50%, -50%) rotate(0deg); }
+      .faq .ans { padding: 0 18px 18px 68px; color: var(--muted); animation: fadeUp .4s ease both; }
+      .faq .ans p { margin: 0; }
+      .faq details.featured { border-color: color-mix(in srgb, var(--good) 55%, var(--border)); }
+      .faq details.featured summary::before { background: color-mix(in srgb, var(--good) 18%, var(--surface)); color: var(--good); }
 
       /* CTA + footer */
-      .cta-band { text-align: center; }
-      .site-footer { border-top: 1px solid var(--border); padding: 28px 0; color: var(--muted); font-size: .9rem; }
+      .cta-band { position: relative; overflow: hidden; text-align: center; background: var(--grad); color: #fff; border-radius: 28px; padding: 56px 20px; isolation: isolate; }
+      .cta-band h2, .cta-band .section-lead { color: #fff; }
+      .cta-band .section-lead { opacity: .92; margin-bottom: 26px; }
+      .cta-band .ring { position: absolute; border-radius: 50%; border: 2px solid rgba(255,255,255,.28); z-index: -1; animation: ring 7s ease-out infinite; }
+      .cta-band .ring.r1 { width: 260px; height: 260px; left: -60px; bottom: -90px; }
+      .cta-band .ring.r2 { width: 340px; height: 340px; right: -90px; top: -120px; animation-delay: -3s; }
+      @keyframes ring { 0% { transform: scale(.8); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+      .cta-band .btn-primary { background: #fff; color: #0e7490; }
+      .cta-band .btn-primary:hover { background: #ecfeff; }
+      .cta-band .btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.6); }
+      .cta-band .btn-ghost:hover { background: rgba(255,255,255,.14); border-color: #fff; }
+      .site-footer { border-top: 1px solid var(--border); padding: 30px 0; color: var(--muted); font-size: .9rem; margin-top: 70px; }
       .footer-row { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
       .footer-row nav { display: flex; gap: 20px; }
       .footer-row a { text-decoration: none; }
@@ -243,7 +487,19 @@
         .main-nav { display: flex; }
         .grid.cols { grid-template-columns: repeat(2, 1fr); }
         .steps { grid-template-columns: repeat(3, 1fr); }
-        .hero { padding: 72px 0 32px; }
+        .hero { padding: 72px 0 48px; }
+        .phone { display: block; }
+        .apps { grid-template-columns: repeat(2, 1fr); }
+        .cta-band { padding: 72px 32px; }
+      }
+      @media (min-width: 900px) {
+        .float { display: block; }
+        .nodetails { grid-template-columns: 1fr 1fr; gap: 56px; }
+        .chart-wrap { grid-template-columns: 1fr 1fr; gap: 56px; }
+        .proj { grid-template-columns: 1fr 1fr; gap: 56px; }
+        .faq-wrap { grid-template-columns: 340px 1fr; gap: 56px; }
+        .faq-side { position: sticky; top: 100px; }
+        .phone { width: 170px; }
       }
       @media (min-width: 1024px) {
         .grid.cols { grid-template-columns: repeat(3, 1fr); }
@@ -252,9 +508,21 @@
         .btn { padding: 0 12px; font-size: .88rem; }
         .brand span { display: none; }
       }
+      @media (max-width: 520px) {
+        .faq .ans { padding-left: 18px; }
+        .kpis { grid-template-columns: 1fr; }
+      }
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
-        .btn { transition: none; }
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+        .js .reveal { opacity: 1; transform: none; }
+        .line { stroke-dashoffset: 0; }
+        .area, .endpoint, .result { opacity: 1; transform: none; }
+        .result .meter i { width: 100%; }
+        .in .stackbar .s1 { width: var(--w1); }
+        .in .stackbar .s2 { width: var(--w2); }
+        .marquee-track { flex-wrap: wrap; width: auto; justify-content: center; }
+        .spark path { stroke-dashoffset: 0; }
       }
     </style>
   </head>
@@ -270,6 +538,7 @@
         </a>
         <nav class="main-nav" aria-label="Page sections">
           <a href="#features">Features</a>
+          <a href="#screens">Screens</a>
           <a href="#apps">Apps</a>
           <a href="#faq">FAQ</a>
         </nav>
@@ -281,136 +550,394 @@
     </header>
 
     <main id="main">
+      <!-- HERO -->
       <section class="hero" aria-labelledby="hero-title">
+        <span class="blob b1" aria-hidden="true"></span>
+        <span class="blob b2" aria-hidden="true"></span>
+        <span class="blob b3" aria-hidden="true"></span>
         <div class="container">
           <div class="hero-copy">
-            <span class="eyebrow">Family finance, together</span>
-            <h1 id="hero-title">Your family's wealth, loans and expenses in one place</h1>
+            <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Family finance, together</span>
+            <h1 id="hero-title">
+              Your family's <span class="grad-text">wealth, loans &amp; projects</span> in one place
+            </h1>
             <p class="lead">
-              FinFamily brings assets, income, loans, EMIs, insurance and everyday spending into one shared dashboard —
-              so your whole household can see the real picture and plan how to become debt-free.
+              Track assets, income, EMIs and everyday spending in one shared dashboard — and see the fastest way to
+              become debt-free. No bank login. No account numbers. Just your amounts.
             </p>
             <div class="cta-row">
-              <a class="btn btn-primary btn-lg" href="/register">Create free account</a>
+              <a class="btn btn-primary btn-lg btn-glow" href="/register">Create free account</a>
               <a class="btn btn-ghost btn-lg" href="/login">Sign in</a>
             </div>
+            <ul class="chips" aria-label="Highlights">
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7" /></svg>No bank login</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7" /></svg>No account numbers</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7" /></svg>Free to use</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7" /></svg>Made for Indian families</li>
+            </ul>
           </div>
-          <div class="hero-shot">
-            <img
-              src="/dashboard-preview.jpg"
-              width="1280"
-              height="800"
-              alt="FinFamily family portfolio dashboard showing net worth, total assets, total debt and monthly inflow"
-              fetchpriority="high"
-            />
+
+          <div class="stage">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>FinFamily</span></div>
+              <img
+                src="/screens/dashboard.jpg"
+                width="1280"
+                height="800"
+                alt="FinFamily family portfolio dashboard showing net worth, total assets, total debt, monthly inflow and outflow"
+                fetchpriority="high"
+              />
+            </div>
+            <div class="float f1" aria-hidden="true">
+              <span class="tick"><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7" /></svg></span><small>EMI marked paid</small>
+              <strong>₹16,369</strong>
+            </div>
+            <div class="float f2" aria-hidden="true">
+              <small>Net worth</small>
+              <strong>₹4,50,000 <span style="color: var(--good); font-size: .8rem">▲ 10%</span></strong>
+              <svg class="spark" viewBox="0 0 110 34"><path pathLength="1" d="M2 28 C 18 26, 24 14, 40 16 S 64 24, 78 12 S 98 6, 108 4" /></svg>
+            </div>
+            <div class="float f3" aria-hidden="true">
+              <small>Debt-free in</small>
+              <strong>27 months</strong>
+            </div>
+            <div class="phone" aria-hidden="true">
+              <img src="/screens/mobile-dashboard.jpg" width="390" height="780" alt="" loading="lazy" />
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="features" aria-labelledby="features-title">
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+          <span>Net worth</span><span>EMI schedules</span><span>Gold loans</span><span>Prepayment calculator</span>
+          <span>Debt avalanche</span><span>Rent tracking</span><span>Project funding</span><span>Monthly reminders</span>
+          <span>Trip splitting</span><span>Audit trail</span>
+          <span>Net worth</span><span>EMI schedules</span><span>Gold loans</span><span>Prepayment calculator</span>
+          <span>Debt avalanche</span><span>Rent tracking</span><span>Project funding</span><span>Monthly reminders</span>
+          <span>Trip splitting</span><span>Audit trail</span>
+        </div>
+      </div>
+
+      <!-- NO REAL DETAILS -->
+      <section aria-labelledby="nodetails-title">
+        <div class="container nodetails">
+          <div class="copy reveal">
+            <span class="kicker">Private by design</span>
+            <h2 id="nodetails-title">Just amounts and durations. <span class="grad-text">Nothing real required.</span></h2>
+            <p>
+              FinFamily is your own planning notebook, not a bank portal. Add a loan with the amount, rate and tenure —
+              that's all it needs to build the full repayment schedule and show you how to close it sooner.
+            </p>
+            <ul class="ticks">
+              <li><span class="ok"><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7" /></svg></span><span><b>No account or loan numbers.</b> There isn't even a field for them.</span></li>
+              <li><span class="ok"><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7" /></svg></span><span><b>Lender is optional.</b> Leave it blank, or type a nickname or a friend's name — anything works.</span></li>
+              <li><span class="ok"><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7" /></svg></span><span><b>No bank connection or statements.</b> You add the numbers; nothing is pulled from anywhere.</span></li>
+              <li><span class="ok"><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7" /></svg></span><span><b>Same for income and expenses.</b> Enter what matters to you, as much or as little as you like.</span></li>
+            </ul>
+          </div>
+
+          <div class="mock reveal" style="--d: .15s" id="loan-demo" role="img" aria-label="Animated example: adding a loan with only an amount, interest rate and tenure shows the monthly EMI and debt-free date">
+            <div class="mock-title"><span>Add a loan</span><small>Example</small></div>
+            <div class="field">
+              <label>Lender (optional)</label>
+              <div class="box" data-type="Optional label"><span class="t"></span></div>
+              <span class="hint" data-hint="No real name needed ✓"></span>
+            </div>
+            <div class="field">
+              <label>Loan amount</label>
+              <div class="box" data-type="₹5,00,000"><span class="t"></span></div>
+            </div>
+            <div class="two">
+              <div class="field">
+                <label>Interest rate</label>
+                <div class="box" data-type="11 % p.a."><span class="t"></span></div>
+              </div>
+              <div class="field">
+                <label>Tenure</label>
+                <div class="box" data-type="36 months"><span class="t"></span></div>
+              </div>
+            </div>
+            <div class="result" aria-hidden="true">
+              <small style="color: var(--muted); font-weight: 600">Your monthly EMI</small><br />
+              <b>₹16,369</b> <small style="color: var(--muted)">· repayment schedule ready</small>
+              <div class="meter"><i></i></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section id="features" class="alt" aria-labelledby="features-title">
         <div class="container">
+          <span class="kicker">Features</span>
           <h2 id="features-title">Everything your household money needs</h2>
           <p class="section-lead">One workspace for the whole family, built around how Indian households actually manage money.</p>
           <div class="grid cols">
-            <article class="card">
+            <article class="card hover reveal">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="m7 15 4-4 3 3 5-6" /></svg></span>
               <h3>Net worth dashboard</h3>
               <p>See assets, debt, monthly cash flow and savings rate at a glance, with trends over the last 12 months.</p>
             </article>
-            <article class="card">
+            <article class="card hover reveal" style="--d: .08s">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg></span>
               <h3>Loan &amp; EMI engine</h3>
               <p>Accurate EMI schedules, part-payments, rate revisions and a prepayment calculator — plus dedicated gold loan tracking.</p>
             </article>
-            <article class="card">
+            <article class="card hover reveal" style="--d: .16s">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" /></svg></span>
               <h3>Debt-payoff strategies</h3>
-              <p>Compare repayment strategies side by side and see how much interest and time each one saves you.</p>
+              <p>Compare Avalanche, Snowball and your own plan, and see how much interest and time each one saves.</p>
             </article>
-            <article class="card">
+            <article class="card hover reveal">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20" /><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></span>
               <h3>Income &amp; expenses</h3>
-              <p>Track salary, rent and one-off income against daily household spending, with monthly confirmation of receipts.</p>
+              <p>Track salary, rent and one-off income against daily spending. Confirm each month's receipts and EMIs from reminders — even for past months.</p>
             </article>
-            <article class="card">
+            <article class="card hover reveal" style="--d: .08s">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h13l-3-3" /><path d="M17 17H4l3 3" /></svg></span>
               <h3>Unified statement</h3>
-              <p>A single chronological passbook of every inflow, expense and loan payment, filterable by period and source.</p>
+              <p>One chronological passbook of every inflow, expense and loan payment. Fix a mistake once and it updates everywhere.</p>
             </article>
-            <article class="card">
+            <article class="card hover reveal" style="--d: .16s">
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /></svg></span>
               <h3>Insurance &amp; audit trail</h3>
-              <p>Keep policies and renewals in view. Every change by every family member is logged and can be restored.</p>
+              <p>Keep policies and renewals in view. Every change by every family member is logged.</p>
             </article>
           </div>
         </div>
       </section>
 
-      <section id="apps" class="alt" aria-labelledby="apps-title">
+      <!-- SCREENS -->
+      <section id="screens" aria-labelledby="screens-title">
         <div class="container">
-          <h2 id="apps-title">Three apps, one login</h2>
-          <p class="section-lead">Switch between workspaces without signing in again.</p>
-          <div class="grid cols">
-            <article class="card">
-              <h3>FinFamily</h3>
-              <p>Wealth, debt, income and household expenses for the whole family.</p>
-            </article>
-            <article class="card">
-              <h3>Expense Tracker</h3>
-              <p>Track projects such as house construction or a new business: materials, phases, tags and cost per square foot.</p>
-            </article>
-            <article class="card">
-              <h3>FairShare</h3>
-              <p>Split trip and event expenses between households and see exactly who pays whom.</p>
-            </article>
+          <span class="kicker">See it in action</span>
+          <h2 id="screens-title">A calm, clear view of your money</h2>
+          <p class="section-lead">Real screens from the app. Switch between them to explore.</p>
+          <div class="tabs" role="tablist" aria-label="App screens">
+            <button class="tab" role="tab" id="tab-dash" aria-controls="p-dash" aria-selected="true" type="button">Dashboard</button>
+            <button class="tab" role="tab" id="tab-loans" aria-controls="p-loans" aria-selected="false" tabindex="-1" type="button">Loans</button>
+            <button class="tab" role="tab" id="tab-proj" aria-controls="p-proj" aria-selected="false" tabindex="-1" type="button">Projects</button>
+            <button class="tab" role="tab" id="tab-tx" aria-controls="p-tx" aria-selected="false" tabindex="-1" type="button">Transactions</button>
+          </div>
+          <div class="showcase-frame reveal">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>FinFamily</span></div>
+              <div class="panel active" id="p-dash" role="tabpanel" aria-labelledby="tab-dash">
+                <figure>
+                  <img src="/screens/dashboard.jpg" width="1280" height="800" loading="lazy" alt="Dashboard with net worth, assets, debt, cash flow and the monthly reminders queue" />
+                </figure>
+              </div>
+              <div class="panel" id="p-loans" role="tabpanel" aria-labelledby="tab-loans" hidden>
+                <figure>
+                  <img src="/screens/loans.jpg" width="1280" height="800" loading="lazy" alt="Loans page with outstanding principal, interest rate, EMI and remaining tenure" />
+                </figure>
+              </div>
+              <div class="panel" id="p-proj" role="tabpanel" aria-labelledby="tab-proj" hidden>
+                <figure>
+                  <img src="/screens/project.jpg" width="1280" height="800" loading="lazy" alt="Project view showing total invested, funded by loans, own funds, rental income and gross yield" />
+                </figure>
+              </div>
+              <div class="panel" id="p-tx" role="tabpanel" aria-labelledby="tab-tx" hidden>
+                <figure>
+                  <img src="/screens/transactions.jpg" width="1280" height="800" loading="lazy" alt="Statement of transactions listing income, expenses and loan payments with edit and delete actions" />
+                </figure>
+              </div>
+            </div>
+            <p id="screen-caption" class="section-lead" style="margin: 22px auto 0" aria-live="polite">
+              <b>Dashboard.</b> Net worth, cash flow and a monthly checklist of income to confirm and EMIs to mark paid.
+            </p>
           </div>
         </div>
       </section>
 
-      <section aria-labelledby="how-title">
+      <!-- DEBT STRATEGY -->
+      <section class="alt" aria-labelledby="debt-title">
+        <div class="container chart-wrap">
+          <div class="copy reveal">
+            <span class="kicker">Debt strategy</span>
+            <h2 id="debt-title">Close loans <span class="grad-text">sooner</span>, pay less interest</h2>
+            <p>
+              Put an extra lump sum or a monthly surplus to work. FinFamily shows exactly which loan to prioritise and how
+              many months and how much interest you save.
+            </p>
+            <div class="strat">
+              <div><span class="badge">1</span><p style="margin:0"><b>Debt Avalanche</b><span>Highest interest first, for the lowest total interest.</span></p></div>
+              <div><span class="badge">2</span><p style="margin:0"><b>Debt Snowball</b><span>Smallest balance first, for quick wins and momentum.</span></p></div>
+              <div><span class="badge">3</span><p style="margin:0"><b>Custom weights</b><span>Split your surplus across loans your own way.</span></p></div>
+            </div>
+          </div>
+          <div class="chart-card reveal" style="--d: .15s" id="debt-chart">
+            <svg viewBox="0 0 600 300" role="img" aria-label="Illustration: with a debt strategy the loan balance reaches zero sooner than with minimum payments only">
+              <g stroke="currentColor" style="color: var(--border)" stroke-width="1">
+                <line x1="40" y1="30" x2="580" y2="30" /><line x1="40" y1="95" x2="580" y2="95" />
+                <line x1="40" y1="160" x2="580" y2="160" /><line x1="40" y1="225" x2="580" y2="225" />
+              </g>
+              <line x1="40" y1="260" x2="580" y2="260" stroke="currentColor" style="color: var(--muted)" stroke-width="1.5" />
+              <path class="area" d="M40 40 C 150 52, 220 120, 330 196 S 400 252, 420 260 L40 260 Z" />
+              <path class="line slow" pathLength="1" d="M40 40 C 200 62, 330 130, 440 200 S 540 250, 566 260" />
+              <path class="line fast" pathLength="1" d="M40 40 C 150 52, 220 120, 330 196 S 400 252, 420 260" />
+              <g class="endpoint">
+                <circle cx="420" cy="260" r="8" fill="var(--good)" stroke="var(--surface)" stroke-width="3" />
+                <circle cx="566" cy="260" r="8" fill="var(--bad)" stroke="var(--surface)" stroke-width="3" />
+                <text x="420" y="287" text-anchor="middle" font-size="13" font-weight="700" fill="var(--good)">Debt-free sooner</text>
+              </g>
+              <text x="40" y="287" font-size="12" fill="var(--muted)">Today</text>
+              <text x="580" y="287" text-anchor="end" font-size="12" fill="var(--muted)">Time →</text>
+              <text x="46" y="24" font-size="12" fill="var(--muted)">Loan balance</text>
+            </svg>
+            <div class="legend">
+              <span><i style="background: var(--bad)"></i>Minimum payments only</span>
+              <span><i style="background: var(--good)"></i>With a debt strategy</span>
+            </div>
+            <p class="example" style="margin: 10px 0 0">Illustration for explanation. Your own numbers are calculated in the app.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- APPS + PROJECTS -->
+      <section id="apps" aria-labelledby="apps-title">
         <div class="container">
+          <span class="kicker">Two apps, one login</span>
+          <h2 id="apps-title">Switch workspaces without signing in again</h2>
+          <p class="section-lead">Your money lives in FinFamily. Group trips and events live in FairShare.</p>
+          <div class="apps">
+            <article class="card app-card hover reveal">
+              <span class="app-tag">FinFamily</span>
+              <h3 style="font-size: 1.4rem">Wealth, debt, income &amp; expenses</h3>
+              <p>Everything about the family's money, with Household and Projects together under Expenses.</p>
+              <ul>
+                <li>Net worth, assets, loans, EMIs and gold loans</li>
+                <li>Monthly reminders, with the option to catch up on past months</li>
+                <li>Household spending and insurance</li>
+                <li>Projects such as a house build or a new business, with funding and returns</li>
+              </ul>
+            </article>
+            <article class="card app-card hover reveal" style="--d: .12s">
+              <span class="app-tag">FairShare</span>
+              <h3 style="font-size: 1.4rem">Split trip &amp; event costs</h3>
+              <p>Travelling with friends or other families? Record who paid and let FairShare settle it.</p>
+              <ul>
+                <li>Add households and guests, with equal or custom splits</li>
+                <li>Automatic "who pays whom" with the fewest payments</li>
+                <li>One-tap WhatsApp summary and Excel export</li>
+                <li>Track settlements until the trip is closed</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="proj" id="proj-demo">
+            <div class="copy reveal">
+              <span class="kicker" style="text-align: left">Projects</span>
+              <h3>Building, buying or starting something?</h3>
+              <p>
+                Track a house construction or business as a project. Link the loans that paid for it and the rent it now
+                earns, and see how it was funded, the yield and how long it takes to pay back.
+              </p>
+              <p>Cash you put in is simply an expense entry on the project, so there's nothing extra to maintain.</p>
+            </div>
+            <div class="chart-card reveal" style="--d: .15s">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; gap: 12px; flex-wrap: wrap">
+                <b>House construction</b><span class="example">Example figures</span>
+              </div>
+              <div class="stackbar" role="img" aria-label="Example: 35 percent funded by loans, 65 percent by own funds" style="--w1: 35%; --w2: 63%">
+                <i class="s1"></i><i class="s2"></i>
+              </div>
+              <div class="legend">
+                <span><i style="background:#6366f1"></i>Funded by loans</span>
+                <span><i style="background: var(--warn)"></i>Own funds</span>
+              </div>
+              <div class="kpis">
+                <div class="kpi"><small>Gross yield</small><b class="good">5.2%</b></div>
+                <div class="kpi"><small>Payback</small><b>19 yrs</b></div>
+                <div class="kpi"><small>Rent / month</small><b>₹35,000</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <section class="alt" aria-labelledby="how-title">
+        <div class="container">
+          <span class="kicker">How it works</span>
           <h2 id="how-title">Get started in three steps</h2>
-          <p class="section-lead">No spreadsheets, no setup fees.</p>
+          <p class="section-lead">No spreadsheets, no setup fees, no paperwork.</p>
           <ol class="steps">
-            <li class="card"><h3>Create your family</h3><p>Sign up, then create a family workspace or request to join an existing one.</p></li>
-            <li class="card"><h3>Add what you own and owe</h3><p>Enter assets, income streams and loans. EMI schedules are generated for you.</p></li>
-            <li class="card"><h3>See the full picture</h3><p>Follow your net worth, review cash flow and compare ways to clear debt faster.</p></li>
+            <li class="card hover reveal"><h3>Create your family</h3><p>Sign up with just a username, then create a family workspace or request to join an existing one.</p></li>
+            <li class="card hover reveal" style="--d: .1s"><h3>Add what you own and owe</h3><p>Enter assets, income and loans using simple amounts and durations. EMI schedules are generated for you.</p></li>
+            <li class="card hover reveal" style="--d: .2s"><h3>See the full picture</h3><p>Follow your net worth, review cash flow and compare ways to clear debt faster.</p></li>
           </ol>
         </div>
       </section>
 
-      <section id="faq" class="alt" aria-labelledby="faq-title">
-        <div class="container">
-          <h2 id="faq-title">Frequently asked questions</h2>
-          <p class="section-lead">Quick answers about FinFamily.</p>
-          <div class="faq">
-            <details>
-              <summary>What is FinFamily?</summary>
-              <p>FinFamily is a web application that brings a family's assets, loans, income, expenses and insurance into a single dashboard so you can see your real net worth and plan how to clear debt.</p>
+      <!-- FAQ -->
+      <section id="faq" aria-labelledby="faq-title">
+        <div class="container faq-wrap">
+          <div class="faq-side reveal">
+            <span class="kicker" style="text-align: left">FAQ</span>
+            <h2 id="faq-title">Questions, <span class="grad-text">answered</span></h2>
+            <p>The short answers to what families ask before they start.</p>
+            <div class="faq-help">
+              <b>Ready to try it?</b>
+              <p>It takes a minute to create an account. No bank details needed.</p>
+              <a class="btn btn-primary" href="/register">Create free account</a>
+            </div>
+          </div>
+
+          <div class="faq reveal" style="--d: .1s">
+            <details class="featured" open>
+              <summary><span class="q">Do I need real loan account numbers or bank details?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>No. FinFamily is for your own reference. Add a loan with just the amount, interest rate, tenure and start date. The lender name is only a label, so type anything you like — there is no account-number field, no bank login and no statement upload. It simply helps you track expenses, income and portfolios, and close loans sooner with debt strategies.</p></div>
+            </details>
+            <details class="featured">
+              <summary><span class="q">Does FinFamily connect to my bank?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>No. You enter the numbers yourself, so it works with any bank, lender or informal loan, and nothing is shared with a bank.</p></div>
             </details>
             <details>
-              <summary>Can several family members use the same account?</summary>
-              <p>Yes. You create a family workspace, invite members or let them request to join, and an admin approves access. Every change is recorded in an audit trail.</p>
+              <summary><span class="q">What is FinFamily?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>FinFamily is a web application that brings a family's assets, loans, income, expenses and insurance into a single dashboard so you can see your real net worth and plan how to clear debt.</p></div>
             </details>
             <details>
-              <summary>Does FinFamily support Indian loans such as gold loans and EMIs?</summary>
-              <p>Yes. The loan engine calculates EMIs and repayment schedules, supports part-payments and rate revisions, and includes dedicated gold loan tracking. Amounts are shown in Indian rupees.</p>
+              <summary><span class="q">How does it help me close loans faster?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>The debt strategy tools compare Debt Avalanche, Debt Snowball and a custom-weighted plan for a lump sum or a monthly surplus, and show the interest saved and months cut. A prepayment calculator and rate-revision tracking help you act on it.</p></div>
             </details>
             <details>
-              <summary>How do I get started?</summary>
-              <p>Sign up with a username and password, create or join a family, then add your assets, income and loans.</p>
+              <summary><span class="q">Can I track house construction, a business or rental income?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>Yes. Expenses has a Household tab for daily spending and a Projects tab for things like a house build or a new business. Link loans and rental income to a project to see how it was funded, the rental yield and the payback period.</p></div>
+            </details>
+            <details>
+              <summary><span class="q">Can several family members use the same account?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>Yes. You create a family workspace, invite members or let them request to join, and an admin approves access. Every change is recorded in an audit trail.</p></div>
+            </details>
+            <details>
+              <summary><span class="q">Does FinFamily support Indian loans such as gold loans and EMIs?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>Yes. The loan engine calculates EMIs and repayment schedules, supports part-payments and rate revisions, and includes dedicated gold loan tracking. Amounts are shown in Indian rupees.</p></div>
+            </details>
+            <details>
+              <summary><span class="q">What is FairShare?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>FairShare is the second app in the same login. It splits trip and event expenses between households and shows exactly who pays whom.</p></div>
+            </details>
+            <details>
+              <summary><span class="q">Is FinFamily free?</span><span class="pm" aria-hidden="true"></span></summary>
+              <div class="ans"><p>Yes. Creating an account and using FinFamily is free.</p></div>
             </details>
           </div>
         </div>
       </section>
 
-      <section class="cta-band" aria-labelledby="cta-title">
+      <!-- CTA -->
+      <section style="padding-top: 0" aria-labelledby="cta-title">
         <div class="container">
-          <h2 id="cta-title">Bring your family's finances together</h2>
-          <p class="section-lead">Create your account and start with a clear view of what you own and owe.</p>
-          <div class="cta-row">
-            <a class="btn btn-primary btn-lg" href="/register">Sign up</a>
-            <a class="btn btn-ghost btn-lg" href="/login">Sign in</a>
+          <div class="cta-band reveal">
+            <span class="ring r1" aria-hidden="true"></span>
+            <span class="ring r2" aria-hidden="true"></span>
+            <h2 id="cta-title">Bring your family's finances together</h2>
+            <p class="section-lead">Start with a clear view of what you own and owe. Just amounts — no real account details.</p>
+            <div class="cta-row">
+              <a class="btn btn-primary btn-lg" href="/register">Sign up free</a>
+              <a class="btn btn-ghost btn-lg" href="/login">Sign in</a>
+            </div>
           </div>
         </div>
       </section>
@@ -425,8 +952,86 @@
         </nav>
       </div>
     </footer>
+
     <script>
-      document.getElementById('year').textContent = new Date().getFullYear();
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Scroll reveal; also marks animated containers when they enter the viewport
+        var targets = document.querySelectorAll('.reveal, #debt-chart, #proj-demo');
+        if ('IntersectionObserver' in window && !reduce) {
+          var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+            });
+          }, { threshold: 0.18, rootMargin: '0px 0px -40px 0px' });
+          targets.forEach(function (t) { io.observe(t); });
+        } else {
+          targets.forEach(function (t) { t.classList.add('in'); });
+        }
+
+        // Loan form typing demo
+        var demo = document.getElementById('loan-demo');
+        var boxes = demo.querySelectorAll('.box');
+        var hint = demo.querySelector('.hint');
+        var result = demo.querySelector('.result');
+        function showFinal() {
+          boxes.forEach(function (b) { b.querySelector('.t').textContent = b.getAttribute('data-type'); });
+          hint.textContent = hint.getAttribute('data-hint');
+          result.classList.add('show');
+        }
+        function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+        async function play() {
+          for (var i = 0; i < boxes.length; i++) {
+            var box = boxes[i], span = box.querySelector('.t'), text = box.getAttribute('data-type');
+            box.classList.add('active');
+            var caret = document.createElement('span'); caret.className = 'caret'; box.appendChild(caret);
+            for (var c = 1; c <= text.length; c++) { span.textContent = text.slice(0, c); await wait(60); }
+            if (i === 0) hint.textContent = hint.getAttribute('data-hint');
+            await wait(260);
+            box.removeChild(caret); box.classList.remove('active');
+          }
+          await wait(200);
+          result.classList.add('show');
+        }
+        if (reduce || !('IntersectionObserver' in window)) { showFinal(); }
+        else {
+          var started = false;
+          new IntersectionObserver(function (es, o) {
+            if (es[0].isIntersecting && !started) { started = true; o.disconnect(); play(); }
+          }, { threshold: 0.4 }).observe(demo);
+        }
+
+        // Screens tabs
+        var captions = {
+          'tab-dash': '<b>Dashboard.</b> Net worth, cash flow and a monthly checklist of income to confirm and EMIs to mark paid.',
+          'tab-loans': '<b>Loans.</b> Outstanding balance, rate, EMI and remaining tenure, with the projects each loan helped fund.',
+          'tab-proj': '<b>Projects.</b> How a build or business was funded, the rent it earns, yield and payback.',
+          'tab-tx': '<b>Transactions.</b> One statement of everything, where a correction flows back to its source.'
+        };
+        var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+        var cap = document.getElementById('screen-caption');
+        function select(tab) {
+          tabs.forEach(function (t) {
+            var on = t === tab;
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.tabIndex = on ? 0 : -1;
+            var p = document.getElementById(t.getAttribute('aria-controls'));
+            p.hidden = !on; p.classList.toggle('active', on);
+          });
+          cap.innerHTML = captions[tab.id];
+        }
+        tabs.forEach(function (tab, i) {
+          tab.addEventListener('click', function () { select(tab); });
+          tab.addEventListener('keydown', function (e) {
+            var n = null;
+            if (e.key === 'ArrowRight') n = tabs[(i + 1) % tabs.length];
+            if (e.key === 'ArrowLeft') n = tabs[(i - 1 + tabs.length) % tabs.length];
+            if (n) { e.preventDefault(); select(n); n.focus(); }
+          });
+        });
+      })();
     </script>
   </body>
 </html>

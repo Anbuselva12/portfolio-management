@@ -1731,7 +1731,7 @@ export const LoanDetailPage: React.FC = () => {
                 type="text"
                 value={editPlace}
                 onChange={(e) => setEditPlace(e.target.value)}
-                placeholder="e.g. Chennai Home"
+                placeholder="Enter a place or purpose"
                 className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
               />
             </div>

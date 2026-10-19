@@ -229,7 +229,7 @@ export const PartPaymentModal: React.FC<PartPaymentModalProps> = ({
                 className="w-36 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
               <span className="text-[11px] text-slate-500 dark:text-slate-400 flex-1 leading-snug">
-                Banks (like HDFC) charge simple interest for days between your last EMI date and part-payment date (e.g. ₹120). Enter the exact amount your bank quoted.
+                Banks charge simple interest for days between your last EMI date and part-payment date (e.g. ₹120). Enter the exact amount your bank quoted.
               </span>
             </div>
           </div>
@@ -306,7 +306,7 @@ export const PartPaymentModal: React.FC<PartPaymentModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. HDFC part payment via net banking ref #12345"
+              placeholder="e.g. Part payment via net banking"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
           </div>

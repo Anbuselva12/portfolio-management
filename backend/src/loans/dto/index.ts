@@ -21,9 +21,10 @@ export class CreateLoanDto {
   @IsNotEmpty()
   type!: string; // home | car | personal | jewel | education | business | gold | other
 
+  /** Optional free-text label; defaults to "<Type> loan" when left blank. */
   @IsString()
-  @IsNotEmpty()
-  lender!: string;
+  @IsOptional()
+  lender?: string;
 
   @IsString()
   @IsOptional()

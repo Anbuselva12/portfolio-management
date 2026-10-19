@@ -262,7 +262,7 @@ export const RateRevisionModal: React.FC<RateRevisionModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. RBI repo rate cut 25 bps via HDFC Bank notice"
+              placeholder="e.g. Repo rate cut passed on by the bank"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
           </div>

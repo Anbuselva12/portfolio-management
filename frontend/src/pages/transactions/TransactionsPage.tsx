@@ -609,7 +609,7 @@ export const TransactionsPage: React.FC = () => {
                                   onClick={() => setActionTarget({ tx, mode: 'edit' })}
                                   aria-label={`Edit transaction ${tx.title}`}
                                   title="Edit"
-                                  className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-cyan-700 dark:hover:text-cyan-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                  className="min-h-[44px] min-w-[44px] md:min-h-[36px] md:min-w-[36px] inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-cyan-700 dark:hover:text-cyan-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                                 >
                                   <Pencil className="w-4 h-4" />
                                 </button>
@@ -620,7 +620,7 @@ export const TransactionsPage: React.FC = () => {
                                   onClick={() => setActionTarget({ tx, mode: 'delete' })}
                                   aria-label={`${caps.deleteLabel}: ${tx.title}`}
                                   title={caps.deleteLabel}
-                                  className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                                  className="min-h-[44px] min-w-[44px] md:min-h-[36px] md:min-w-[36px] inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>

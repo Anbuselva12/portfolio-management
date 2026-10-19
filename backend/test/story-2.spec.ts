@@ -255,6 +255,16 @@ describe('Story 2 — Loan Engine, Amortization, Prepayments & Storage Parity', 
         expect(loan.id).toBeDefined();
         expect(loan.status).toBe('active');
 
+        // Lender is optional: a blank lender falls back to "<Type> loan"
+        const unnamed = await service.createLoan(member.id, family.id, {
+          type: 'personal',
+          principal: '100000',
+          interestRate: '12',
+          tenureMonths: 12,
+          startDate: '2026-01-01',
+        });
+        expect(unnamed.lender).toBe('Personal loan');
+
         // Check amortization schedule
         const schedule = await service.getSchedule(loan.id, family.id);
         expect(schedule.length).toBe(60);

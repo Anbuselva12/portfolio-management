@@ -482,7 +482,7 @@ export const MembersAccessPage: React.FC = () => {
               required
               value={inviteUsername}
               onChange={(e) => setInviteUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-              placeholder="e.g. karthik"
+              placeholder="Enter their username"
               className="mt-1 block w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
           </div>
@@ -496,7 +496,7 @@ export const MembersAccessPage: React.FC = () => {
               required
               value={inviteDisplayName}
               onChange={(e) => setInviteDisplayName(e.target.value)}
-              placeholder="e.g. Karthik Sankar"
+              placeholder="Enter their name"
               className="mt-1 block w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
           </div>

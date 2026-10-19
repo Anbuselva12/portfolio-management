@@ -102,8 +102,8 @@ export const LoansPage: React.FC = () => {
 
   const handleCreateLoan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lender.trim() || !principal || !interestRate || !tenureMonths) {
-      setFormError('Lender, principal, rate, and tenure are required.');
+    if (!principal || !interestRate || !tenureMonths) {
+      setFormError('Principal, rate, and tenure are required.');
       return;
     }
     setFormError(null);
@@ -116,7 +116,7 @@ export const LoansPage: React.FC = () => {
         placeOrPurpose: placeOrPurpose.trim() || undefined,
         comments: comments.trim() || undefined,
         emiRemindersEnabled,
-        lender: lender.trim(),
+        ...(lender.trim() ? { lender: lender.trim() } : {}),
         principal,
         interestRate,
         tenureMonths: Number(tenureMonths),
@@ -583,7 +583,7 @@ export const LoansPage: React.FC = () => {
                 type="text"
                 value={placeOrPurpose}
                 onChange={(e) => setPlaceOrPurpose(e.target.value)}
-                placeholder="e.g. Chennai Home"
+                placeholder="Enter a place or purpose"
                 className="mt-1 block w-full px-3 py-2 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
               />
             </div>
@@ -591,14 +591,13 @@ export const LoansPage: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Lending Institution / Bank *
+              Lending Institution / Bank (optional)
             </label>
             <input
               type="text"
-              required
               value={lender}
               onChange={(e) => setLender(e.target.value)}
-              placeholder="e.g. State Bank of India / HDFC Bank"
+              placeholder="Optional — any name, or leave blank"
               className="mt-1 block w-full px-3 py-2 sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>

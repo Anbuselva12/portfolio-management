@@ -94,7 +94,7 @@ export const CalibrateLoanModal: React.FC<CalibrateLoanModalProps> = ({
                 Sync to Bank Statement
               </h2>
               <p className="text-xs text-slate-400">
-                Calibrate directly with your latest HDFC / bank statement figures
+                Calibrate directly with your latest bank statement figures
               </p>
             </div>
           </div>

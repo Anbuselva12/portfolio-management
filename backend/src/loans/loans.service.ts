@@ -59,15 +59,16 @@ export class LoansService {
     }
 
     // 2. Create Loan entity
+    const lenderLabel = dto.lender?.trim() || `${dto.type.charAt(0).toUpperCase()}${dto.type.slice(1)} loan`;
     const loan = await this.loanRepository.create({
       member_id: memberId,
       family_id: familyId,
-      name: dto.name || dto.lender,
+      name: dto.name || lenderLabel,
       place_or_purpose: dto.placeOrPurpose || null,
       comments: dto.comments || null,
       emi_reminders_enabled: dto.emiRemindersEnabled ?? true,
       type: dto.type,
-      lender: dto.lender,
+      lender: lenderLabel,
       currency: dto.currency || 'INR',
       principal: principal.toString(),
       original_principal: principal.toString(),
