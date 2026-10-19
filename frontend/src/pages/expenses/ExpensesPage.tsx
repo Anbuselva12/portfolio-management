@@ -136,36 +136,40 @@ export const ExpensesPage: React.FC = () => {
   const totalMonthlySpend = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   return (
-    <div className="space-y-6">
-      <ExpensesHubTabs />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Household Expenses
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Total spending for {selectedMonth}: <span className="font-semibold text-rose-600 dark:text-rose-400 font-mono">{formatINR(totalMonthlySpend)}</span>
-          </p>
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Header: same structure as the Projects tab so actions stay in the same place */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-xs">
+            <Receipt className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">Expenses</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Household: total spending for {selectedMonth}:{' '}
+              <span className="font-semibold text-rose-600 dark:text-rose-400 font-mono">{formatINR(totalMonthlySpend)}</span>
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => setIsCategoryDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 shadow-xs transition-colors cursor-pointer"
           >
-            <Tag className="w-4 h-4 text-slate-500" />
+            <Tag className="w-4 h-4 text-gray-500" />
             <span>Manage Categories</span>
           </button>
           <button
             onClick={() => setIsExpenseDrawerOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Log Expense</span>
           </button>
         </div>
       </div>
+
+      <ExpensesHubTabs />
 
       {/* Filter Toolbar */}
       <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">

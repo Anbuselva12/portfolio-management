@@ -10,6 +10,8 @@ import {
   ILoanRepository,
   I_REPAYMENT_SCHEDULE_REPOSITORY,
   IRepaymentScheduleRepository,
+  I_PREPAYMENT_REPOSITORY,
+  IPrepaymentRepository,
   I_FAMILY_REPOSITORY,
   IFamilyRepository,
   I_CURRENCY_RATE_REPOSITORY,
@@ -25,6 +27,7 @@ export class DashboardService {
     @Inject(I_EXPENSE_REPOSITORY) private readonly expenseRepository: IExpenseRepository,
     @Inject(I_LOAN_REPOSITORY) private readonly loanRepository: ILoanRepository,
     @Inject(I_REPAYMENT_SCHEDULE_REPOSITORY) private readonly scheduleRepository: IRepaymentScheduleRepository,
+    @Inject(I_PREPAYMENT_REPOSITORY) private readonly prepaymentRepository: IPrepaymentRepository,
     @Inject(I_FAMILY_REPOSITORY) private readonly familyRepository: IFamilyRepository,
     @Inject(I_CURRENCY_RATE_REPOSITORY) private readonly currencyRateRepository: ICurrencyRateRepository,
   ) {}
@@ -40,6 +43,31 @@ export class DashboardService {
         ? new Decimal(90.5)
         : new Decimal(1));
     return amount.times(rate);
+  }
+
+  /**
+   * How far a loan is repaid. EMI loans: instalments paid out of those scheduled. Gold loans have no
+   * instalments (bullet loan with ad-hoc payments), so: amount paid out of paid + still outstanding.
+   */
+  private async getRepaymentProgress(
+    loan: any,
+    outstanding: Decimal,
+  ): Promise<
+    | { kind: 'emi'; paidInstallments: number; totalInstallments: number; progressPercent: number }
+    | { kind: 'gold'; amountPaid: number; progressPercent: number }
+  > {
+    if (loan.type === 'jewel' || loan.type === 'gold') {
+      const payments = await this.prepaymentRepository.findByLoanId(loan.id);
+      const paid = payments.reduce((sum, p) => sum.plus(p.amount.toString()), new Decimal(0));
+      const total = paid.plus(outstanding);
+      const percent = total.gt(0) ? paid.div(total).times(100) : new Decimal(0);
+      return { kind: 'gold', amountPaid: paid.toNumber(), progressPercent: Math.round(percent.toNumber()) };
+    }
+    const schedule = await this.scheduleRepository.findByLoanId(loan.id);
+    const paidInstallments = schedule.filter((i) => i.is_paid).length;
+    const totalInstallments = schedule.length || loan.tenure_months;
+    const percent = totalInstallments > 0 ? Math.round((paidInstallments / totalInstallments) * 100) : 0;
+    return { kind: 'emi', paidInstallments, totalInstallments, progressPercent: Math.min(100, percent) };
   }
 
   private async getLoanOutstandingBalance(loan: any): Promise<Decimal> {
@@ -338,19 +366,22 @@ export class DashboardService {
         const payoffDate = new Date(startDate);
         payoffDate.setMonth(payoffDate.getMonth() + l.tenure_months);
         const loanBalance = await this.getLoanOutstandingBalance(l);
+        const progress = await this.getRepaymentProgress(l, loanBalance);
 
         return {
           id: l.id,
           lender: l.lender,
           type: l.type,
-        principal: Number(loanBalance),
-        emi: Number(l.emi_amount),
-        startDate: startDate.toISOString().split('T')[0],
-        payoffDate: payoffDate.toISOString().split('T')[0],
-        tenureMonths: l.tenure_months,
-      };
-    })
-  );
+          isGoldLoan: progress.kind === 'gold',
+          principal: Number(loanBalance),
+          emi: Number(l.emi_amount),
+          startDate: startDate.toISOString().split('T')[0],
+          payoffDate: payoffDate.toISOString().split('T')[0],
+          tenureMonths: l.tenure_months,
+          ...progress,
+        };
+      }),
+    );
 
     return {
       assetAllocation,
