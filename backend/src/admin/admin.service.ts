@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { FamilyMembershipService } from '../family/family-membership.service';
 
 @Injectable()
 export class AdminService {
@@ -14,6 +15,7 @@ export class AdminService {
     @Inject(I_AUDIT_REPOSITORY) private readonly auditRepository: IAuditRepository,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly membership: FamilyMembershipService,
   ) {
     this.bcryptRounds = this.configService.get<number>('bcryptRounds') || 12;
   }
@@ -43,7 +45,10 @@ export class AdminService {
       throw new BadRequestException('Invalid member or not pending');
     }
 
-    await this.memberRepository.update(targetId, { status: 'active' });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.member.update({ where: { id: targetId }, data: { status: 'active' } });
+      await this.membership.onJoinApproved(tx, targetId, familyId);
+    });
     await this.auditRepository.create({
       member_id: adminId,
       family_id: familyId,
@@ -61,7 +66,7 @@ export class AdminService {
       throw new BadRequestException('Invalid member or not pending');
     }
 
-    await this.memberRepository.update(targetId, { status: 'unaffiliated', family_id: null });
+    await this.prisma.$transaction((tx) => this.membership.restoreAfterRejection(tx, targetId));
     await this.auditRepository.create({
       member_id: adminId,
       family_id: familyId,
@@ -150,5 +155,13 @@ export class AdminService {
     });
 
     return { message: 'Password reset', newPassword: tempPassword };
+  }
+
+  async getRemovalImpact(familyId: string, targetId: string) {
+    return this.membership.getRemovalImpact(familyId, targetId);
+  }
+
+  async removeMember(adminId: string, familyId: string, targetId: string) {
+    return this.membership.removeMember(adminId, familyId, targetId);
   }
 }

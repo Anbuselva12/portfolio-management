@@ -1,10 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuthStore } from './store/auth.store';
 import { AppShell } from './components/layout/AppShell';
 
-import { LoginPage } from './pages/auth/LoginPage';
-import { RegisterPage } from './pages/auth/RegisterPage';
 import { FamilySelectionPage } from './pages/onboarding/FamilySelectionPage';
 import { PendingApprovalPage } from './pages/onboarding/PendingApprovalPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
@@ -35,6 +33,14 @@ const LegacyTrackerProjectRedirect: React.FC = () => {
   return <Navigate to={`/expenses/projects/${id}`} replace />;
 };
 
+/** Sends signed-out visitors to the public landing page, opening its sign-in or sign-up drawer. */
+const ToLanding: React.FC<{ hash: '#signin' | '#signup' }> = ({ hash }) => {
+  useEffect(() => {
+    window.location.replace(`/${hash}`);
+  }, [hash]);
+  return null;
+};
+
 // Root redirect respecting preferred application
 const RootRedirect: React.FC = () => {
   const { user } = useAuthStore();
@@ -51,7 +57,7 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </div>
     );
   }
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <ToLanding hash="#signin" />;
   if (user.status === 'unaffiliated') return <Navigate to="/onboarding/family-selection" replace />;
   if (user.status === 'pending_approval') return <Navigate to="/onboarding/pending" replace />;
   return <>{children}</>;
@@ -67,15 +73,15 @@ const RequireOnboarding: React.FC<{ children: React.ReactNode }> = ({ children }
       </div>
     );
   }
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <ToLanding hash="#signin" />;
   if (user.status === 'active') {
     return <Navigate to={landingRoute(user.preferredApp)} replace />;
   }
   return <>{children}</>;
 };
 
-// Redirect away from login/register if already logged in
-const RedirectIfAuthenticated: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+/** Old /login and /register URLs: signed-in users go to the app, everyone else to the landing page. */
+const LegacyAuthRoute: React.FC<{ hash: '#signin' | '#signup' }> = ({ hash }) => {
   const { user, isLoading } = useAuthStore();
   if (isLoading) return null;
   if (user) {
@@ -83,29 +89,15 @@ const RedirectIfAuthenticated: React.FC<{ children: React.ReactNode }> = ({ chil
     if (user.status === 'pending_approval') return <Navigate to="/onboarding/pending" replace />;
     return <Navigate to={landingRoute(user.preferredApp)} replace />;
   }
-  return <>{children}</>;
+  return <ToLanding hash={hash} />;
 };
 
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/login"
-          element={
-            <RedirectIfAuthenticated>
-              <LoginPage />
-            </RedirectIfAuthenticated>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <RedirectIfAuthenticated>
-              <RegisterPage />
-            </RedirectIfAuthenticated>
-          }
-        />
+        <Route path="/login" element={<LegacyAuthRoute hash="#signin" />} />
+        <Route path="/register" element={<LegacyAuthRoute hash="#signup" />} />
 
         <Route
           path="/onboarding/family-selection"

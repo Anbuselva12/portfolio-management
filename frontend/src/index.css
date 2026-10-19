@@ -88,6 +88,56 @@ html {
   }
 }
 
+/* Wide tables (e.g. the transactions statement) stack into cards on tablets too. */
+@media (max-width: 1023px) {
+  table.stack-tablet,
+  table.stack-tablet tbody,
+  table.stack-tablet tr,
+  table.stack-tablet td {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+  table.stack-tablet thead {
+    display: none;
+  }
+  table.stack-tablet tr {
+    padding: 0.75rem 1rem;
+  }
+  table.stack-tablet td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0 !important;
+    text-align: right;
+    white-space: normal !important;
+  }
+  table.stack-tablet td:not([data-label]) {
+    display: block;
+    text-align: left;
+  }
+  table.stack-tablet td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--color-gray-500, #6b7280);
+  }
+  table.stack-tablet td[data-actions] {
+    justify-content: flex-end;
+    padding-top: 0.5rem !important;
+  }
+  table.stack-tablet td[data-actions]::before {
+    content: none;
+  }
+}
+
+
 @media (max-width: 767px) {
   table.stack-mobile tfoot {
     display: block;
@@ -103,3 +153,34 @@ html {
     text-align: center;
   }
 }
+
+/* ── Polish ─────────────────────────────────────────────────────────────── */
+
+/* Pages ease in on every route change (the route's content remounts inside <main>). */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  main > * { animation: page-in .35s ease both; }
+}
+
+/* Consistent heading rhythm and numerals across pages. */
+main h1 { letter-spacing: -0.02em; text-wrap: balance; }
+main { scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, .5) transparent; }
+main::-webkit-scrollbar { width: 10px; height: 10px; }
+main::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, .45); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+
+/* Never let long unbroken text (usernames, notes, ids) stretch a card. */
+main p, main li, main h1, main h2, main h3 { overflow-wrap: break-word; }
+main td .font-mono, main td .tabular-nums { white-space: nowrap; }
+
+/* Comfortable touch targets for the icon-only buttons used in table rows. */
+@media (pointer: coarse) {
+  main button { min-height: 40px; }
+}
+
+/* Visually-hidden text inside tables is absolutely positioned; anchor it to the table so a scroll container
+   clips it instead of letting it widen the page. */
+main table { position: relative; }
+

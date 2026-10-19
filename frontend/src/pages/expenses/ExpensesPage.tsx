@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { expensesApi } from '../../api/endpoints/expenses.api';
 import { ExpenseEntry, ExpenseCategory } from '../../types';
 import { formatINR } from '../../utils/currency';
+import { useIsFamily } from '../../store/workspace.store';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import {
   Receipt,
@@ -17,6 +18,7 @@ import {
 import { ExpensesHubTabs } from '../../components/expenses/ExpensesHubTabs';
 
 export const ExpensesPage: React.FC = () => {
+  const isFamily = useIsFamily();
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -396,7 +398,7 @@ export const ExpensesPage: React.FC = () => {
       <SlideDrawer
         isOpen={isCategoryDrawerOpen}
         onClose={() => setIsCategoryDrawerOpen(false)}
-        title="Family Expense Categories"
+        title={isFamily ? 'Family Expense Categories' : 'Expense Categories'}
       >
         <div className="space-y-6">
           <form onSubmit={handleAddCategory} className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">

@@ -31,6 +31,9 @@ export const mapMember = (m: any): Member | null => {
   };
 };
 
+/** Shared in-flight session check, so concurrent callers (e.g. React dev double effects) refresh only once. */
+let initializing: Promise<void> | null = null;
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
@@ -51,12 +54,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // ignore
     } finally {
-      set({ user: null, accessToken: null });
+      // Leave for the public landing page. The full page load discards in-memory auth state; clearing the
+      // store first would make the route guard redirect to the sign-in drawer instead.
+      window.location.assign('/');
     }
   },
   setToken: (token) => set({ accessToken: token }),
   setUser: (user) => set({ user }),
   initialize: async () => {
+    if (initializing) return initializing;
+    initializing = (async () => {
     try {
       const res = await authApi.refresh();
       let user = mapMember(res.member || res.user);
@@ -73,5 +80,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       set({ user: null, accessToken: null, isLoading: false });
     }
+    })().finally(() => {
+      initializing = null;
+    });
+    return initializing;
   },
 }));

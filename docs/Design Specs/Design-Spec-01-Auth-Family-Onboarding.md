@@ -56,3 +56,8 @@ Shown to any logged-in Member whose `family_id` is null. Two large side-by-side 
 | Family name not required unique | Multiple families may share a display name; disambiguate join list by creator/member-count if needed |
 | User cancels a pending join to pick another family | Pending request is withdrawn; no notification sent to the rejected family's admin |
 | Deactivated member tries to log in | Clear message: "Your account has been deactivated by your family admin." No password-reset self-service offered here (contact admin) |
+
+## Update 2026-10-19 — Skip, solo workspace and the landing-page sign-in
+- The onboarding screen now asks "How do you want to use FinFamily?" and offers a full-width **Just me for now — Skip** card above the Create / Join cards. Skipping creates a private solo workspace (SDD §4.12) and opens the dashboard.
+- Solo users later find **Settings → Create or join a family**, which reuses the same Create / Join cards: Create turns the solo workspace into a family in place; Join moves their data into the family once approved.
+- Sign-in and sign-up live only in the landing page drawer; `/login` and `/register` redirect there. Signing out returns to the landing page.

@@ -3,6 +3,7 @@ import { incomeApi } from '../../api/endpoints/income.api';
 import { trackerApi } from '../../api/endpoints/tracker.api';
 import { IncomeEntry, IncomeType, IncomeRecurrence, TrackerProject } from '../../types';
 import { formatINR } from '../../utils/currency';
+import { useIsFamily } from '../../store/workspace.store';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import { RecordReceiptModal } from '../../components/income/RecordReceiptModal';
 import {
@@ -33,6 +34,7 @@ const INCOME_TYPES: { type: IncomeType; label: string }[] = [
 ];
 
 export const IncomePage: React.FC = () => {
+  const isFamily = useIsFamily();
   const [incomes, setIncomes] = useState<IncomeEntry[]>([]);
   const [activeTab, setActiveTab] = useState<'recurring' | 'one_off'>('recurring');
   const [isLoading, setIsLoading] = useState(true);
@@ -201,7 +203,7 @@ export const IncomePage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Family Income Streams
+            {isFamily ? 'Family Income Streams' : 'My Income Streams'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Active monthly recurring: <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">{formatINR(activeMonthlyTotal)}/mo</span>

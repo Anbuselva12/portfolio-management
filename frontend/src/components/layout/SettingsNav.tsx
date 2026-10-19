@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
+import { useIsFamily, useIsSolo } from '../../store/workspace.store';
 import { User, Shield, Users, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -11,11 +12,14 @@ interface SettingsNavProps {
 export const SettingsNav: React.FC<SettingsNavProps> = ({ pendingCount = 0 }) => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+  const isFamily = useIsFamily();
+  const isSolo = useIsSolo();
 
   const tabs = [
     { to: '/settings/profile', label: 'My Profile', icon: User },
-    ...(isAdmin ? [{ to: '/settings/family', label: 'Family Settings', icon: Shield }] : []),
-    ...(isAdmin
+    ...(isSolo ? [{ to: '/settings/family', label: 'Create or join a family', icon: Users }] : []),
+    ...(isAdmin && isFamily ? [{ to: '/settings/family', label: 'Family Settings', icon: Shield }] : []),
+    ...(isAdmin && isFamily
       ? [
           {
             to: '/settings/members',

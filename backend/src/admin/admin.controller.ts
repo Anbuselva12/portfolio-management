@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -22,6 +22,16 @@ export class AdminController {
   @Get(['members/pending', 'pending'])
   async getPendingMembers(@CurrentUser() user: any) {
     return this.adminService.getPendingMembers(user.familyId);
+  }
+
+  @Get('members/:id/removal-impact')
+  async removalImpact(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.adminService.getRemovalImpact(user.familyId, id);
+  }
+
+  @Delete('members/:id')
+  async removeMember(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.adminService.removeMember(user.sub, user.familyId, id);
   }
 
   @Post(['members/:id/approve', 'approve/:id'])

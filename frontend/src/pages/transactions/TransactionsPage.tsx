@@ -461,7 +461,7 @@ export const TransactionsPage: React.FC = () => {
       {/* Transactions Feed / Table */}
       <div className="bg-white dark:bg-gray-850 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="stack-mobile w-full text-left text-sm text-gray-500 dark:text-gray-400">
+          <table className="stack-mobile stack-tablet w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
               <tr>
                 <th scope="col" className="px-5 py-3.5 font-bold">

@@ -35,3 +35,9 @@
 ## States
 - Empty Audit Trail (brand-new family): "No activity yet."
 - A Member without Admin role sees only their own actions and cannot see other members' entries in "My Activity," per the default privacy posture (family-level financial *totals* are shared; individual audit history is not, unless `allow_cross_member_edit` implies broader visibility — configurable at build time if the family wants full transparency instead).
+
+## Update 2026-10-19 — Removing members, leaving, and admin notifications
+- Members & Access shows a red **Remove** button for every member except yourself. It opens an alert dialog listing what will be permanently deleted (assets, income streams, receipts, loans, household expenses, insurance, project expenses) with counts, then **Remove and delete their data**.
+- My Profile shows a **Leave this family** card for members of a real family, with the same impact dialog. The only admin cannot leave while others remain.
+- After a removal or departure, admins see a dismissible banner at the top of the Dashboard after signing in ("<name> was removed from the family" / "<name> left the family", with what was deleted).
+- In a solo workspace the Members & Access menu, Family Settings tab and family wording are hidden.

@@ -13,7 +13,7 @@ export class PrismaFamilyRepository implements IFamilyRepository {
 
   async findDiscoverable(): Promise<Family[]> {
     return this.prisma.family.findMany({
-      where: { is_discoverable: true },
+      where: { is_discoverable: true, is_personal: false },
       include: {
         _count: {
           select: { members: true },

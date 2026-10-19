@@ -16,9 +16,13 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { SettingsNav } from '../../components/layout/SettingsNav';
+import { useIsSolo, useWorkspaceStore } from '../../store/workspace.store';
+import { FamilySelectionPage } from '../onboarding/FamilySelectionPage';
 
 export const FamilySettingsPage: React.FC = () => {
   const { user } = useAuthStore();
+  const isSolo = useIsSolo();
+  const workspaceLoaded = useWorkspaceStore((s) => !!s.workspace);
   const isAdmin = user?.role === 'admin';
 
   const [family, setFamily] = useState<any>(null);
@@ -105,7 +109,16 @@ export const FamilySettingsPage: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (isSolo) {
+    return (
+      <div className="max-w-5xl space-y-6 pb-12">
+        <SettingsNav />
+        <FamilySelectionPage embedded />
+      </div>
+    );
+  }
+
+  if (isLoading || !workspaceLoaded) {
     return (
       <div className="min-h-[400px] flex items-center justify-center text-slate-400">
         <Loader2 className="w-6 h-6 animate-spin text-cyan-600 mr-2" />

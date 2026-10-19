@@ -144,3 +144,11 @@ Light and dark mode both supported; charts must maintain positive/negative/warni
 8. AI Suggestion (Gemini) strategy integration (Design-Spec-05)
 9. Audit Trail + restore functionality (Design-Spec-07)
 10. Multi-member polish + local-storage/server-mode parity testing
+
+## Responsive layout update (2026-10-19)
+- **Breakpoints:** phone < 768px (top bar, bottom tab bar, card-stacked tables); tablet 768–1023px (**icon rail** sidebar, 72px wide, with tooltips and a dot badge for pending requests; wide tables such as the transactions statement also stack into cards); laptop >= 1024px (full 256px sidebar); desktop adds more content width.
+- **Page padding:** content keeps 32px top and side padding on md and up (the page title no longer touches the top edge) and extra bottom padding for the mobile tab bar.
+- **Motion:** each route's content eases in (fade and 8px rise), disabled for `prefers-reduced-motion`.
+- **Robustness:** a table-wide `position: relative` anchors visually-hidden text so it cannot widen the page; long words wrap inside cards; amounts never wrap mid-number.
+- Verified with an automated sweep of 16 pages at 390, 768, 1024 and 1440px (no horizontal overflow).
+

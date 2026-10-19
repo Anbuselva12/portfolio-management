@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/auth.store';
+import { useIsFamily } from '../../store/workspace.store';
+import { FamilyNotices } from '../../components/family/FamilyNotices';
 import { dashboardApi } from '../../api/endpoints/dashboard.api';
 import { incomeApi } from '../../api/endpoints/income.api';
 import { loansApi } from '../../api/endpoints/loans.api';
@@ -57,6 +59,7 @@ const LIABILITY_COLORS = ['#e11d48', '#f97316', '#d97706', '#84cc16', '#64748b']
 export const DashboardPage: React.FC = () => {
   const { user } = useAuthStore();
   const [scope, setScope] = useState<'family' | 'me'>('family');
+  const isFamily = useIsFamily();
   const [summary, setSummary] = useState<any>(null);
   const [analytics, setAnalytics] = useState<any>(null);
   const [reminders, setReminders] = useState<any>(null);
@@ -259,14 +262,17 @@ export const DashboardPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Family Portfolio Dashboard
+            {isFamily ? 'Family Portfolio Dashboard' : 'My Portfolio Dashboard'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Real-time balance sheet for {scope === 'family' ? 'all household members' : `${user?.displayName || 'You'}`}
+            {isFamily
+              ? `Real-time balance sheet for ${scope === 'family' ? 'all household members' : user?.displayName || 'you'}`
+              : 'Your real-time balance sheet, cash flow and loans'}
           </p>
         </div>
 
-        {/* Scope Toggle Button */}
+        {/* Scope Toggle Button (families only) */}
+        {isFamily && (
         <div className="inline-flex p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300/50 dark:border-slate-700/50 self-start sm:self-auto">
           <button
             onClick={() => setScope('family')}
@@ -289,7 +295,10 @@ export const DashboardPage: React.FC = () => {
             Just Me
           </button>
         </div>
+        )}
       </div>
+
+      {user?.role === 'admin' && isFamily && <FamilyNotices />}
 
       {/* Admin Pending Join Requests Notification Banner */}
       {user?.role === 'admin' && pendingRequestsCount > 0 && (

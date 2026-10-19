@@ -40,6 +40,8 @@ export class LocalStorageFamilyRepository implements IFamilyRepository {
       country: data.country,
       join_policy: data.join_policy,
       is_discoverable: data.is_discoverable,
+      is_personal: false,
+      owner_member_id: null,
       strategy_weights: null,
       created_at: new Date(),
     };

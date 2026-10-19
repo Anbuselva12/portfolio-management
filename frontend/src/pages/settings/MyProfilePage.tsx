@@ -4,11 +4,14 @@ import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../api/endpoints/auth.api';
 import { User, Lock, CheckCircle2, AlertCircle, Loader2, Palmtree } from 'lucide-react';
 import { SettingsNav } from '../../components/layout/SettingsNav';
+import { LeaveFamilyCard } from '../../components/family/LeaveFamilyCard';
+import { useIsFamily } from '../../store/workspace.store';
 
 export const MyProfilePage: React.FC = () => {
   const location = useLocation();
   const isFairShare = location.pathname.startsWith('/fairshare');
   const { user, setUser } = useAuthStore();
+  const isFamily = useIsFamily();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [preferredCurrency, setPreferredCurrency] = useState(user?.preferredCurrency || 'INR');
   const [preferredApp, setPreferredApp] = useState<'finfamily' | 'expense_tracker' | 'fairshare'>(
@@ -259,6 +262,8 @@ export const MyProfilePage: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {!isFairShare && isFamily && <LeaveFamilyCard />}
     </div>
   );
 };

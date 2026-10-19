@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuthStore } from '../../store/auth.store';
+import { useIsFamily, useWorkspaceStore } from '../../store/workspace.store';
 import {
   Home,
   Briefcase,
@@ -30,6 +31,8 @@ import { MobileAppSwitcherModal } from './MobileAppSwitcherModal';
 
 export const AppShell: React.FC = () => {
   const { user, logout } = useAuthStore();
+  const isFamily = useIsFamily();
+  const loadWorkspace = useWorkspaceStore((s) => s.load);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isAppSwitcherModalOpen, setIsAppSwitcherModalOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -37,6 +40,10 @@ export const AppShell: React.FC = () => {
   const navigate = useNavigate();
 
   const currentApp = getCurrentApp(location.pathname);
+
+  useEffect(() => {
+    loadWorkspace(user?.familyId);
+  }, [user?.familyId, loadWorkspace]);
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -76,7 +83,7 @@ export const AppShell: React.FC = () => {
     { to: '/expenses', icon: Receipt, label: 'Expenses' },
     { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
     { to: '/insurance', icon: Shield, label: 'Insurance' },
-    ...(user?.role === 'admin'
+    ...(user?.role === 'admin' && isFamily
       ? [{ to: '/settings/members', icon: Users, label: 'Members & Access', badge: pendingCount }]
       : []),
     { to: '/settings/audit', icon: Clock, label: 'Audit Trail' },
@@ -312,7 +319,7 @@ export const AppShell: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <main className="flex-1 overflow-y-auto pt-16 md:pt-0 pb-20 md:pb-0 p-3.5 sm:p-5 md:p-8">
+        <main className="flex-1 overflow-y-auto px-3.5 sm:px-5 md:px-8 pt-16 md:pt-8 pb-24 md:pb-10 min-w-0">
           <Outlet />
         </main>
       </div>

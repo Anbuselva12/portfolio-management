@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/auth.store';
+import { useIsFamily } from '../../store/workspace.store';
 import { auditApi, AuditQueryParams } from '../../api/endpoints/audit.api';
 import { AuditLogEntry } from '../../types';
 import { formatDate } from '../../utils/date';
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 
 export const AuditTrailPage: React.FC = () => {
+  const isFamily = useIsFamily();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
 
@@ -86,7 +88,7 @@ export const AuditTrailPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {isAdmin ? 'Family Audit Trail & Change Log' : 'My Activity Log'}
+              {isAdmin && isFamily ? 'Family Audit Trail & Change Log' : 'My Activity Log'}
             </h1>
             <span className="text-xs uppercase font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
               {isAdmin ? 'Admin View' : 'Personal View'}

@@ -4,6 +4,7 @@ import { adminApi } from '../../api/endpoints/admin.api';
 import { Member } from '../../types';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import { SettingsNav } from '../../components/layout/SettingsNav';
+import { RemovalConfirmModal } from '../../components/family/RemovalConfirmModal';
 import {
   Users,
   UserPlus,
@@ -37,6 +38,8 @@ export const MembersAccessPage: React.FC = () => {
   const [invitePassword, setInvitePassword] = useState('');
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
 
   // Reset code dialog
   const [resetCodeModal, setResetCodeModal] = useState<{ username: string; code: string } | null>(null);
@@ -447,6 +450,17 @@ export const MembersAccessPage: React.FC = () => {
                         )}
                       </button>
                     )}
+                    {!isCurrentUser && (
+                      <button
+                        type="button"
+                        onClick={() => setRemoveTarget({ id: m.id, name: displayName })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer"
+                        aria-label={`Remove ${displayName} from the family`}
+                      >
+                        <UserX className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -454,6 +468,20 @@ export const MembersAccessPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {removeTarget && (
+        <RemovalConfirmModal
+          mode="remove"
+          personName={removeTarget.name}
+          loadImpact={() => adminApi.removalImpact(removeTarget.id)}
+          onConfirm={async () => {
+            await adminApi.removeMember(removeTarget.id);
+            setRemoveTarget(null);
+            await loadMembersData();
+          }}
+          onClose={() => setRemoveTarget(null)}
+        />
+      )}
 
       {/* Invite Member Drawer */}
       <SlideDrawer

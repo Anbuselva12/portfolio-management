@@ -14,20 +14,8 @@ import {
 import { CreateFamilyDto } from './dto/create-family.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { DEFAULT_EXPENSE_CATEGORIES, FamilyMembershipService } from './family-membership.service';
 
-const DEFAULT_EXPENSE_CATEGORIES = [
-  'Groceries',
-  'Electricity',
-  'Gas/LPG',
-  'Internet',
-  'Fuel',
-  'Medical',
-  'Education',
-  'Dining Out',
-  'Entertainment',
-  'Rent',
-  'Others',
-];
 
 @Injectable()
 export class FamilyService {
@@ -39,6 +27,7 @@ export class FamilyService {
     @Inject(I_CURRENCY_RATE_REPOSITORY) private readonly currencyRateRepository: ICurrencyRateRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly membership: FamilyMembershipService,
   ) {}
 
   async getDiscoverableFamilies() {
@@ -96,32 +85,9 @@ export class FamilyService {
     return { family, accessToken };
   }
 
+  /** Join requests are handled by the membership service so solo users can bring their data along. */
   async joinFamily(memberId: string, familyId: string) {
-    const member = await this.memberRepository.findById(memberId);
-    if (!member) throw new NotFoundException('Member not found');
-    if (member.family_id) throw new BadRequestException('Member already belongs to a family');
-
-    const family = await this.familyRepository.findById(familyId);
-    if (!family) throw new NotFoundException('Family not found');
-
-    const newStatus = family.join_policy === 'open' ? 'active' : 'pending_approval';
-
-    await this.memberRepository.update(memberId, {
-      family_id: family.id,
-      status: newStatus,
-      role: 'member',
-    });
-
-    await this.auditRepository.create({
-      member_id: memberId,
-      family_id: family.id,
-      entity_type: 'member',
-      entity_id: memberId,
-      action: 'update',
-      field_changes: JSON.stringify({ family_id: { old: null, new: family.id }, status: { old: member.status, new: newStatus } })
-    });
-
-    return { message: `Successfully requested to join. Status: ${newStatus}` };
+    return this.membership.joinFamily(memberId, familyId);
   }
 
   async getFamily(familyId: string) {

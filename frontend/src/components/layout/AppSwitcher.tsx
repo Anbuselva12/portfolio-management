@@ -40,7 +40,7 @@ export const AppSwitcher: React.FC = () => {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          'w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer border text-left group',
+          'w-full flex items-center justify-center lg:justify-between p-2 lg:p-3 rounded-2xl transition-all cursor-pointer border text-left group',
           isOpen
             ? 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 shadow-xs'
             : 'bg-white dark:bg-gray-900 border-transparent hover:bg-gray-50 dark:hover:bg-gray-850 hover:border-gray-200 dark:hover:border-gray-800',
@@ -56,7 +56,7 @@ export const AppSwitcher: React.FC = () => {
           >
             <CurrentIcon className="w-5 h-5" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 hidden lg:block">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-extrabold tracking-tight text-gray-900 dark:text-white truncate">
                 {currentApp.name}
@@ -71,7 +71,7 @@ export const AppSwitcher: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors shrink-0">
+        <div className="hidden lg:flex items-center gap-1 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors shrink-0">
           <LayoutGrid className="w-4 h-4 opacity-70" />
           <ChevronDown
             className={clsx(

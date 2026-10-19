@@ -19,9 +19,14 @@ model Family {
   country         String   @default("IN")
   join_policy     String   @default("approval_required") // open | approval_required
   is_discoverable Boolean  @default(false)
+  /// Hidden one-person workspace created when a new user skips family setup.
+  is_personal     Boolean  @default(false)
+  /// Owner of a personal workspace (null for real families).
+  owner_member_id String?
   created_at      DateTime @default(now())
 
   members          Member[]
+  notifications    FamilyNotification[]
   assets           Asset[]
   income_entries   IncomeEntry[]
   expense_cats     ExpenseCategory[]
@@ -602,5 +607,21 @@ model FairShareSettlement {
   settled_at         DateTime @default(now())
 
   trip               FairShareTrip           @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+}
+
+// ─── Family notifications (e.g. a member was removed or left) ─────────────────
+model FamilyNotification {
+  id              String    @id @default(uuid())
+  family_id       String
+  type            String    // member_removed | member_left
+  title           String
+  message         String
+  created_at      DateTime  @default(now())
+  dismissed_at    DateTime?
+  dismissed_by_id String?
+
+  family Family @relation(fields: [family_id], references: [id])
+
+  @@index([family_id, dismissed_at])
 }
 

@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
+import { useWorkspaceStore } from '../../store/workspace.store';
 import { familyApi } from '../../api/endpoints/family.api';
-import { Users, PlusCircle, Search, Shield, CheckCircle2, Clock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Users, PlusCircle, Search, Shield, CheckCircle2, Clock, ArrowRight, Loader2, AlertCircle, UserRound } from 'lucide-react';
 import { Family } from '../../types';
 
-export const FamilySelectionPage: React.FC = () => {
+interface FamilySelectionPageProps {
+  /**
+   * `embedded` renders inside Settings for a solo user: "create" turns their solo workspace into a family
+   * (keeping their data) and there is no Skip option.
+   */
+  embedded?: boolean;
+}
+
+export const FamilySelectionPage: React.FC<FamilySelectionPageProps> = ({ embedded = false }) => {
   const navigate = useNavigate();
-  const { user, setUser, setToken } = useAuthStore();
+  const { user, setUser, setToken, initialize } = useAuthStore();
+  const resetWorkspace = useWorkspaceStore((s) => s.reset);
+  const [isSkipping, setIsSkipping] = useState(false);
+  const [skipError, setSkipError] = useState<string | null>(null);
+
+  const handleSkip = async () => {
+    setSkipError(null);
+    setIsSkipping(true);
+    try {
+      await familyApi.skip();
+      resetWorkspace();
+      await initialize();
+      navigate('/dashboard');
+    } catch (err: any) {
+      setSkipError(err.response?.data?.message || 'Could not continue without a family. Please try again.');
+      setIsSkipping(false);
+    }
+  };
 
   // Create Family state
   const [familyName, setFamilyName] = useState('');
@@ -51,13 +77,15 @@ export const FamilySelectionPage: React.FC = () => {
     setIsCreating(true);
 
     try {
-      const res = await familyApi.create({
-        name: familyName.trim(),
-        baseCurrency,
-        country: 'IN',
-        isDiscoverable,
-        joinPolicy,
-      });
+      const payload = { name: familyName.trim(), baseCurrency, country: 'IN', isDiscoverable, joinPolicy };
+      if (embedded) {
+        await familyApi.convert(payload);
+        resetWorkspace();
+        await initialize();
+        navigate('/settings/members');
+        return;
+      }
+      const res = await familyApi.create(payload);
 
       if (res.accessToken) {
         setToken(res.accessToken);
@@ -85,6 +113,10 @@ export const FamilySelectionPage: React.FC = () => {
 
     try {
       await familyApi.join(selectedFamilyId);
+      if (embedded) {
+        resetWorkspace();
+        await initialize();
+      }
       const selected = families.find((f) => f.id === selectedFamilyId);
       const isApproval = selected?.joinPolicy === 'approval_required';
 
@@ -113,23 +145,60 @@ export const FamilySelectionPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3">
-            Step 1 of 1: Family Setup
+    <div className={embedded ? '' : 'min-h-screen bg-slate-50 dark:bg-slate-950 py-10 sm:py-14 px-4 sm:px-6 lg:px-8'}>
+      <div className={embedded ? '' : 'max-w-5xl mx-auto'}>
+        {embedded ? (
+          <div className="mb-6">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Create or join a family</h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+              You're using FinFamily on your own. Turn your workspace into a family to invite others, or ask to join an
+              existing family — everything you've added comes with you once you're approved.
+            </p>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white sm:text-4xl">
-            Choose your family workspace
-          </h1>
-          <p className="mt-3 max-w-2xl mx-auto text-base text-slate-600 dark:text-slate-400">
-            Create a new family portfolio as an Administrator, or join an existing household to share finances.
-          </p>
-        </div>
+        ) : (
+          <div className="text-center mb-8 sm:mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3">
+              Set up your workspace
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              How do you want to use FinFamily?
+            </h1>
+            <p className="mt-3 max-w-2xl mx-auto text-sm sm:text-base text-slate-600 dark:text-slate-400">
+              Manage money together with your family, or start on your own and add a family any time later from Settings.
+            </p>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {!embedded && (
+          <div className="mb-6 sm:mb-8 p-5 sm:p-6 rounded-2xl border-2 border-dashed border-cyan-300 dark:border-cyan-800 bg-white/70 dark:bg-slate-900/70 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+            <div className="flex items-start gap-3">
+              <div className="w-11 h-11 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                <UserRound className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">Just me for now</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Skip family setup and start tracking your own money. You can create or join a family later.
+                </p>
+                {skipError && <p role="alert" className="text-xs text-rose-600 mt-1">{skipError}</p>}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleSkip}
+              disabled={isSkipping}
+              className="min-h-[48px] shrink-0 inline-flex items-center justify-center gap-2 px-6 rounded-xl text-sm font-bold text-white bg-slate-900 dark:bg-white dark:text-slate-900 hover:opacity-90 disabled:opacity-60 cursor-pointer"
+            >
+              {isSkipping && <Loader2 className="w-4 h-4 animate-spin" />}
+              Skip — continue on my own
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8 items-start">
           {/* Card A: Create New Family */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-full">
+          <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-full">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
                 <PlusCircle className="w-6 h-6" />
@@ -252,7 +321,7 @@ export const FamilySelectionPage: React.FC = () => {
           </div>
 
           {/* Card B: Join Existing Family */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-full">
+          <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-full">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
                 <Users className="w-6 h-6" />

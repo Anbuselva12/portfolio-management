@@ -9,6 +9,9 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { PrismaService } from '../common/prisma/prisma.service';
 
+/** How long a rotated-out refresh token is still accepted. */
+const REFRESH_ROTATION_GRACE_MS = 30_000;
+
 @Injectable()
 export class AuthService {
   private readonly bcryptRounds: number;
@@ -95,7 +98,8 @@ export class AuthService {
       throw new UnauthorizedException('Access Denied');
     }
 
-    const tokenRecord = await this.prisma.refreshToken.findFirst({
+    // The current token, plus any predecessor still inside its short rotation grace window.
+    const candidates = await this.prisma.refreshToken.findMany({
       where: {
         member_id: memberId,
         revoked: false,
@@ -103,16 +107,12 @@ export class AuthService {
       },
     });
 
-    if (!tokenRecord) {
-      throw new UnauthorizedException('Access Denied');
-    }
-
-    if (!refreshToken || !this.digestMatches(refreshToken, tokenRecord.token_hash)) {
+    if (!refreshToken || !candidates.some((t) => this.digestMatches(refreshToken, t.token_hash))) {
       throw new UnauthorizedException('Access Denied');
     }
 
     const tokens = await this.getTokens(member);
-    await this.updateRefreshToken(member.id, tokens.refreshToken);
+    await this.updateRefreshToken(member.id, tokens.refreshToken, { rotation: true });
 
     return { member, ...tokens };
   }
@@ -189,18 +189,30 @@ export class AuthService {
     return a.length === b.length && timingSafeEqual(a, b);
   }
 
-  private async updateRefreshToken(memberId: string, refreshToken: string) {
+  /**
+   * Stores a new refresh token. On sign-in every earlier token is revoked. On rotation (refresh) the previous
+   * tokens stay valid for a few seconds, so parallel refreshes (two tabs, a reload mid-request, React dev
+   * double effects) do not sign the user out; they then expire on their own.
+   */
+  private async updateRefreshToken(memberId: string, refreshToken: string, opts: { rotation?: boolean } = {}) {
     const hash = this.digest(refreshToken);
     const expiresIn = this.configService.get<string>('jwt.refreshExpiresIn') || '7d';
     const days = parseInt(expiresIn, 10);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + (isNaN(days) ? 7 : days));
 
-    // Revoke old tokens
-    await this.prisma.refreshToken.updateMany({
-      where: { member_id: memberId, revoked: false },
-      data: { revoked: true },
-    });
+    if (opts.rotation) {
+      const graceUntil = new Date(Date.now() + REFRESH_ROTATION_GRACE_MS);
+      await this.prisma.refreshToken.updateMany({
+        where: { member_id: memberId, revoked: false, expires_at: { gt: graceUntil } },
+        data: { expires_at: graceUntil },
+      });
+    } else {
+      await this.prisma.refreshToken.updateMany({
+        where: { member_id: memberId, revoked: false },
+        data: { revoked: true },
+      });
+    }
 
     await this.prisma.refreshToken.create({
       data: {

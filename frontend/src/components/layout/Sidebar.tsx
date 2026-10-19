@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
+import { useIsFamily } from '../../store/workspace.store';
 import { AppSwitcher } from './AppSwitcher';
 import {
   Home,
@@ -30,6 +31,7 @@ interface NavItem {
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
+  const isFamily = useIsFamily();
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
   const isFairShare = location.pathname.startsWith('/fairshare');
@@ -53,7 +55,7 @@ export const Sidebar: React.FC = () => {
     { to: '/expenses', icon: Receipt, label: 'Expenses' },
     { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
     { to: '/insurance', icon: Shield, label: 'Insurance' },
-    ...(user?.role === 'admin'
+    ...(user?.role === 'admin' && isFamily
       ? [{ to: '/settings/members', icon: Users, label: 'Members & Access', badge: pendingCount }]
       : []),
     { to: '/settings/audit', icon: Clock, label: 'Audit Trail' },
@@ -68,21 +70,23 @@ export const Sidebar: React.FC = () => {
   const links = isFairShare ? fairShareLinks : finFamilyLinks;
 
   return (
-    <aside className="hidden md:flex flex-col w-60 lg:w-64 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shrink-0">
+    <aside className="hidden md:flex flex-col w-[4.5rem] lg:w-64 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shrink-0">
       {/* Brand & Appian-Style Multi-App Switcher */}
-      <div className="p-3 border-b border-gray-100 dark:border-gray-850">
+      <div className="p-2 lg:p-3 border-b border-gray-100 dark:border-gray-850">
         <AppSwitcher />
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-2 lg:px-3 py-4 space-y-1.5 overflow-y-auto" aria-label="Main">
         {links.map((link) => (
           <NavLink
             key={link.label}
             to={link.to}
+            title={link.label}
+            aria-label={link.label}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all',
+                'relative flex items-center justify-center lg:justify-start gap-3 px-2 lg:px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all',
                 isActive
                   ? 'bg-cyan-600 text-white font-semibold shadow-xs'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -90,9 +94,9 @@ export const Sidebar: React.FC = () => {
             }
           >
             <link.icon className="w-5 h-5 shrink-0" />
-            <span className="truncate">{link.label}</span>
+            <span className="truncate hidden lg:inline">{link.label}</span>
             {link.badge !== undefined && link.badge > 0 && (
-              <span className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500 text-white animate-pulse">
+              <span className="absolute top-1 right-1 lg:static lg:ml-auto min-w-[1.1rem] lg:min-w-0 text-center px-1 lg:px-2 py-0 lg:py-0.5 text-[10px] lg:text-xs font-bold rounded-full bg-amber-500 text-white animate-pulse">
                 {link.badge}
               </span>
             )}
@@ -101,12 +105,12 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Profile & Logout Footer */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/40">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="p-2 lg:p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/40">
+        <div className="flex items-center justify-center lg:justify-start gap-3 mb-2 lg:mb-3" title={user?.displayName}>
           <div className="w-9 h-9 rounded-full bg-cyan-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
           </div>
-          <div className="text-sm truncate min-w-0">
+          <div className="text-sm truncate min-w-0 hidden lg:block">
             <div className="font-semibold text-gray-900 dark:text-white truncate">
               {user?.displayName}
             </div>
@@ -117,10 +121,12 @@ export const Sidebar: React.FC = () => {
         </div>
         <button
           onClick={logout}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors w-full cursor-pointer"
+          title="Log out"
+          aria-label="Log out"
+          className="flex items-center justify-center lg:justify-start gap-2 px-3 py-2 min-h-[40px] text-xs font-semibold text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors w-full cursor-pointer"
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          <span>Log out</span>
+          <span className="hidden lg:inline">Log out</span>
         </button>
       </div>
     </aside>
