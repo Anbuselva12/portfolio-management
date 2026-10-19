@@ -45,3 +45,11 @@ Only claims that exist in the product are made — no fabricated testimonials, r
 1. Set `VITE_SITE_URL` (e.g. `https://your-domain`) in the hosting environment and redeploy.
 2. Add the site in **Google Search Console**, verify ownership (DNS, or set `VITE_GOOGLE_SITE_VERIFICATION`), submit `/sitemap.xml`, then *Request indexing* for `/`.
 3. Indexing typically takes days to weeks; ranking for generic terms depends on content, backlinks and domain age.
+
+## Redesign v2 — Debt-planner positioning (added 2026-10-19, pending owner approval)
+- **Selling point:** the hero leads with the debt-payoff planner ("Too many loans? Know exactly which one to close first.") and the AI advisor (Google Gemini, on-demand on the Debt Strategies page). An announcement bar above the header carries the same message with a *Try the debt planner* link.
+- **Interactive planner (client-side only):** three illustrative loans, an Avalanche/Snowball toggle and an "extra per month" slider run a month-by-month simulation in the browser (minimum-only vs. roll-over plan) and show months to debt-free, months saved, interest saved, which loan to "Close first", and an AI-advisor-style sentence. It is labelled as an example and uses no user data or network calls.
+- **Bento feature grid** (debt strategies and AI advisor as the two large cards), a "Private by design" section (no account numbers, lender optional, no bank connection), product-screen tabs, the two-app section (FinFamily with Household + Projects, and FairShare), a project funding example, how-it-works, a redesigned FAQ and CTA band.
+- **Auth slide-over:** Sign in / Sign up (header, hero, FAQ, CTA, footer) open a right-hand drawer on the static page instead of navigating. Forms post to `POST {VITE_API_URL}/auth/login` and `/auth/register` with credentials (the refresh cookie), then redirect to `/dashboard` or `/onboarding/family-selection`; the SPA restores the session from the cookie. The `href`s still point to `/login` and `/register` (no-JS and crawler fallback), and `#signin` / `#signup` deep-link the drawer. Accessibility: `role=dialog`, focus trap, Esc to close, focus restore, page `inert` while open.
+- Motion respects `prefers-reduced-motion`; dark and light themes are token-driven.
+
