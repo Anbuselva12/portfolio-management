@@ -5,7 +5,7 @@ export type AssetType = 'bank_balance' | 'fd' | 'rd' | 'mutual_fund' | 'stocks' 
 export type IncomeType = 'salary' | 'rent' | 'dividend' | 'interest' | 'freelance' | 'other';
 export type IncomeRecurrence = 'recurring_monthly' | 'one_off';
 export type IncomeStatus = 'active' | 'stopped' | 'superseded';
-export type ExpenseSource = 'manual' | 'insurance_auto';
+export type ExpenseSource = 'manual' | 'insurance_auto' | 'loan_emi_auto';
 export type InsurancePolicyType = 'life' | 'health' | 'vehicle' | 'home' | 'other';
 export type PremiumFrequency = 'monthly' | 'quarterly' | 'annual';
 export type InsuranceStatus = 'active' | 'lapsed' | 'matured';
@@ -93,6 +93,8 @@ export interface ExpenseEntry {
   date: string;
   notes: string | null;
   source: ExpenseSource;
+  loanId?: string | null;
+  isPaid?: boolean;
   createdAt: string;
 }
 

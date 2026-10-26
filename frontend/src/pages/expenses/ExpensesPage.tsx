@@ -237,8 +237,8 @@ export const ExpensesPage: React.FC = () => {
                 {filteredExpenses.map((exp) => {
                   const cat = categories.find((c) => c.id === exp.categoryId);
                   const isAutoInsurance = exp.source === 'insurance_auto';
-                  const isAutoEmi = (exp as any).source === 'loan_emi_auto';
-                  const isPaidEmi = isAutoEmi && Boolean((exp as any).is_paid);
+                  const isAutoEmi = exp.source === 'loan_emi_auto';
+                  const isPaidEmi = isAutoEmi && Boolean(exp.isPaid);
 
                   return (
                     <tr

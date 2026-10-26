@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { useIsFamily } from '../../store/workspace.store';
@@ -20,7 +20,6 @@ import {
   Palmtree,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { adminApi } from '../../api/endpoints/admin.api';
 
 interface NavItem {
   to: string;
@@ -29,22 +28,12 @@ interface NavItem {
   badge?: number;
 }
 
-export const Sidebar: React.FC = () => {
+/** `pendingCount` (admin join requests) is fetched once by AppShell and shared with the phone menu. */
+export const Sidebar: React.FC<{ pendingCount?: number }> = ({ pendingCount = 0 }) => {
   const { user, logout } = useAuthStore();
   const isFamily = useIsFamily();
-  const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
   const isFairShare = location.pathname.startsWith('/fairshare');
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      adminApi.getPending()
-        .then((res) => {
-          if (Array.isArray(res)) setPendingCount(res.length);
-        })
-        .catch(() => {});
-    }
-  }, [user?.role]);
 
   const finFamilyLinks: NavItem[] = [
     { to: '/dashboard', icon: Home, label: 'Dashboard' },

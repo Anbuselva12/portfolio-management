@@ -126,10 +126,10 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({
               Total Interest Saved
             </div>
             <div
-              className="text-lg sm:text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap tracking-tight truncate"
-              title={'+' + formatINR(interestSaved)}
+              className={`text-lg sm:text-xl font-black font-mono mt-0.5 whitespace-nowrap tracking-tight truncate ${interestSaved > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}
+              title={formatINR(interestSaved)}
             >
-              +{formatKpiINR(interestSaved)}
+              {interestSaved > 0 ? '+' : ''}{formatKpiINR(interestSaved)}
             </div>
             <div className="text-[10px] text-slate-400 mt-0.5 truncate">
               vs. minimum payments

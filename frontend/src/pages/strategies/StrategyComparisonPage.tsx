@@ -452,8 +452,8 @@ export const StrategyComparisonPage: React.FC = () => {
             <div className="flex items-center gap-4 text-xs font-mono self-start md:self-auto shrink-0">
               <div className="text-right">
                 <div className="text-[10px] text-slate-400 uppercase font-sans font-semibold">Max Interest Saved</div>
-                <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                  +{formatINR(data.summaryBanner.maxInterestSaved)}
+                <div className={`text-sm font-black ${Number(data.summaryBanner.maxInterestSaved) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                  {Number(data.summaryBanner.maxInterestSaved) > 0 ? '+' : ''}{formatINR(data.summaryBanner.maxInterestSaved)}
                 </div>
               </div>
               {data.summaryBanner.tenureReductionMonths > 0 && (

@@ -725,6 +725,7 @@ export const GoldLoanDetailView: React.FC<GoldLoanDetailViewProps> = ({
             <button
               type="button"
               onClick={() => setQuoteResult(null)}
+              aria-label="Dismiss quote"
               className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
             >
               ✕

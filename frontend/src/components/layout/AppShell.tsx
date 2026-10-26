@@ -104,7 +104,7 @@ export const AppShell: React.FC = () => {
   return (
     <div className="relative flex h-screen h-dvh w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-hidden">
       {/* Desktop / Tablet Sidebar (hidden on screens < 768px) */}
-      <Sidebar />
+      <Sidebar pendingCount={pendingCount} />
 
       {/* Mobile Top Header Bar (< 768px) */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-3 z-40">

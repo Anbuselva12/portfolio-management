@@ -1368,6 +1368,7 @@ export const LoanDetailPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setQuoteResult(null)}
+                  aria-label="Dismiss quote"
                   className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
                 >
                   ✕
@@ -2000,6 +2001,7 @@ export const LoanDetailPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddGoldPaymentOpen(false)}
+                aria-label="Close"
                 className="text-slate-400 hover:text-slate-600 cursor-pointer text-lg leading-none"
               >
                 ✕
