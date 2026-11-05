@@ -1,4 +1,5 @@
 import { api } from '../axios';
+import { RepaymentPlanChange, RepaymentPlanRequest } from '../../types';
 
 export const loansApi = {
   getAll: async (memberId?: string) => (await api.get('/loans', { params: memberId ? { memberId } : undefined })).data,
@@ -33,6 +34,10 @@ export const loansApi = {
     (await api.delete(`/loans/${loanId}/gold-payment/${paymentId}`)).data,
   deletePrepayment: async (loanId: string, prepaymentId: string) =>
     (await api.delete(`/loans/${loanId}/prepayments/${prepaymentId}`)).data,
+  previewRepaymentPlan: async (loanId: string, data: RepaymentPlanRequest): Promise<RepaymentPlanChange> =>
+    (await api.post(`/loans/${loanId}/repayment-plan/preview`, data)).data,
+  applyRepaymentPlan: async (loanId: string, data: RepaymentPlanRequest): Promise<RepaymentPlanChange> =>
+    (await api.post(`/loans/${loanId}/repayment-plan/apply`, data)).data,
   deleteRateRevision: async (loanId: string, revisionId: string) =>
     (await api.delete(`/loans/${loanId}/rate-revisions/${revisionId}`)).data,
   recalculate: async (loanId: string) =>

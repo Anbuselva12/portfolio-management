@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/date';
 import { DiscrepancyBanner } from '../../components/loans/DiscrepancyBanner';
 import { PrepaymentCalculatorModal } from '../../components/loans/PrepaymentCalculatorModal';
 import { RateRevisionModal } from '../../components/loans/RateRevisionModal';
+import { RepaymentPlanModal } from '../../components/loans/RepaymentPlanModal';
 import { PartPaymentModal } from '../../components/loans/PartPaymentModal';
 import { CalibrateLoanModal } from '../../components/loans/CalibrateLoanModal';
 import { GoldLoanDetailView } from '../../components/loans/GoldLoanDetailView';
@@ -64,6 +65,7 @@ export const LoanDetailPage: React.FC = () => {
   // Modals state
   const [isPrepaymentOpen, setIsPrepaymentOpen] = useState(false);
   const [isRateRevisionOpen, setIsRateRevisionOpen] = useState(false);
+  const [isRepaymentPlanOpen, setIsRepaymentPlanOpen] = useState(false);
   const [isPartPaymentOpen, setIsPartPaymentOpen] = useState(false);
   const [isCalibrateOpen, setIsCalibrateOpen] = useState(false);
   const [isCloseLoanOpen, setIsCloseLoanOpen] = useState(false);
@@ -539,6 +541,8 @@ export const LoanDetailPage: React.FC = () => {
   const emiAmount = loan.emiAmount || loan.emi_amount || '0';
   const tenureMonths = loan.tenureMonths || loan.tenure_months || 0;
   const isDefaulted = loan.status === 'defaulted';
+  // EMI/tenure changes are for reducing-balance loans; gold loans are bullet and flat-interest loans have no EMI formula to solve.
+  const canChangeRepaymentPlan = !isGoldLoan && (loan.interestType || loan.interest_type) !== 'flat_simple';
   const isClosed = loan.status === 'closed' || loan.status === 'paid_off';
   const discrepancyFlag = loan.discrepancyFlag ?? loan.discrepancy_flag;
 
@@ -760,6 +764,17 @@ export const LoanDetailPage: React.FC = () => {
                 <TrendingDown className="w-3.5 h-3.5" />
                 <span>Log Rate Revision</span>
               </button>
+
+              {canChangeRepaymentPlan && (
+                <button
+                  onClick={() => setIsRepaymentPlanOpen(true)}
+                  disabled={isDefaulted}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-400 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Change EMI / Tenure</span>
+                </button>
+              )}
 
               <button
                 onClick={() => setIsCalibrateOpen(true)}
@@ -1948,6 +1963,18 @@ export const LoanDetailPage: React.FC = () => {
           onClose={() => setIsPrepaymentOpen(false)}
           loan={loan}
           onPrepaymentApplied={loadLoanData}
+        />
+      )}
+
+      {/* Change EMI / Tenure Modal */}
+      {loan && canChangeRepaymentPlan && (
+        <RepaymentPlanModal
+          isOpen={isRepaymentPlanOpen}
+          onClose={() => setIsRepaymentPlanOpen(false)}
+          loanId={id!}
+          currentEmi={emiAmount}
+          remainingMonths={remainingMonths}
+          onSuccess={loadLoanData}
         />
       )}
 

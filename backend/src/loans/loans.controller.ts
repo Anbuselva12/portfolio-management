@@ -12,6 +12,7 @@ import {
   ApplyPrepaymentDto,
   UpdateInstallmentDto,
   RateRevisionDto,
+  RepaymentPlanDto,
   CalibrateLoanDto,
   CloseLoanDto,
 } from './dto';
@@ -135,6 +136,24 @@ export class LoansController {
     @Body() dto: RateRevisionDto,
   ) {
     return this.loansService.applyRateRevision(id, user.familyId, user.sub, dto);
+  }
+
+  @Post(':id/repayment-plan/preview')
+  async previewRepaymentPlan(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: RepaymentPlanDto,
+  ) {
+    return this.loansService.previewRepaymentPlan(id, user.familyId, dto);
+  }
+
+  @Post(':id/repayment-plan/apply')
+  async applyRepaymentPlan(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: RepaymentPlanDto,
+  ) {
+    return this.loansService.applyRepaymentPlan(id, user.familyId, user.sub, dto);
   }
 
   @Delete(':id/rate-revisions/:revisionId')

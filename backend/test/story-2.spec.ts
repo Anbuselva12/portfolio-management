@@ -328,6 +328,45 @@ describe('Story 2 — Loan Engine, Amortization, Prepayments & Storage Parity', 
         expect(Number(calibratedSchedule[0].opening_balance)).toBe(3439456);
         // Final month residual tail clears closing balance to exactly 0
         expect(Number(calibratedSchedule[128].closing_balance)).toBe(0);
+
+        // 6. Repayment plan: a higher EMI shortens the tenure, a chosen tenure sets the EMI
+        const previewHigherEmi = await service.previewRepaymentPlan(loan.id, family.id, { mode: 'set_emi', newEmi: '50000' });
+        expect(previewHigherEmi.newTenureMonths).toBeLessThan(129);
+        expect(Number(previewHigherEmi.interestSaved)).toBeGreaterThan(0);
+        // a preview writes nothing
+        expect((await service.getSchedule(loan.id, family.id)).length).toBe(129);
+
+        await service.applyRepaymentPlan(loan.id, family.id, member.id, { mode: 'set_emi', newEmi: '50000' });
+        const afterHigherEmi = await service.getSchedule(loan.id, family.id);
+        expect(afterHigherEmi.length).toBe(previewHigherEmi.newTenureMonths);
+        expect(Number(afterHigherEmi[0].emi_amount)).toBe(50000);
+        expect(Number(afterHigherEmi[afterHigherEmi.length - 1].closing_balance)).toBe(0);
+        const reloaded = await service.getLoanById(loan.id, family.id);
+        expect(Number(reloaded.emi_amount)).toBe(50000);
+        expect(reloaded.tenure_months).toBe(afterHigherEmi.length);
+
+        await service.applyRepaymentPlan(loan.id, family.id, member.id, { mode: 'set_tenure', newTenureMonths: 180 });
+        const afterLongerTenure = await service.getSchedule(loan.id, family.id);
+        expect(afterLongerTenure.length).toBe(180);
+        expect(Number(afterLongerTenure[0].emi_amount)).toBeLessThan(38848);
+
+        // an EMI that does not cover the monthly interest is refused and changes nothing
+        await expect(
+          service.previewRepaymentPlan(loan.id, family.id, { mode: 'set_emi', newEmi: '1000' }),
+        ).rejects.toThrow(/monthly interest/);
+        expect((await service.getSchedule(loan.id, family.id)).length).toBe(180);
+
+        // gold loans have no EMI to change
+        const goldLoan = await service.createLoan(member.id, family.id, {
+          type: 'gold',
+          principal: '400000',
+          interestRate: '11',
+          tenureMonths: 12,
+          startDate: '2026-01-01',
+        });
+        await expect(
+          service.previewRepaymentPlan(goldLoan.id, family.id, { mode: 'set_tenure', newTenureMonths: 6 }),
+        ).rejects.toThrow(/Gold loans/);
       });
 
       it('DoD 7-12: Auto-queues monthly EMI, syncs payment bi-directionally, and persists custom loan metadata', async () => {

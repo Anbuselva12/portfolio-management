@@ -53,7 +53,50 @@ export interface RateRevisionCalculation {
   previousPayoffDate: Date;
 }
 
+export type RepaymentPlanTarget =
+  | { mode: 'set_emi'; newEmi: Decimal }
+  | { mode: 'set_tenure'; newTenureMonths: number };
+
+export interface RepaymentPlanInput {
+  outstanding: Decimal;
+  annualRatePct: Decimal;
+  currentEmi: Decimal;
+  remainingTenureMonths: number;
+  /** Interest still to be paid on the current schedule (sum of the unpaid installments). */
+  remainingInterest: Decimal;
+  firstDueDate: Date;
+  previousPayoffDate: Date;
+  target: RepaymentPlanTarget;
+}
+
+export interface RepaymentPlanChange {
+  mode: 'set_emi' | 'set_tenure';
+  outstanding: Decimal;
+  oldEmi: Decimal;
+  newEmi: Decimal;
+  oldTenureMonths: number;
+  newTenureMonths: number;
+  /** Positive when the plan gets shorter. */
+  tenureDiffMonths: number;
+  /** Positive when the monthly payment goes up. */
+  emiDiff: Decimal;
+  /** Amount of the last installment, which absorbs rounding so the balance closes at exactly zero. */
+  lastInstallmentAmount: Decimal;
+  oldRemainingInterest: Decimal;
+  newRemainingInterest: Decimal;
+  /** Positive when the new plan costs less interest than the current one. */
+  interestSaved: Decimal;
+  newPayoffDate: Date;
+  previousPayoffDate: Date;
+}
+
+/** Raised for a plan that is mathematically impossible or outside sane limits; callers map it to a 400. */
+export class RepaymentPlanError extends Error {}
+
 export class LoanEngine {
+  /** 50 years: anything longer is treated as an input mistake rather than a plan. */
+  static readonly MAX_REMAINING_TENURE_MONTHS = 600;
+
   /**
    * Reducing-balance compound interest monthly EMI calculation.
    * Formula: EMI = P * r * (1 + r)^n / ((1 + r)^n - 1)
@@ -463,6 +506,69 @@ export class LoanEngine {
       interestSaved,
       newPayoffDate,
       previousPayoffDate: currentPayoffDate,
+    };
+  }
+
+  /**
+   * Remaining months needed to clear `outstanding` paying a fixed `emi` (reducing balance):
+   * n = -ln(1 - r*P/EMI) / ln(1 + r). A remainder of up to 2% of one EMI is left for the last
+   * installment to absorb, so paisa rounding of the EMI never creates a one-rupee extra month.
+   */
+  static calculateTenureForEmi(outstanding: Decimal, annualRatePct: Decimal, emi: Decimal): number {
+    const r = annualRatePct.dividedBy(12).dividedBy(100);
+    const monthlyInterest = outstanding.times(r);
+    if (emi.lessThanOrEqualTo(monthlyInterest)) {
+      throw new RepaymentPlanError(
+        `EMI must be more than the monthly interest of ${monthlyInterest.toFixed(2)}, otherwise the balance never reduces.`,
+      );
+    }
+    const exactMonths = r.isZero()
+      ? outstanding.dividedBy(emi)
+      : Decimal.ln(new Decimal(1).minus(monthlyInterest.dividedBy(emi))).negated().dividedBy(Decimal.ln(new Decimal(1).plus(r)));
+    return Math.max(1, exactMonths.minus('0.02').ceil().toNumber());
+  }
+
+  /**
+   * What-if for changing the monthly EMI (tenure follows) or the remaining tenure (EMI follows)
+   * of a reducing-balance loan, measured from the next unpaid installment.
+   */
+  static calculateRepaymentPlanChange(input: RepaymentPlanInput): RepaymentPlanChange {
+    const { outstanding, annualRatePct, currentEmi, remainingTenureMonths, firstDueDate, target } = input;
+
+    let newEmi: Decimal;
+    let planMonths: number;
+    if (target.mode === 'set_emi') {
+      newEmi = target.newEmi.toDecimalPlaces(2);
+      planMonths = this.calculateTenureForEmi(outstanding, annualRatePct, newEmi);
+    } else {
+      planMonths = target.newTenureMonths;
+      newEmi = this.calculateReducingEmi(outstanding, annualRatePct, planMonths);
+    }
+    if (planMonths > this.MAX_REMAINING_TENURE_MONTHS) {
+      throw new RepaymentPlanError(
+        `That plan needs ${planMonths} more months; the limit is ${this.MAX_REMAINING_TENURE_MONTHS} (50 years). Increase the EMI.`,
+      );
+    }
+
+    const schedule = this.generateAmortizationSchedule(outstanding, annualRatePct, planMonths, firstDueDate, newEmi);
+    const last = schedule[schedule.length - 1];
+    const newRemainingInterest = schedule.reduce((sum, i) => sum.plus(i.interest_component), new Decimal(0));
+
+    return {
+      mode: target.mode,
+      outstanding,
+      oldEmi: currentEmi.toDecimalPlaces(2),
+      newEmi,
+      oldTenureMonths: remainingTenureMonths,
+      newTenureMonths: schedule.length,
+      tenureDiffMonths: remainingTenureMonths - schedule.length,
+      emiDiff: newEmi.minus(currentEmi).toDecimalPlaces(2),
+      lastInstallmentAmount: last.emi_amount,
+      oldRemainingInterest: input.remainingInterest.toDecimalPlaces(2),
+      newRemainingInterest: newRemainingInterest.toDecimalPlaces(2),
+      interestSaved: input.remainingInterest.minus(newRemainingInterest).toDecimalPlaces(2),
+      newPayoffDate: last.due_date,
+      previousPayoffDate: input.previousPayoffDate,
     };
   }
 }

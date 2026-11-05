@@ -20,10 +20,11 @@ import {
   ApplyPrepaymentDto,
   UpdateInstallmentDto,
   RateRevisionDto,
+  RepaymentPlanDto,
   CalibrateLoanDto,
   CloseLoanDto,
 } from './dto';
-import { LoanEngine } from './engine/loan-engine';
+import { LoanEngine, RepaymentPlanChange, RepaymentPlanError } from './engine/loan-engine';
 import { GoldLoanCalculator } from './engine/gold-loan.calculator';
 import Decimal from 'decimal.js';
 
@@ -684,6 +685,118 @@ export class LoansService {
 
     await this.recalculateLoanOutstanding(loanId);
     return revision;
+  }
+
+  /**
+   * Loads everything a repayment-plan change needs and runs the what-if, writing nothing.
+   * Only reducing-balance, non-gold loans with unpaid installments can be restructured.
+   */
+  private async buildRepaymentPlan(loanId: string, familyId: string, dto: RepaymentPlanDto) {
+    const loan = await this.getLoanById(loanId, familyId);
+    if (loan.type === 'jewel' || loan.type === 'gold') {
+      throw new BadRequestException('Gold loans are bullet loans with no EMI to change.');
+    }
+    if (loan.status === 'closed' || loan.status === 'paid_off') {
+      throw new BadRequestException('This loan is closed, so its repayment plan cannot be changed.');
+    }
+    if (loan.interest_type === 'flat_simple') {
+      throw new BadRequestException('Changing the EMI or tenure is available for reducing-balance loans only.');
+    }
+
+    const schedule = await this.scheduleRepository.findByLoanId(loanId);
+    const unpaid = schedule.filter((i) => !i.is_paid);
+    const nextInst = unpaid[0];
+    if (!nextInst) throw new BadRequestException('No unpaid installments are left on this loan.');
+
+    const remainingInterest = unpaid.reduce((sum, i) => sum.plus(i.interest_component.toString()), new Decimal(0));
+    const target =
+      dto.mode === 'set_emi'
+        ? { mode: 'set_emi' as const, newEmi: new Decimal(dto.newEmi as string) }
+        : { mode: 'set_tenure' as const, newTenureMonths: dto.newTenureMonths as number };
+
+    let plan: RepaymentPlanChange;
+    try {
+      plan = LoanEngine.calculateRepaymentPlanChange({
+        outstanding: new Decimal(nextInst.opening_balance.toString()),
+        annualRatePct: new Decimal(loan.interest_rate.toString()),
+        currentEmi: new Decimal(loan.emi_amount.toString()),
+        remainingTenureMonths: unpaid.length,
+        remainingInterest,
+        firstDueDate: nextInst.due_date,
+        previousPayoffDate: schedule[schedule.length - 1].due_date,
+        target,
+      });
+    } catch (err) {
+      if (err instanceof RepaymentPlanError) throw new BadRequestException(err.message);
+      throw err;
+    }
+    return { loan, schedule, nextInst, plan };
+  }
+
+  async previewRepaymentPlan(loanId: string, familyId: string, dto: RepaymentPlanDto) {
+    const { plan } = await this.buildRepaymentPlan(loanId, familyId, dto);
+    return plan;
+  }
+
+  async applyRepaymentPlan(loanId: string, familyId: string, memberId: string, dto: RepaymentPlanDto) {
+    const { loan, schedule, nextInst, plan } = await this.buildRepaymentPlan(loanId, familyId, dto);
+    const paidCount = schedule.length - schedule.filter((i) => !i.is_paid).length;
+
+    const newInstallments = LoanEngine.generateAmortizationSchedule(
+      plan.outstanding,
+      new Decimal(loan.interest_rate.toString()),
+      plan.newTenureMonths,
+      nextInst.due_date,
+      plan.newEmi,
+      loan.interest_type,
+    );
+
+    // The EMI is now an explicit choice, so it replaces the originally entered one and any
+    // "entered EMI differs from calculated" warning no longer applies.
+    await this.loanRepository.update(loanId, {
+      emi_amount: plan.newEmi.toString() as any,
+      user_emi_input: plan.newEmi.toString() as any,
+      tenure_months: paidCount + plan.newTenureMonths,
+      discrepancy_flag: false,
+      discrepancy_details: null,
+    } as any);
+
+    await this.scheduleRepository.deleteFutureInstallments(loanId, nextInst.installment_number);
+    await this.scheduleRepository.createMany(
+      newInstallments.map((inst, index) => ({
+        loan_id: loanId,
+        installment_number: nextInst.installment_number + index,
+        due_date: inst.due_date,
+        opening_balance: inst.opening_balance.toString(),
+        emi_amount: inst.emi_amount.toString(),
+        principal_component: inst.principal_component.toString(),
+        interest_component: inst.interest_component.toString(),
+        closing_balance: inst.closing_balance.toString(),
+        is_paid: false,
+        is_manually_edited: false,
+      })),
+    );
+
+    await this.auditRepository.create({
+      member_id: memberId,
+      family_id: familyId,
+      entity_type: 'loan',
+      entity_id: loanId,
+      action: 'update',
+      field_changes: JSON.stringify({
+        repaymentPlan: {
+          mode: plan.mode,
+          oldEmi: plan.oldEmi.toString(),
+          newEmi: plan.newEmi.toString(),
+          oldTenureMonths: plan.oldTenureMonths,
+          newTenureMonths: plan.newTenureMonths,
+          interestSaved: plan.interestSaved.toString(),
+        },
+      }),
+    });
+
+    await this.recalculateLoanOutstanding(loanId);
+    return plan;
   }
 
   async calibrateLoan(loanId: string, familyId: string, memberId: string, dto: CalibrateLoanDto) {

@@ -91,6 +91,16 @@ Direct execution modal for recording ad-hoc principal prepayments against active
 
 ---
 
+
+### Change EMI / Tenure (reducing-balance, non-gold loans)
+Lets the user raise or lower the monthly EMI (the tenure follows) or propose a shorter/longer time left (the EMI follows). Button **Change EMI / Tenure** in the loan header; hidden for gold/bullet loans and flat-interest loans.
+- **Inputs**: a two-way switch — *Change EMI* (amount, with −10% / +10% / +25% shortcuts) or *Change tenure* (years + months, with −1 / +1 / +2 yr shortcuts). Defaults to the loan's current EMI and months left.
+- **Live preview** (debounced; nothing is saved): Monthly EMI `old → new`, Time left `old → new`, Debt-free date (vs. previous), Interest from here (saves / costs more), and the final installment when it differs from the EMI (it absorbs rounding so the balance closes at zero).
+- **Feasibility line**: compares the *increase* in EMI with this month's household surplus (the dashboard's net savings): *Feasible* (fits, shows what is left), *Tight* (short by ₹X), or a plain note when the surplus cannot be loaded. A lower EMI states the monthly relief and that interest rises.
+- **Rules**: the EMI must exceed the first month's interest; a plan longer than 600 months (50 years) is refused; both with a plain-language message. **Apply** is disabled when nothing would change.
+- **On apply**: paid installments are kept; unpaid ones are regenerated from the next due date; the loan's EMI and total tenure are updated; the "entered EMI differs from calculated" warning is cleared (the EMI is now an explicit choice); an audit entry records old/new EMI and tenure.
+- **API**: `POST /loans/:id/repayment-plan/preview` and `/apply`, body `{ mode: 'set_emi', newEmi }` or `{ mode: 'set_tenure', newTenureMonths }`.
+
 ## 4. Rate Revision Modal (Floating-Rate / RLLR / EBLR)
 Supports periodic benchmark rate adjustments (e.g. RBI repo-rate changes).
 - **Inputs**:

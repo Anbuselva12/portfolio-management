@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumberString, IsInt, Min, IsOptional, IsDateString, IsIn, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumberString, IsInt, Min, IsOptional, IsDateString, IsIn, IsBoolean, ValidateIf, Max } from 'class-validator';
 
 export class CreateLoanDto {
   @IsString()
@@ -186,6 +186,24 @@ export class RateRevisionDto {
   @IsString()
   @IsOptional()
   notes?: string;
+}
+
+export class RepaymentPlanDto {
+  @IsIn(['set_emi', 'set_tenure'])
+  mode!: 'set_emi' | 'set_tenure';
+
+  /** Required when mode is set_emi: the monthly EMI to move to. The tenure follows. */
+  @ValidateIf((o) => o.mode === 'set_emi')
+  @IsNumberString()
+  @IsNotEmpty()
+  newEmi?: string;
+
+  /** Required when mode is set_tenure: months left to pay from the next installment. The EMI follows. */
+  @ValidateIf((o) => o.mode === 'set_tenure')
+  @IsInt()
+  @Min(1)
+  @Max(600)
+  newTenureMonths?: number;
 }
 
 export class CalibrateLoanDto {

@@ -269,6 +269,30 @@ export interface RateRevisionImpact {
   previousPayoffDate: string;
 }
 
+export type RepaymentPlanRequest =
+  | { mode: 'set_emi'; newEmi: string }
+  | { mode: 'set_tenure'; newTenureMonths: number };
+
+export interface RepaymentPlanChange {
+  mode: 'set_emi' | 'set_tenure';
+  outstanding: string | number;
+  oldEmi: string | number;
+  newEmi: string | number;
+  oldTenureMonths: number;
+  newTenureMonths: number;
+  /** Positive when the plan gets shorter. */
+  tenureDiffMonths: number;
+  /** Positive when the monthly payment goes up. */
+  emiDiff: string | number;
+  lastInstallmentAmount: string | number;
+  oldRemainingInterest: string | number;
+  newRemainingInterest: string | number;
+  /** Positive when the new plan costs less interest. */
+  interestSaved: string | number;
+  newPayoffDate: string;
+  previousPayoffDate: string;
+}
+
 export interface BrokenInterestResponse {
   days: number;
   currentOutstanding: string;
