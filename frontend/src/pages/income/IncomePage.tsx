@@ -198,11 +198,11 @@ export const IncomePage: React.FC = () => {
     .reduce((sum, i) => sum + Number(i.amount || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-md:space-y-3">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+      <div className="flex flex-row sm:items-center justify-between gap-3 max-md:items-center">
+        <div className="min-w-0">
+          <h1 className="text-2xl max-md:text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {isFamily ? 'Family Income Streams' : 'My Income Streams'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -211,7 +211,7 @@ export const IncomePage: React.FC = () => {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/20 transition-all cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2.5 max-md:min-h-[44px] shrink-0 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/20 transition-all cursor-pointer self-start sm:self-auto max-md:self-center"
         >
           <Plus className="w-4 h-4" />
           <span>Add Income</span>
@@ -220,7 +220,7 @@ export const IncomePage: React.FC = () => {
 
       {/* Tabs */}
       <div className="border-b border-slate-200 dark:border-slate-800">
-        <nav className="flex space-x-8">
+        <nav className="flex space-x-8 max-md:space-x-0 max-md:[&>button]:flex-1 max-md:[&>button]:text-center">
           <button
             onClick={() => setActiveTab('recurring')}
             className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
@@ -229,7 +229,7 @@ export const IncomePage: React.FC = () => {
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
-            Recurring Monthly Income
+            <span className="md:hidden">Recurring</span><span className="max-md:hidden">Recurring Monthly Income</span>
           </button>
           <button
             onClick={() => setActiveTab('one_off')}
@@ -239,7 +239,7 @@ export const IncomePage: React.FC = () => {
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
-            One-Off Incomes
+            <span className="md:hidden">One-off</span><span className="max-md:hidden">One-Off Incomes</span>
           </button>
         </nav>
       </div>

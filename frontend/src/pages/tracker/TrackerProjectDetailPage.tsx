@@ -599,7 +599,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 max-md:p-0 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 max-md:space-y-4">
       {/* Top Header & Breadcrumb */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">

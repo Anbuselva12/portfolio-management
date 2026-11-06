@@ -209,3 +209,79 @@ nav.safe-bottom.h-16 { height: calc(4rem + env(safe-area-inset-bottom)); }
   main { overscroll-behavior-y: contain; }
   main img, main svg { max-width: 100%; }
 }
+
+/* ── Mobile: compact list rows (replaces the card-per-row table stacking) ───────────────
+ * Row 1: primary cell (the one without data-label) + the Amount/Value cell on the right.
+ * Row 2: remaining labelled cells inline as small metadata, actions pushed to the right. */
+@media (max-width: 767px) {
+  table.stack-mobile tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.5rem;
+    padding: 0.65rem 0.85rem;
+  }
+  table.stack-mobile td {
+    display: block;
+    width: auto;
+    padding: 0 !important;
+    text-align: left;
+    font-size: 0.75rem;
+    order: 3;
+    min-width: 0 !important;
+  }
+  table.stack-mobile td[data-label]::before { content: none; }
+  table.stack-mobile td:not([data-label]):not([data-actions]) {
+    order: 1;
+    flex: 1 1 100%;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+  table.stack-mobile tr:has(td[data-label='Amount'], td[data-label='Value']) > td:not([data-label]):not([data-actions]) {
+    flex-basis: calc(100% - 8.75rem);
+  }
+  table.stack-mobile td[data-label='Amount'],
+  table.stack-mobile td[data-label='Value'] {
+    order: 2;
+    flex: 0 0 8.25rem;
+    text-align: right;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  table.stack-mobile td[data-actions] {
+    order: 4;
+    margin-left: auto;
+    padding: 0 !important;
+  }
+  table.stack-mobile td[data-actions] button { min-height: 36px; min-width: 36px; }
+}
+
+@media (max-width: 767px) {
+  /* Row action icons sit on the metadata line; don't let their 36px hit area inflate the row. */
+  table.stack-mobile td[data-actions] { margin-block: -0.35rem; }
+}
+
+@media (max-width: 767px) {
+  /* Tables whose inline cells need their column name (e.g. amortization: Principal / Interest / Balance). */
+  table.stack-mobile.stack-labeled td[data-label]:not([data-label=''])::before {
+    content: attr(data-label) ' ';
+    display: inline;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-gray-500, #6b7280);
+    margin-right: 0.15rem;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Row-layout rules above set display on cells; keep the `max-md:hidden` utility authoritative. */
+  table.stack-mobile td.max-md\:hidden { display: none; }
+}
+
+@media (max-width: 767px) {
+  /* Page titles and their one-line descriptions: one scale across every phone screen. */
+  main h1 { font-size: 1.375rem !important; line-height: 1.75rem !important; }
+  main h1 + p { font-size: 0.8125rem; line-height: 1.25rem; }
+}

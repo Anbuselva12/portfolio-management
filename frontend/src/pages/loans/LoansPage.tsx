@@ -8,6 +8,7 @@ import { formatINR } from '../../utils/currency';
 import { useIsFamily } from '../../store/workspace.store';
 import { formatDate } from '../../utils/date';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
+import { LoanRowsMobile, type LoanRowData } from '../../components/loans/LoanRowsMobile';
 import {
   CreditCard,
   Plus,
@@ -207,6 +208,29 @@ export const LoansPage: React.FC = () => {
     });
   }, [displayedLoans, sortBy]);
 
+  const mobileRows: LoanRowData[] = sortedLoans.map((loan: Loan) => {
+    const typeObj = LOAN_TYPES.find((t) => t.type === loan.type);
+    const outstanding = Number((loan.current_outstanding_principal ?? (loan as any).currentOutstandingPrincipal ?? loan.principal) || 0);
+    const original = Number((loan.original_principal || (loan as any).originalPrincipal || loan.principal) || 0);
+    const closed = loan.status === 'closed' || loan.status === 'paid_off';
+    const emi = loan.emiAmount ?? loan.emi_amount;
+    return {
+      id: loan.id,
+      name: (loan as any).name || loan.lender,
+      subtitle: loan.lender,
+      icon: typeObj?.icon || CreditCard,
+      isGold: isGoldLoan(loan),
+      isClosed: closed,
+      outstanding,
+      paidPercent: closed ? 100 : original > 0 ? Math.min(100, Math.max(0, Math.round((1 - outstanding / original) * 100))) : 0,
+      rate: String(loan.interestRate ?? loan.interest_rate),
+      emi: emi != null ? Number(emi) : null,
+      remainingMonths: getRemainingTenure(loan),
+      reconciled: Boolean(loan.discrepancyFlag ?? (loan as any).discrepancy_flag),
+      projectNames: allocations.filter((a) => a.loanId === loan.id).map((a) => a.projectName),
+    };
+  });
+
   const totalOutstanding = activeLoans.reduce(
     (sum: number, l: Loan) => sum + Number((l.current_outstanding_principal ?? (l as any).currentOutstandingPrincipal ?? l.principal) || 0),
     0,
@@ -216,26 +240,36 @@ export const LoansPage: React.FC = () => {
     .reduce((sum: number, l: Loan) => sum + Number(l.emiAmount ?? l.emi_amount ?? 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-md:space-y-3">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-md:gap-2.5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl max-md:text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {isFamily ? 'Family Loans & Liabilities' : 'My Loans & Liabilities'}
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="max-md:hidden text-sm text-slate-500 dark:text-slate-400 mt-1">
             Total active debt: <span className="font-semibold text-rose-600 dark:text-rose-400 font-mono">{formatINR(totalOutstanding)}</span> • Monthly EMI obligation: <span className="font-semibold text-slate-900 dark:text-white font-mono">{formatINR(totalMonthlyEmi)}/mo</span>
           </p>
         </div>
-        <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+        <div className="md:hidden grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active debt</div>
+            <div className="font-mono font-bold text-sm text-rose-600 dark:text-rose-400 truncate">{formatINR(totalOutstanding)}</div>
+          </div>
+          <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Monthly EMI</div>
+            <div className="font-mono font-bold text-sm text-slate-900 dark:text-white truncate">{formatINR(totalMonthlyEmi)}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 max-md:gap-2 self-start sm:self-auto flex-wrap max-md:flex-nowrap max-md:self-stretch">
           {displayedLoans.length > 1 && (
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center gap-2 max-md:order-2 max-md:flex-1 max-md:min-w-0 bg-white dark:bg-slate-900 px-3 py-2 max-md:min-h-[44px] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">Sort:</span>
+              <span className="max-md:hidden text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer max-md:w-full max-md:min-w-0"
               >
                 <option value="highest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Highest Loan</option>
                 <option value="lowest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Lowest Loan</option>
@@ -248,7 +282,7 @@ export const LoansPage: React.FC = () => {
             type="button"
             onClick={handleSyncAll}
             disabled={isSyncing || isLoading}
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 max-md:order-3 max-md:w-11 max-md:min-h-[44px] max-md:px-0 shrink-0 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all cursor-pointer disabled:opacity-50"
             title="Sync and recalculate current outstanding balances for all loans"
           >
             <RefreshCw className={`w-4 h-4 text-slate-500 dark:text-slate-400 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -259,7 +293,7 @@ export const LoansPage: React.FC = () => {
               setFormError(null);
               setIsDrawerOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 max-md:order-1 max-md:min-h-[44px] shrink-0 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Loan</span>
@@ -268,7 +302,7 @@ export const LoansPage: React.FC = () => {
       </div>
 
       {/* Tabs: Active Loans vs Closed Loans */}
-      <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 pt-1 overflow-x-auto scrollbar-none whitespace-nowrap">
+      <div className="flex items-center gap-6 max-md:gap-5 border-b border-slate-200 dark:border-slate-800 pt-1 overflow-x-auto scrollbar-none whitespace-nowrap">
         <button
           onClick={() => setActiveTab('active')}
           className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
@@ -340,7 +374,14 @@ export const LoansPage: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <>
+        <LoanRowsMobile
+          rows={mobileRows}
+          onOpen={(id) => navigate(`/loans/${id}`)}
+          onDelete={handleDeleteLoan}
+          onTagProject={(id, label) => setTagLoan({ id, label })}
+        />
+        <div className="max-md:hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedLoans.map((loan: Loan) => {
             const typeObj = LOAN_TYPES.find((t) => t.type === loan.type);
             const Icon = typeObj?.icon || CreditCard;
@@ -517,6 +558,7 @@ export const LoansPage: React.FC = () => {
             );
           })}
         </div>
+        </>
       )}
 
       {tagLoan && (

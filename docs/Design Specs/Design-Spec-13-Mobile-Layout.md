@@ -23,3 +23,14 @@ Charts, reminders and the payoff timeline follow unchanged.
 
 ## Retired
 FairShare and the App Switcher (2026-11-06). Run `backend/prisma/manual-migrations/20261106_remove_fairshare.postgres.sql` to drop its tables.
+
+## List screens (added 2026-11-06)
+Phones favour dense rows over cards; desktop/tablet markup is untouched (changes sit behind `max-md:` / `md:hidden`).
+- **Table rows (`table.stack-mobile`)**: one compact row — primary cell (no `data-label`) and the `Amount` / `Value` cell on line 1, remaining labelled cells inline on line 2, `data-actions` pushed right. Add `stack-labeled` to show small column names inline (used by the amortization schedule). `max-md:hidden` on a cell still hides it. Used by Statement, Expenses, Income, Assets, Audit Trail and the loan schedule.
+- **Statement**: no duplicated outer padding; KPI strip is Inflow / Outflow plus a full-width Net card; filters collapse behind a filter button next to search; type badge and (for solo workspaces) member are hidden.
+- **Expenses / Income / Projects**: header actions share one row; tabs and month/category filters fill the width.
+- **Loans**: `LoanRowsMobile` list (name, outstanding, lender · rate, EMI, repaid bar, months left, tag and delete icons). Row tap opens the loan summary. The card grid is used from `md` up.
+- **Loan detail**: action buttons scroll in a single row, compact KPI tiles, schedule as rows.
+- **Home**: "Your loans" sits directly under the quick links; every row (and, on desktop, every payoff-timeline card) links to `/loans/:id`. The dashboard analytics now returns the loan `name` for each payoff-timeline item.
+- **Insurance**: tighter cards without the helper lines.
+- Page titles use one size below 768px.

@@ -257,6 +257,102 @@ export const DashboardPage: React.FC = () => {
     return 'text-xl sm:text-2xl lg:text-3xl 2xl:text-2xl';
   };
 
+  // Each loan row links to its summary page; shared by the phone and desktop placements below.
+  const loansCard = (
+  <div className="bg-white dark:bg-slate-900 p-6 max-md:p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 max-md:mb-3 max-md:flex-row max-md:items-center">
+      <div>
+        <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-cyan-500" />
+          <span><span className="max-md:hidden">Debt Payoff Timeline (Baseline Schedule)</span><span className="md:hidden">Your loans</span></span>
+        </h3>
+        <p className="max-md:hidden text-xs text-slate-400 mt-0.5">
+          Projected payoff horizons under standard amortization schedules.
+        </p>
+      </div>
+      <Link
+        to="/loans"
+        className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+      >
+        <span>View All Loans</span>
+        <ChevronRight className="w-3.5 h-3.5" />
+      </Link>
+    </div>
+
+    {analytics?.payoffTimeline?.length > 0 ? (
+      <div className="space-y-4 max-md:space-y-2">
+        {analytics.payoffTimeline.map((item: any) => (
+          <Link
+            key={item.id}
+            to={`/loans/${item.id}`}
+            aria-label={`Open ${item.name ?? item.lender} loan summary`}
+            className={`p-4 max-md:p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-md:gap-2 transition-colors hover:border-cyan-400 dark:hover:border-cyan-600 ${
+              item.isGoldLoan
+                ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
+                : 'bg-slate-50 dark:bg-slate-850 border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <div className="sm:w-1/3">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-slate-900 dark:text-white truncate">{item.name ?? item.lender}</span>
+                <span
+                  className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                    item.isGoldLoan
+                      ? 'text-amber-800 bg-amber-200 dark:text-amber-200 dark:bg-amber-900/60'
+                      : 'text-slate-500 bg-slate-200 dark:bg-slate-800'
+                  }`}
+                >
+                  {item.isGoldLoan ? 'Gold loan' : item.type}
+                </span>
+              </div>
+              <div className="text-xs text-slate-400 mt-1">
+                {item.isGoldLoan ? (
+                  <>Paid so far: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatINR(item.amountPaid)}</strong></>
+                ) : (
+                  <>EMI: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatINR(item.emi)}/mo</strong></>
+                )} • Balance: <span className="font-mono text-rose-500">{formatINR(item.principal)}</span>
+              </div>
+            </div>
+
+            <div className="sm:w-2/3 space-y-1.5 max-md:space-y-1">
+              <div className="flex justify-between text-xs font-mono text-slate-500 max-md:justify-end">
+                <span className="max-md:hidden">Started: {item.startDate}</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {item.isGoldLoan ? 'Maturity' : 'Payoff'}: {item.payoffDate}
+                </span>
+              </div>
+              <div
+                role="progressbar"
+                aria-label={`${item.lender} repayment progress`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={item.progressPercent}
+                className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden"
+              >
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    item.isGoldLoan ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-cyan-500 to-emerald-500'
+                  }`}
+                  style={{ width: `${item.progressPercent}%` }}
+                />
+              </div>
+              <div className="text-[10px] text-slate-400 text-right">
+                {item.isGoldLoan
+                  ? `${item.progressPercent}% repaid (paid ${formatINR(item.amountPaid)} of ${formatINR(item.amountPaid + item.principal)})`
+                  : `${item.paidInstallments} of ${item.totalInstallments} EMIs paid • ${item.progressPercent}%`}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    ) : (
+      <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+        No active loans to track. Visit the <Link to="/loans" className="text-cyan-600 font-semibold underline">Loans</Link> page to register a loan.
+      </div>
+    )}
+  </div>
+  );
+
   return (
     <div className="space-y-5 md:space-y-8 pb-12">
       {/* Top Header & Scope Selector */}
@@ -345,6 +441,8 @@ export const DashboardPage: React.FC = () => {
         savingsRatePct={savingsRatePct}
         pendingCount={reminders?.totalPendingCount ?? 0}
       />
+
+      <div className="md:hidden">{loansCard}</div>
 
       {/* KPI Strip (tablet / desktop) */}
       <div className="max-md:hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3.5 sm:gap-4">
@@ -1037,7 +1135,7 @@ export const DashboardPage: React.FC = () => {
       {/* Row 2: Liability Breakdown + DTI Gauge (1/3) & Cash Flow Trend (2/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Liability Breakdown & DTI Gauge */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 p-6 max-md:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -1182,97 +1280,8 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Row 3: Debt Payoff Timeline (Gantt-style horizontal schedule) */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-cyan-500" />
-              <span>Debt Payoff Timeline (Baseline Schedule)</span>
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Projected payoff horizons under standard amortization schedules.
-            </p>
-          </div>
-          <Link
-            to="/loans"
-            className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
-          >
-            <span>View All Loans</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {analytics?.payoffTimeline?.length > 0 ? (
-          <div className="space-y-4">
-            {analytics.payoffTimeline.map((item: any) => (
-              <div
-                key={item.id}
-                className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                  item.isGoldLoan
-                    ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
-                    : 'bg-slate-50 dark:bg-slate-850 border-slate-200 dark:border-slate-800'
-                }`}
-              >
-                <div className="sm:w-1/3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-slate-900 dark:text-white">{item.lender}</span>
-                    <span
-                      className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                        item.isGoldLoan
-                          ? 'text-amber-800 bg-amber-200 dark:text-amber-200 dark:bg-amber-900/60'
-                          : 'text-slate-500 bg-slate-200 dark:bg-slate-800'
-                      }`}
-                    >
-                      {item.isGoldLoan ? 'Gold loan' : item.type}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    {item.isGoldLoan ? (
-                      <>Paid so far: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatINR(item.amountPaid)}</strong></>
-                    ) : (
-                      <>EMI: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatINR(item.emi)}/mo</strong></>
-                    )} • Balance: <span className="font-mono text-rose-500">{formatINR(item.principal)}</span>
-                  </div>
-                </div>
-
-                <div className="sm:w-2/3 space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono text-slate-500">
-                    <span>Started: {item.startDate}</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                      {item.isGoldLoan ? 'Maturity' : 'Payoff'}: {item.payoffDate}
-                    </span>
-                  </div>
-                  <div
-                    role="progressbar"
-                    aria-label={`${item.lender} repayment progress`}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={item.progressPercent}
-                    className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden"
-                  >
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        item.isGoldLoan ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-cyan-500 to-emerald-500'
-                      }`}
-                      style={{ width: `${item.progressPercent}%` }}
-                    />
-                  </div>
-                  <div className="text-[10px] text-slate-400 text-right">
-                    {item.isGoldLoan
-                      ? `${item.progressPercent}% repaid (paid ${formatINR(item.amountPaid)} of ${formatINR(item.amountPaid + item.principal)})`
-                      : `${item.paidInstallments} of ${item.totalInstallments} EMIs paid • ${item.progressPercent}%`}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-            No active loans to track. Visit the <Link to="/loans" className="text-cyan-600 font-semibold underline">Loans</Link> page to register a loan.
-          </div>
-        )}
-      </div>
+      {/* Row 3: Debt Payoff Timeline (tablet / desktop; phones show it right under the summary) */}
+      <div className="max-md:hidden">{loansCard}</div>
 
       {/* Quick Action Cards Grid (tablet / desktop; phones use the tiles in MobileHome) */}
       <div className="max-md:hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

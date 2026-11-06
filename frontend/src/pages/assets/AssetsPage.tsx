@@ -215,7 +215,7 @@ export const AssetsPage: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td data-label="Value" className="py-4 px-6">
+                      <td data-label="Value" className="py-4 px-6 max-md:text-right">
                         <div className="font-bold text-slate-900 dark:text-white font-mono text-base">
                           {formatINR(asset.currentValue)}
                         </div>
@@ -231,7 +231,7 @@ export const AssetsPage: React.FC = () => {
                             {asset.interestRate}% p.a.
                           </span>
                         ) : (
-                          <span className="text-slate-400 text-xs">—</span>
+                          <span className="max-md:hidden text-slate-400 text-xs">—</span>
                         )}
                         {asset.projectedMaturityValue && (
                           <div className="text-xs text-slate-400 mt-1">
@@ -246,7 +246,7 @@ export const AssetsPage: React.FC = () => {
                             <span>{new Date(asset.maturityDate).toLocaleDateString()}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="max-md:hidden text-slate-400">—</span>
                         )}
                       </td>
                       <td data-actions className="py-4 px-6 text-right">

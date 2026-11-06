@@ -370,6 +370,7 @@ export class DashboardService {
 
         return {
           id: l.id,
+          name: l.name && l.name !== 'Loan' ? l.name : l.lender,
           lender: l.lender,
           type: l.type,
           isGoldLoan: progress.kind === 'gold',

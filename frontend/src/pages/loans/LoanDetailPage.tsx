@@ -725,9 +725,9 @@ export const LoanDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-md:space-y-3">
       {/* Top Bar Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-md:gap-2">
         <button
           onClick={() => navigate('/loans')}
           className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors cursor-pointer w-fit"
@@ -736,12 +736,12 @@ export const LoanDetailPage: React.FC = () => {
           <span>Back to all loans</span>
         </button>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:-mx-4 max-md:px-4 max-md:pb-1 [scrollbar-width:none]">
           {!isClosed ? (
             <>
               <button
                 onClick={() => setIsCloseLoanOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-sm transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 max-md:shrink-0 max-md:whitespace-nowrap max-md:min-h-[40px] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-sm transition-all cursor-pointer"
                 title="Close loan / record payoff reason"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -751,7 +751,7 @@ export const LoanDetailPage: React.FC = () => {
               <button
                 onClick={() => setIsPartPaymentOpen(true)}
                 disabled={isDefaulted}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 max-md:shrink-0 max-md:whitespace-nowrap max-md:min-h-[40px] rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>Make Part-Payment</span>
@@ -760,7 +760,7 @@ export const LoanDetailPage: React.FC = () => {
               <button
                 onClick={() => setIsRateRevisionOpen(true)}
                 disabled={isDefaulted}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-sm shadow-cyan-600/20 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 max-md:shrink-0 max-md:whitespace-nowrap max-md:min-h-[40px] rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-sm shadow-cyan-600/20 transition-all cursor-pointer"
               >
                 <TrendingDown className="w-3.5 h-3.5" />
                 <span>Log Rate Revision</span>
@@ -770,7 +770,7 @@ export const LoanDetailPage: React.FC = () => {
                 <button
                   onClick={() => setIsRepaymentPlanOpen(true)}
                   disabled={isDefaulted}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-400 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 max-md:shrink-0 max-md:whitespace-nowrap max-md:min-h-[40px] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-400 shadow-sm transition-all cursor-pointer disabled:opacity-50"
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   <span>Change EMI / Tenure</span>
@@ -780,7 +780,7 @@ export const LoanDetailPage: React.FC = () => {
               <button
                 onClick={() => setIsCalibrateOpen(true)}
                 disabled={isDefaulted}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors cursor-pointer shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 max-md:shrink-0 max-md:whitespace-nowrap max-md:min-h-[40px] rounded-xl text-xs font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors cursor-pointer shadow-sm"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span>Sync Statement</span>
@@ -867,10 +867,10 @@ export const LoanDetailPage: React.FC = () => {
       )}
 
       {/* Loan Title & Badges */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 max-md:gap-2 border-b border-slate-200 dark:border-slate-800 pb-4 max-md:pb-3">
         <div className="flex-1">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <div className="flex items-center gap-3 max-md:gap-2 flex-wrap">
+            <h1 className="text-2xl max-md:text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {(loan as any).name || loan.lender}
             </h1>
             <span className="text-xs uppercase font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -962,8 +962,8 @@ export const LoanDetailPage: React.FC = () => {
       )}
 
       {/* KPI Cards Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-md:gap-2">
+        <div className="p-4 max-md:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
@@ -979,61 +979,61 @@ export const LoanDetailPage: React.FC = () => {
                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
               </button>
             </div>
-            <div className="text-xl sm:text-2xl font-black font-mono text-rose-600 dark:text-rose-400">
+            <div className="text-xl max-md:text-base sm:text-2xl font-black font-mono text-rose-600 dark:text-rose-400">
               {formatINR(currentOutstandingVal)}
             </div>
           </div>
-          <div className="text-[11px] text-slate-400 mt-2 flex flex-wrap items-center gap-x-2">
+          <div className="max-md:hidden text-[11px] text-slate-400 mt-2 flex flex-wrap items-center gap-x-2">
             <span>Orig: {formatINR(originalPrincipalVal)}</span>
             <span>•</span>
             <span className="capitalize text-slate-600 dark:text-slate-300 font-semibold">{isGoldLoan ? 'Gold Overdraft' : (loan.interestType || loan.interest_type || 'Reducing')}</span>
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 max-md:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
             {isGoldLoan ? 'Monthly Servicing' : 'Monthly EMI'}
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
+          <div className="text-xl max-md:text-base sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
             {formatINR(emiAmount)}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 capitalize">
+          <div className="max-md:hidden text-[11px] text-slate-400 mt-1 capitalize">
             {isGoldLoan ? 'Manual payments' : `Mode: ${loan.emiType || loan.emi_type}`}
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 max-md:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
             Overall Interest
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+          <div className="text-xl max-md:text-base sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
             {formatINR(isGoldLoan && goldLedger ? goldLedger.totalInterestCharged : scheduleTotals.totalInterest)}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">
+          <div className="max-md:hidden text-[11px] text-slate-400 mt-1">
             Total Lifetime Cost
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 max-md:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
             Interest Rate
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
+          <div className="text-xl max-md:text-base sm:text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
             {interestRate}% <span className="text-xs font-normal">p.a.</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">
+          <div className="max-md:hidden text-[11px] text-slate-400 mt-1">
             Compounding: <span className="capitalize font-semibold text-slate-600 dark:text-slate-300">{loan.compoundingFrequency || loan.compounding_frequency || 'Monthly'}</span>
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm col-span-2 md:col-span-1 flex flex-col justify-between">
+        <div className="p-4 max-md:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm col-span-2 md:col-span-1 flex flex-col justify-between">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
               {isGoldLoan ? 'Payoff Today' : 'Tenure Progress'}
             </div>
             {isGoldLoan && goldLedger ? (
               <>
-                <div className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                <div className="text-xl max-md:text-base sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
                   {formatINR(goldLedger.payoffQuoteToday)}
                 </div>
                 <div className="text-[11px] text-slate-400 mt-1">
@@ -1042,7 +1042,7 @@ export const LoanDetailPage: React.FC = () => {
               </>
             ) : (
               <>
-                <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
+                <div className="text-xl max-md:text-base sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
                   Paid {paidCount} <span className="text-sm font-medium text-slate-400">/ {actualTenureMonths} mos</span>
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
@@ -1229,7 +1229,7 @@ export const LoanDetailPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-50/60 via-slate-50 to-teal-50/60 dark:from-cyan-950/20 dark:via-slate-900 dark:to-teal-950/20 border border-cyan-100 dark:border-cyan-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="max-md:hidden p-4 rounded-2xl bg-gradient-to-r from-cyan-50/60 via-slate-50 to-teal-50/60 dark:from-cyan-950/20 dark:via-slate-900 dark:to-teal-950/20 border border-cyan-100 dark:border-cyan-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-cyan-100 dark:bg-cyan-950 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
               <BadgePercent className="w-4 h-4" />
@@ -1591,7 +1591,7 @@ export const LoanDetailPage: React.FC = () => {
 
         {/* Schedule Table */}
         <div className="overflow-x-auto max-h-[620px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-          <table className="w-full text-left border-collapse text-xs min-w-[760px]">
+          <table className="stack-mobile stack-labeled w-full text-left border-collapse text-xs min-w-[760px] max-md:min-w-0">
             <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="py-3 px-4 font-semibold uppercase tracking-wider text-[10px] w-12 text-center">#</th>
@@ -1625,28 +1625,28 @@ export const LoanDetailPage: React.FC = () => {
                       isPaid ? 'opacity-70 bg-slate-50/50 dark:bg-slate-900/30' : ''
                     }`}
                   >
-                    <td className="py-2.5 px-4 text-center font-bold text-slate-400">
+                    <td className="max-md:hidden py-2.5 px-4 text-center font-bold text-slate-400">
                       {instNum}
                     </td>
                     <td className="py-2.5 px-4 font-sans text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                      {formatDate(dueDate)}
+                      <span className="md:hidden font-bold text-slate-400 mr-2">#{instNum}</span>{formatDate(dueDate)}
                     </td>
-                    <td className="py-2.5 px-4 text-right text-slate-600 dark:text-slate-400">
+                    <td className="max-md:hidden py-2.5 px-4 text-right text-slate-600 dark:text-slate-400">
                       {formatINR(opening)}
                     </td>
-                    <td className="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-white">
+                    <td data-label="Amount" className="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-white">
                       {formatINR(emi)}
                     </td>
-                    <td className="py-2.5 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                    <td data-label="Principal" className="py-2.5 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
                       {formatINR(principalPart)}
                     </td>
-                    <td className="py-2.5 px-4 text-right text-rose-500 dark:text-rose-400">
+                    <td data-label="Interest" className="py-2.5 px-4 text-right text-rose-500 dark:text-rose-400">
                       {formatINR(interestPart)}
                     </td>
-                    <td className="py-2.5 px-4 text-right font-bold text-slate-700 dark:text-slate-300">
+                    <td data-label="Balance" className="py-2.5 px-4 text-right font-bold text-slate-700 dark:text-slate-300">
                       {formatINR(closing)}
                     </td>
-                    <td className="py-2.5 px-4 text-center">
+                    <td data-label="" className="py-2.5 px-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
@@ -1675,7 +1675,7 @@ export const LoanDetailPage: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="py-2.5 px-4 text-center font-sans">
+                    <td data-actions className="py-2.5 px-4 text-center font-sans">
                       <button
                         disabled={isClosed}
                         onClick={() => openEditInstallment(inst)}

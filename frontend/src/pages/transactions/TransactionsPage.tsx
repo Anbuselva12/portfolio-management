@@ -28,6 +28,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { SlidersHorizontal } from 'lucide-react';
+import { useIsFamily } from '../../store/workspace.store';
 import {
   TransactionActionModal,
   TransactionActionMode,
@@ -44,6 +46,8 @@ export const TransactionsPage: React.FC = () => {
   const [flow, setFlow] = useState<'all' | 'inflow' | 'outflow'>('all');
   const [source, setSource] = useState<'all' | 'income' | 'expense' | 'loan'>('all');
   const [search, setSearch] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const isFamily = useIsFamily();
   const [projectFilter, setProjectFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [projects, setProjects] = useState<TrackerProject[]>([]);
@@ -158,19 +162,19 @@ export const TransactionsPage: React.FC = () => {
   const netCashFlowNum = Number(data?.summary?.netCashFlow || '0');
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 max-md:p-0 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 max-md:space-y-3">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-row items-center sm:justify-between gap-4 max-md:gap-2 max-md:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+            <h1 className="text-2xl max-md:text-xl font-bold tracking-tight text-gray-900 dark:text-white">
               Statement of Transactions
             </h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300">
+            <span className="max-md:hidden px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300">
               Live Feed
             </span>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="max-md:hidden text-sm text-gray-500 dark:text-gray-400 mt-1">
             Unified chronological passbook of all incomes, household expenses, and loan debt servicing.
           </p>
         </div>
@@ -178,60 +182,60 @@ export const TransactionsPage: React.FC = () => {
         <button
           onClick={fetchTransactions}
           disabled={isLoading}
-          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 px-3.5 max-md:px-0 max-md:w-11 max-md:h-11 shrink-0 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
-          <span>Refresh</span>
+          <span className="max-md:hidden">Refresh</span>
         </button>
       </div>
 
       {/* KPI Cards Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-md:gap-2 sm:gap-4">
         {/* Total Inflow */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-emerald-100 dark:border-emerald-950/50 shadow-xs relative overflow-hidden">
+        <div className="p-4 max-md:p-3 rounded-2xl bg-white dark:bg-gray-850 border border-emerald-100 dark:border-emerald-950/50 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               Total Inflow (+)
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+            <div className="max-md:hidden w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <ArrowDownLeft className="w-4 h-4" />
             </div>
           </div>
           <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2 whitespace-nowrap">
             +{formatCurrency(data?.summary?.totalInflow || '0', baseCurrency)}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="max-md:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
             One-offs & confirmed receipts
           </p>
         </div>
 
         {/* Total Outflow / Debt */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-rose-100 dark:border-rose-950/50 shadow-xs relative overflow-hidden">
+        <div className="p-4 max-md:p-3 rounded-2xl bg-white dark:bg-gray-850 border border-rose-100 dark:border-rose-950/50 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
-              Total Outflow / Debt (-)
+              Outflow / Debt (-)
             </span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
+            <div className="max-md:hidden w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
           <div className="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 mt-2 whitespace-nowrap">
             -{formatCurrency(data?.summary?.totalOutflow || '0', baseCurrency)}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="max-md:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
             Expenses, EMIs & prepayments
           </p>
         </div>
 
         {/* Net Cash Flow */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-xs relative overflow-hidden">
+        <div className="max-md:col-span-2 p-4 max-md:p-3 rounded-2xl bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Net Cash Flow
             </span>
             <div
               className={clsx(
-                'w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold',
+                'max-md:hidden w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold',
                 netCashFlowNum >= 0
                   ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
                   : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
@@ -254,7 +258,7 @@ export const TransactionsPage: React.FC = () => {
           <div className="flex items-center gap-1.5 mt-1">
             <span
               className={clsx(
-                'inline-block px-1.5 py-0.2 rounded text-[11px] font-bold uppercase',
+                'max-md:hidden inline-block px-1.5 py-0.2 rounded text-[11px] font-bold uppercase',
                 netCashFlowNum >= 0
                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
                   : 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300'
@@ -262,12 +266,12 @@ export const TransactionsPage: React.FC = () => {
             >
               {netCashFlowNum >= 0 ? 'Surplus' : 'Deficit'}
             </span>
-            <span className="text-xs text-gray-400">in selected period</span>
+            <span className="max-md:hidden text-xs text-gray-400">in selected period</span>
           </div>
         </div>
 
         {/* Total Activity */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-xs relative overflow-hidden">
+        <div className="max-md:hidden p-4 rounded-2xl bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Recorded Transactions
@@ -286,10 +290,10 @@ export const TransactionsPage: React.FC = () => {
       </div>
 
       {/* Control Bar: Filters, Flow Toggles, Search */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-4 max-md:p-3 rounded-2xl bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-xs space-y-4 max-md:space-y-2.5">
+        <div className={clsx('flex flex-col lg:flex-row lg:items-center justify-between gap-4 max-md:gap-2.5', !filtersOpen && 'max-md:hidden')}>
           {/* Duration Selector */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold max-w-full overflow-x-auto whitespace-nowrap self-start lg:self-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold max-w-full overflow-x-auto whitespace-nowrap self-start lg:self-auto max-md:self-stretch max-md:[&>button]:flex-1 max-md:[&>button]:justify-center">
             <button
               onClick={() => {
                 setDuration('1m');
@@ -349,7 +353,7 @@ export const TransactionsPage: React.FC = () => {
           </div>
 
           {/* Flow Direction Selector (All / Inflow + / Debt -) */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold max-w-full overflow-x-auto whitespace-nowrap self-start lg:self-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold max-w-full overflow-x-auto whitespace-nowrap self-start lg:self-auto max-md:self-stretch max-md:[&>button]:flex-1 max-md:[&>button]:justify-center">
             <button
               onClick={() => {
                 setFlow('all');
@@ -396,17 +400,17 @@ export const TransactionsPage: React.FC = () => {
         </div>
 
         {/* Secondary Filter: Source & Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Source:</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 max-md:pt-0 border-t max-md:border-t-0 border-gray-100 dark:border-gray-800">
+          <div className={clsx('flex flex-wrap items-center gap-x-4 gap-y-2 max-md:grid max-md:grid-cols-2 max-md:gap-2', !filtersOpen && 'max-md:hidden')}>
+          <div className="flex items-center gap-2 max-md:min-w-0">
+            <span className="max-md:hidden text-xs font-medium text-gray-500 dark:text-gray-400">Source:</span>
             <select
               value={source}
               onChange={(e) => {
                 setSource(e.target.value as any);
                 setPage(1);
               }}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="max-md:w-full max-md:min-h-[44px] px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
             >
               <option value="all">All Sources</option>
               <option value="income">Income Only</option>
@@ -415,8 +419,8 @@ export const TransactionsPage: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label htmlFor="tx-project-filter" className="text-xs font-medium text-gray-500 dark:text-gray-400">Project:</label>
+          <div className="flex items-center gap-2 max-md:min-w-0">
+            <label htmlFor="tx-project-filter" className="max-md:hidden text-xs font-medium text-gray-500 dark:text-gray-400">Project:</label>
             <select
               id="tx-project-filter"
               value={projectFilter}
@@ -424,7 +428,7 @@ export const TransactionsPage: React.FC = () => {
                 setProjectFilter(e.target.value);
                 setPage(1);
               }}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="max-md:w-full max-md:min-h-[44px] px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
             >
               <option value="all">All Projects</option>
               <option value="untagged">Untagged</option>
@@ -437,6 +441,7 @@ export const TransactionsPage: React.FC = () => {
           </div>
           </div>
 
+          <div className="flex items-center gap-2 max-md:w-full">
           <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -444,9 +449,24 @@ export const TransactionsPage: React.FC = () => {
               placeholder="Search statement..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="w-full pl-9 pr-3 py-1.5 max-md:min-h-[44px] text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
             />
           </form>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            aria-label="Toggle filters"
+            className={clsx(
+              'md:hidden shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border cursor-pointer',
+              filtersOpen
+                ? 'bg-cyan-600 border-cyan-600 text-white'
+                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300',
+            )}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+          </button>
+          </div>
         </div>
       </div>
 
@@ -535,7 +555,7 @@ export const TransactionsPage: React.FC = () => {
                       </td>
 
                       {/* Type Badge */}
-                      <td data-label="Type" className="px-5 py-4 whitespace-nowrap">
+                      <td data-label="Type" className="px-5 py-4 whitespace-nowrap max-md:hidden">
                         {getTypeBadge(tx.type)}
                       </td>
 
@@ -563,12 +583,12 @@ export const TransactionsPage: React.FC = () => {
                             {tx.projects.length ? tx.projects.map((p) => p.name).join(', ') : 'Tag project'}
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
+                          <span className="max-md:hidden text-xs text-gray-300 dark:text-gray-600">—</span>
                         )}
                       </td>
 
                       {/* Member */}
-                      <td data-label="Member" className="px-5 py-4 whitespace-nowrap text-xs">
+                      <td data-label="Member" className={clsx('px-5 py-4 whitespace-nowrap text-xs', !isFamily && 'max-md:hidden')}>
                         <span className="font-medium text-gray-700 dark:text-gray-300">
                           {tx.memberName}
                         </span>
@@ -639,7 +659,7 @@ export const TransactionsPage: React.FC = () => {
 
         {/* Pagination bar */}
         {data && data.pagination.totalPages > 1 && (
-          <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <div className="p-4 max-md:p-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between max-md:flex-col max-md:gap-2 text-xs text-gray-500 dark:text-gray-400">
             <span>
               Showing {((page - 1) * data.pagination.limit) + 1} to{' '}
               {Math.min(page * data.pagination.limit, data.pagination.total)} of{' '}

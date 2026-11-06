@@ -165,7 +165,7 @@ export const InsurancePage: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-md:gap-3">
           {policies.map((policy) => {
             const typeObj = POLICY_TYPES.find((t) => t.type === policy.policyType);
             const Icon = typeObj?.icon || Shield;
@@ -175,10 +175,10 @@ export const InsurancePage: React.FC = () => {
             return (
               <div
                 key={policy.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 max-md:p-4 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-4 max-md:mb-1">
                     <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-950 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
                       <Icon className="w-5 h-5" />
                     </div>
@@ -203,7 +203,7 @@ export const InsurancePage: React.FC = () => {
                     Policy #{policy.policyNumber}
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                  <div className="mt-4 pt-4 max-md:mt-2 max-md:pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-3 max-md:space-y-1.5">
                     <div>
                       <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
                         Sum Assured (Coverage)
@@ -211,7 +211,7 @@ export const InsurancePage: React.FC = () => {
                       <div className="text-lg font-bold text-slate-900 dark:text-white font-mono">
                         {formatINR(policy.sumAssured)}
                       </div>
-                      <div className="text-[10px] text-slate-400 italic">
+                      <div className="max-md:hidden text-[10px] text-slate-400 italic">
                         Not added to liquid Net Worth
                       </div>
                     </div>
@@ -233,15 +233,15 @@ export const InsurancePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs max-md:mt-2.5 max-md:pt-2.5">
                   {isDueSoon ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded-full">
                       <Clock className="w-3 h-3" /> Due in &le; 30 Days
                     </span>
                   ) : (
-                    <span className="text-slate-400">Next cycle scheduled</span>
+                    <span className="max-md:hidden text-slate-400">Next cycle scheduled</span>
                   )}
-                  <span className="inline-flex items-center gap-1 text-[11px] text-cyan-600 dark:text-cyan-400">
+                  <span className="max-md:hidden inline-flex items-center gap-1 text-[11px] text-cyan-600 dark:text-cyan-400">
                     <Sparkles className="w-3 h-3" /> Auto-expense ready
                   </span>
                 </div>

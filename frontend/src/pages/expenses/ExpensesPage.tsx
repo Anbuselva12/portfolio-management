@@ -136,32 +136,32 @@ export const ExpensesPage: React.FC = () => {
   const totalMonthlySpend = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 max-md:p-0 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 max-md:space-y-3">
       {/* Header: same structure as the Projects tab so actions stay in the same place */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 max-md:gap-2.5">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-xs">
+          <div className="max-md:hidden w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-xs">
             <Receipt className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">Expenses</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h1 className="text-2xl max-md:text-xl font-black tracking-tight text-gray-900 dark:text-white">Expenses</h1>
+            <p className="text-sm max-md:text-xs text-gray-500 dark:text-gray-400">
               Household: total spending for {selectedMonth}:{' '}
               <span className="font-semibold text-rose-600 dark:text-rose-400 font-mono">{formatINR(totalMonthlySpend)}</span>
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-2.5 max-md:gap-2">
           <button
             onClick={() => setIsCategoryDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 max-md:flex-1 max-md:min-h-[44px] rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 shadow-xs transition-colors cursor-pointer"
           >
             <Tag className="w-4 h-4 text-gray-500" />
-            <span>Manage Categories</span>
+            <span className="max-md:hidden">Manage Categories</span><span className="md:hidden">Categories</span>
           </button>
           <button
             onClick={() => setIsExpenseDrawerOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 max-md:flex-1 max-md:min-h-[44px] rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Log Expense</span>
@@ -172,23 +172,23 @@ export const ExpensesPage: React.FC = () => {
       <ExpensesHubTabs />
 
       {/* Filter Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-slate-400" />
+      <div className="flex flex-wrap items-center gap-3 max-md:grid max-md:grid-cols-[1.3fr_1fr] max-md:gap-2 bg-white dark:bg-slate-900 p-4 max-md:p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-2 max-md:min-w-0">
+          <Calendar className="max-md:hidden w-4 h-4 text-slate-400" />
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="max-md:w-full max-md:min-h-[44px] px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 dark:text-slate-400">Category:</span>
+        <div className="flex items-center gap-2 max-md:min-w-0">
+          <span className="max-md:hidden text-xs text-slate-500 dark:text-slate-400">Category:</span>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="max-md:w-full max-md:min-h-[44px] px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
           >
             <option value="all">All Categories</option>
             {categories.map((c) => (
@@ -246,7 +246,7 @@ export const ExpensesPage: React.FC = () => {
                       className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${isPaidEmi ? 'opacity-60' : ''}`}
                     >
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap max-md:gap-1.5">
                           <span className={`font-semibold ${isPaidEmi ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
                             {cat?.name || (isAutoEmi ? 'Loan EMI' : 'General Expense')}
                           </span>
@@ -262,7 +262,7 @@ export const ExpensesPage: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td data-label="Notes" className="py-4 px-6 text-slate-700 dark:text-slate-200 text-xs">
+                      <td data-label="Notes" className="py-4 px-6 text-slate-700 dark:text-slate-200 text-xs max-md:truncate max-md:max-w-[55%]">
                         {exp.notes || <span className="text-slate-400 italic">No notes</span>}
                       </td>
                       <td data-label="Date" className="py-4 px-6 text-slate-600 dark:text-slate-400 text-xs font-mono">

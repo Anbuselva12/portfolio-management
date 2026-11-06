@@ -9,7 +9,7 @@ const TABS = [
 
 /** Segmented switch between daily household expenses and long-running projects (Design-Spec-06 §1a). */
 export const ExpensesHubTabs: React.FC = () => (
-  <nav aria-label="Expense views" className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 gap-1">
+  <nav aria-label="Expense views" className="flex md:inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 gap-1">
     {TABS.map((tab) => (
       <NavLink
         key={tab.to}
@@ -17,7 +17,7 @@ export const ExpensesHubTabs: React.FC = () => (
         end={tab.end}
         className={({ isActive }) =>
           clsx(
-            'min-h-[40px] px-4 inline-flex items-center rounded-lg text-sm font-semibold transition-colors',
+            'min-h-[40px] px-4 max-md:flex-1 max-md:justify-center inline-flex items-center rounded-lg text-sm font-semibold transition-colors',
             isActive
               ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',

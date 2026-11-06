@@ -96,19 +96,19 @@ export const TrackerHubPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 max-md:p-0 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 max-md:space-y-3">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-xs">
+            <div className="max-md:hidden w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-xs">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+              <h1 className="text-2xl max-md:text-xl font-black tracking-tight text-gray-900 dark:text-white">
                 Expenses
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm max-md:text-xs text-gray-500 dark:text-gray-400">
                 Projects: construction, business set-ups, material accounting, funding and returns.
               </p>
             </div>
