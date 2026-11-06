@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Loan } from '../../types';
 import { formatINR } from '../../utils/currency';
+import { Portal } from '../ui/Portal';
 import {
   X,
   CheckCircle2,
@@ -104,8 +105,9 @@ export const CloseLoanModal: React.FC<CloseLoanModalProps> = ({
   const loanName = (loan as any).name || loan.lender || 'Loan';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92vh] overflow-y-auto space-y-5">
+    <Portal>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92dvh] overflow-y-auto space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
@@ -279,5 +281,6 @@ export const CloseLoanModal: React.FC<CloseLoanModalProps> = ({
         </form>
       </div>
     </div>
+    </Portal>
   );
 };

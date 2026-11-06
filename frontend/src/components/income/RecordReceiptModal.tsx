@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, CalendarPlus, CheckCircle2, Loader2, X } from 'lucide-react';
 import { incomeApi } from '../../api/endpoints/income.api';
 import { IncomeEntry } from '../../types';
+import { Portal } from '../ui/Portal';
 
 const inputClass =
   'w-full min-h-[44px] px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500';
@@ -97,8 +98,9 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({ income, 
   };
 
   return (
+    <Portal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !isSaving) onClose();
       }}
@@ -109,7 +111,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({ income, 
         role="dialog"
         aria-modal="true"
         aria-labelledby="record-receipt-title"
-        className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92vh] overflow-y-auto space-y-5 focus:outline-none"
+        className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92dvh] overflow-y-auto space-y-5 focus:outline-none"
       >
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-start gap-3 min-w-0">
@@ -210,5 +212,6 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({ income, 
         </div>
       </div>
     </div>
+    </Portal>
   );
 };

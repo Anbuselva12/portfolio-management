@@ -25,7 +25,7 @@ export const mapMember = (m: any): Member | null => {
     status: m.status,
     isActive: m.isActive ?? m.is_active ?? true,
     preferredCurrency: m.preferredCurrency ?? m.preferred_currency ?? 'INR',
-    preferredApp: m.preferredApp ?? m.preferred_app ?? 'finfamily',
+    preferredApp: (m.preferredApp ?? m.preferred_app) === 'expense_tracker' ? 'expense_tracker' : 'finfamily',
     createdAt: m.createdAt ?? m.created_at,
     lastLoginAt: m.lastLoginAt ?? m.last_login_at ?? null,
   };

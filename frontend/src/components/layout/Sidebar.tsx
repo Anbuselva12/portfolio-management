@@ -1,68 +1,30 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { useIsFamily } from '../../store/workspace.store';
-import { AppSwitcher } from './AppSwitcher';
-import {
-  Home,
-  Briefcase,
-  TrendingUp,
-  CreditCard,
-  Receipt,
-  ArrowLeftRight,
-  Shield,
-  Settings,
-  LogOut,
-  Zap,
-  Clock,
-  Wallet,
-  Users,
-  Palmtree,
-} from 'lucide-react';
+import { getNavLinks } from './navLinks';
+import { LogOut, Wallet } from 'lucide-react';
 import clsx from 'clsx';
-
-interface NavItem {
-  to: string;
-  icon: any;
-  label: string;
-  badge?: number;
-}
 
 /** `pendingCount` (admin join requests) is fetched once by AppShell and shared with the phone menu. */
 export const Sidebar: React.FC<{ pendingCount?: number }> = ({ pendingCount = 0 }) => {
   const { user, logout } = useAuthStore();
   const isFamily = useIsFamily();
-  const location = useLocation();
-  const isFairShare = location.pathname.startsWith('/fairshare');
-
-  const finFamilyLinks: NavItem[] = [
-    { to: '/dashboard', icon: Home, label: 'Dashboard' },
-    { to: '/assets', icon: Briefcase, label: 'Assets' },
-    { to: '/income', icon: TrendingUp, label: 'Income' },
-    { to: '/loans', icon: CreditCard, label: 'Loans' },
-    { to: '/strategies', icon: Zap, label: 'Debt Strategies' },
-    { to: '/expenses', icon: Receipt, label: 'Expenses' },
-    { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
-    { to: '/insurance', icon: Shield, label: 'Insurance' },
-    ...(user?.role === 'admin' && isFamily
-      ? [{ to: '/settings/members', icon: Users, label: 'Members & Access', badge: pendingCount }]
-      : []),
-    { to: '/settings/audit', icon: Clock, label: 'Audit Trail' },
-    { to: '/settings/profile', icon: Settings, label: 'Settings' },
-  ];
-
-  const fairShareLinks: NavItem[] = [
-    { to: '/fairshare', icon: Palmtree, label: 'Trips & Events' },
-    { to: '/fairshare/settings', icon: Settings, label: 'Settings' },
-  ];
-
-  const links = isFairShare ? fairShareLinks : finFamilyLinks;
+  const links = getNavLinks({ isAdmin: user?.role === 'admin', isFamily, pendingCount });
 
   return (
     <aside className="hidden md:flex flex-col w-[4.5rem] lg:w-64 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shrink-0">
-      {/* Brand & Appian-Style Multi-App Switcher */}
+      {/* Brand */}
       <div className="p-2 lg:p-3 border-b border-gray-100 dark:border-gray-850">
-        <AppSwitcher />
+        <div className="flex items-center justify-center lg:justify-start gap-3 p-2 lg:p-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-cyan-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Wallet className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 hidden lg:block">
+            <div className="text-sm font-extrabold tracking-tight text-gray-900 dark:text-white truncate">FinFamily</div>
+            <div className="text-[11px] font-medium text-gray-400 dark:text-gray-500 truncate">Wealth, Debt & Strategy</div>
+          </div>
+        </div>
       </div>
 
       {/* Nav links */}

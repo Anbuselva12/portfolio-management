@@ -13,7 +13,7 @@
 | 5 | Optional **current market value** on a project, used to show appreciation and total return. |
 
 ## 2. Navigation
-- Expense Tracker is removed from the App Switcher. Switcher = FinFamily, FairShare.
+- Expense Tracker is removed from the App Switcher. The App Switcher itself has since been removed (FairShare retired 2026-11-06).
 - Sidebar **Expenses** → page with a segmented control **Household | Projects** (`/expenses`, `/expenses/projects`).
 - Project workspace: `/expenses/projects/:id`. `/tracker`, `/tracker/projects/:id` redirect. `/tracker/settings` redirects to `/settings/profile`.
 - Users with `preferred_app = expense_tracker` land on `/expenses/projects`.

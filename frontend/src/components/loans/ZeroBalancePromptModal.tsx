@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loan } from '../../types';
 import { CheckCircle2, Sparkles, X, ShieldCheck } from 'lucide-react';
+import { Portal } from '../ui/Portal';
 
 export interface ZeroBalancePromptModalProps {
   isOpen: boolean;
@@ -20,7 +21,8 @@ export const ZeroBalancePromptModal: React.FC<ZeroBalancePromptModalProps> = ({
   const loanName = (loan as any).name || loan.lender || 'Loan';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs">
+    <Portal>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs">
       <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5 text-center">
         {/* Celebration Icon */}
         <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto ring-8 ring-emerald-500/10">
@@ -70,5 +72,6 @@ export const ZeroBalancePromptModal: React.FC<ZeroBalancePromptModalProps> = ({
         </div>
       </div>
     </div>
+    </Portal>
   );
 };

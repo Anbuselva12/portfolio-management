@@ -14,6 +14,7 @@ import { GoldLoanDetailView } from '../../components/loans/GoldLoanDetailView';
 import { CloseLoanModal } from '../../components/loans/CloseLoanModal';
 import { ZeroBalancePromptModal } from '../../components/loans/ZeroBalancePromptModal';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
+import { Portal } from '../../components/ui/Portal';
 import {
   ResponsiveContainer,
   LineChart,
@@ -2018,8 +2019,9 @@ export const LoanDetailPage: React.FC = () => {
 
       {/* Record Gold Loan Payment Modal */}
       {isAddGoldPaymentOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-4">
+        <Portal>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-600" />
@@ -2100,6 +2102,7 @@ export const LoanDetailPage: React.FC = () => {
             </form>
           </div>
         </div>
+        </Portal>
       )}
 
       {loan && (

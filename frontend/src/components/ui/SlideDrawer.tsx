@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { Portal } from './Portal';
 
 interface SlideDrawerProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export const SlideDrawer: React.FC<SlideDrawerProps> = ({ isOpen, onClose, title
   if (!isOpen) return null;
 
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative w-full md:w-[480px] bg-white dark:bg-gray-900 h-full flex flex-col shadow-2xl animate-in slide-in-from-right">
@@ -30,5 +32,6 @@ export const SlideDrawer: React.FC<SlideDrawerProps> = ({ isOpen, onClose, title
         </div>
       </div>
     </div>
+    </Portal>
   );
 };

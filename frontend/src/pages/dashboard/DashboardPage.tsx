@@ -37,6 +37,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { MobileHome } from './MobileHome';
 import {
   ResponsiveContainer,
   LineChart,
@@ -257,7 +258,7 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-5 md:space-y-8 pb-12">
       {/* Top Header & Scope Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -273,10 +274,10 @@ export const DashboardPage: React.FC = () => {
 
         {/* Scope Toggle Button (families only) */}
         {isFamily && (
-        <div className="inline-flex p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300/50 dark:border-slate-700/50 self-start sm:self-auto">
+        <div className="flex sm:inline-flex p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300/50 dark:border-slate-700/50 sm:self-auto">
           <button
             onClick={() => setScope('family')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-none px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               scope === 'family'
                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -286,7 +287,7 @@ export const DashboardPage: React.FC = () => {
           </button>
           <button
             onClick={() => setScope('me')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-none px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               scope === 'me'
                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -331,8 +332,22 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3.5 sm:gap-4">
+      <MobileHome
+        isLoading={isLoading}
+        netWorth={netWorth}
+        nwDelta={nwDelta}
+        nwDeltaPct={nwDeltaPct}
+        totalAssets={totalAssets}
+        totalLiabilities={totalLiabilities}
+        monthlyIncome={monthlyIncome}
+        monthlyOutflow={monthlyExpenses + monthlyEmi}
+        monthlySavings={monthlySavings}
+        savingsRatePct={savingsRatePct}
+        pendingCount={reminders?.totalPendingCount ?? 0}
+      />
+
+      {/* KPI Strip (tablet / desktop) */}
+      <div className="max-md:hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3.5 sm:gap-4">
         {/* 1. Net Worth */}
         {(() => {
           const formatted = isLoading ? '...' : formatKpiINR(netWorth);
@@ -496,7 +511,7 @@ export const DashboardPage: React.FC = () => {
 
       {/* Pending Reminders & Monthly Action Queue */}
       {reminders && (reminders.incomes?.length > 0 || reminders.loans?.length > 0 || reminderMonth !== null) && (
-        <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all ${
+        <div id="reminders" className={`scroll-mt-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all ${
           isRemindersCollapsed ? 'p-4 sm:p-5' : 'p-5 sm:p-6 space-y-6'
         }`}>
           <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
@@ -1259,8 +1274,8 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* Quick Action Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Quick Action Cards Grid (tablet / desktop; phones use the tiles in MobileHome) */}
+      <div className="max-md:hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           to="/assets"
           className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-cyan-500 transition-all shadow-sm group cursor-pointer"

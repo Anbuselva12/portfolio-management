@@ -62,7 +62,7 @@
     └── Settings (Trip Defaults, WhatsApp Formats)
 ```
 
-Primary navigation: **left sidebar** with an Appian-style **App Switcher** in the top brand header, allowing one-click switching between **FinFamily**, **Expense Tracker**, and **FairShare**. Users can save their preferred default landing app under My Profile / Admin settings.
+Primary navigation: **left sidebar** (tablet/desktop) with the FinFamily brand in the header; on phones a top bar, bottom tab bar and slide-over menu (see Design-Spec-13). FinFamily is the only application — the App Switcher and FairShare were retired 2026-11-06. Users can still choose a default landing page (Dashboard or Expenses → Projects) under My Profile.
 
 ---
 

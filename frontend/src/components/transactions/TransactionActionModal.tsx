@@ -4,6 +4,7 @@ import { TransactionItem } from '../../api/endpoints/transactions.api';
 import { incomeApi } from '../../api/endpoints/income.api';
 import { expensesApi } from '../../api/endpoints/expenses.api';
 import { loansApi } from '../../api/endpoints/loans.api';
+import { Portal } from '../ui/Portal';
 
 export type TransactionActionMode = 'edit' | 'delete';
 
@@ -162,8 +163,9 @@ export const TransactionActionModal: React.FC<TransactionActionModalProps> = ({ 
   const isDelete = mode === 'delete';
 
   return (
+    <Portal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !isSaving) onClose();
       }}
@@ -174,7 +176,7 @@ export const TransactionActionModal: React.FC<TransactionActionModalProps> = ({ 
         role="dialog"
         aria-modal="true"
         aria-labelledby="tx-action-title"
-        className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full border border-gray-200 dark:border-gray-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92vh] overflow-y-auto space-y-5 focus:outline-none"
+        className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full border border-gray-200 dark:border-gray-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92dvh] overflow-y-auto space-y-5 focus:outline-none"
       >
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-start gap-3 min-w-0">
@@ -283,5 +285,6 @@ export const TransactionActionModal: React.FC<TransactionActionModalProps> = ({ 
         </div>
       </div>
     </div>
+    </Portal>
   );
 };

@@ -19,7 +19,6 @@ import {
   I_SUGGESTION_SNAPSHOT_REPOSITORY,
   I_RATE_REVISION_REPOSITORY,
   I_TRACKER_REPOSITORY,
-  I_FAIR_SHARE_REPOSITORY,
 } from './interfaces';
 
 import {
@@ -38,7 +37,6 @@ import {
   PrismaSuggestionSnapshotRepository,
   PrismaRateRevisionRepository,
   PrismaTrackerRepository,
-  PrismaFairShareRepository,
 } from './prisma';
 
 import {
@@ -57,7 +55,6 @@ import {
   LocalStorageSuggestionSnapshotRepository,
   LocalStorageRateRevisionRepository,
   LocalStorageTrackerRepository,
-  LocalStorageFairShareRepository,
 } from './local-storage';
 
 const createRepoProvider = (token: string, PrismaRepo: any, LocalRepo: any): Provider => ({
@@ -85,7 +82,6 @@ const providers: Provider[] = [
   createRepoProvider(I_SUGGESTION_SNAPSHOT_REPOSITORY, PrismaSuggestionSnapshotRepository, LocalStorageSuggestionSnapshotRepository),
   createRepoProvider(I_RATE_REVISION_REPOSITORY, PrismaRateRevisionRepository, LocalStorageRateRevisionRepository),
   createRepoProvider(I_TRACKER_REPOSITORY, PrismaTrackerRepository, LocalStorageTrackerRepository),
-  createRepoProvider(I_FAIR_SHARE_REPOSITORY, PrismaFairShareRepository, LocalStorageFairShareRepository),
 ];
 
 @Global()

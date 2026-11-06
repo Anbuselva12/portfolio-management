@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../api/endpoints/auth.api';
-import { User, Lock, CheckCircle2, AlertCircle, Loader2, Palmtree } from 'lucide-react';
+import { User, Lock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { SettingsNav } from '../../components/layout/SettingsNav';
 import { LeaveFamilyCard } from '../../components/family/LeaveFamilyCard';
 import { useIsFamily } from '../../store/workspace.store';
 
 export const MyProfilePage: React.FC = () => {
-  const location = useLocation();
-  const isFairShare = location.pathname.startsWith('/fairshare');
   const { user, setUser } = useAuthStore();
   const isFamily = useIsFamily();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [preferredCurrency, setPreferredCurrency] = useState(user?.preferredCurrency || 'INR');
-  const [preferredApp, setPreferredApp] = useState<'finfamily' | 'expense_tracker' | 'fairshare'>(
+  const [preferredApp, setPreferredApp] = useState<'finfamily' | 'expense_tracker'>(
     user?.preferredApp || 'finfamily',
   );
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
@@ -87,16 +84,13 @@ export const MyProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-3xl space-y-6">
-      {!isFairShare && <SettingsNav />}
+      <SettingsNav />
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          {isFairShare && <Palmtree className="w-6 h-6 text-emerald-600" />}
-          <span>{isFairShare ? 'FairShare Settings' : 'Profile & Preferences'}</span>
+          <span>Profile & Preferences</span>
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {isFairShare
-            ? 'Manage your personal profile, credentials, and default landing workspace.'
-            : 'Manage your personal display name, account credentials, and localized currency.'}
+          Manage your personal display name, account credentials, and localized currency.
         </p>
       </div>
 
@@ -171,7 +165,6 @@ export const MyProfilePage: React.FC = () => {
             >
               <option value="finfamily">FinFamily (Wealth & Debt)</option>
               <option value="expense_tracker">FinFamily · Expense Projects (opens Expenses → Projects)</option>
-              <option value="fairshare">FairShare (Trips & Event Expenses)</option>
             </select>
           </div>
 
@@ -263,7 +256,7 @@ export const MyProfilePage: React.FC = () => {
         </form>
       </div>
 
-      {!isFairShare && isFamily && <LeaveFamilyCard />}
+      {isFamily && <LeaveFamilyCard />}
     </div>
   );
 };

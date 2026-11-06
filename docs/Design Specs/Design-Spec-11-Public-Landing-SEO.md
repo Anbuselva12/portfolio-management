@@ -24,7 +24,7 @@ Serve a **static, crawlable, JavaScript-free marketing page at `/`** and keep th
 1. **Header** (sticky): logo + wordmark · anchor links *Features / Apps / FAQ* (hidden < 640px) · **Sign in** (ghost) · **Sign up** (filled).
 2. **Hero**: H1, one-sentence value proposition, primary CTA *Create free account*, secondary *Sign in*, product screenshot (`/dashboard-preview.jpg`, explicit width/height, descriptive alt).
 3. **Features** (6 cards): Net-worth dashboard · Loans & EMI engine (incl. gold loans) · Debt-payoff strategies (+AI suggestions) · Income & expense tracking · Unified transaction statement · Insurance & audit trail with member roles.
-4. **Apps** (3 cards): FinFamily, Expense Tracker (projects / construction / business), FairShare (trip splitting).
+4. **Apps** (1 card): FinFamily, including Projects under Expenses. FairShare was retired 2026-11-06.
 5. **How it works** (3 steps): Create a family → Add assets, income, loans → See the full picture.
 6. **FAQ** (native `<details>`): matches the FAQPage JSON-LD exactly.
 7. **Closing CTA** + **Footer** (Sign in, Sign up, © year).

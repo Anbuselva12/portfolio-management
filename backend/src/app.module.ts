@@ -20,7 +20,6 @@ import { StrategiesModule } from './strategies/strategies.module';
 import { AuditModule } from './audit/audit.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { TrackerModule } from './tracker/tracker.module';
-import { FairShareModule } from './fairshare/fairshare.module';
 
 @Module({
   imports: [
@@ -42,7 +41,6 @@ import { FairShareModule } from './fairshare/fairshare.module';
     AuditModule,
     TransactionsModule,
     TrackerModule,
-    FairShareModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

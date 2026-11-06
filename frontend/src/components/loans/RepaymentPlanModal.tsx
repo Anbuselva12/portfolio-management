@@ -6,6 +6,7 @@ import { RepaymentPlanChange } from '../../types';
 import { formatINR } from '../../utils/currency';
 import { formatDate } from '../../utils/date';
 import { Affordability, assessAffordability, formatMonths } from '../../utils/repaymentPlan';
+import { Portal } from '../ui/Portal';
 
 type PlanMode = 'set_emi' | 'set_tenure';
 
@@ -158,13 +159,14 @@ export const RepaymentPlanModal: React.FC<RepaymentPlanModalProps> = ({
   const isUnchanged = preview !== null && emiDiff === 0 && preview.tenureDiffMonths === 0;
 
   return (
+    <Portal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/60"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3">
           <div>
             <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-white">
@@ -380,6 +382,7 @@ export const RepaymentPlanModal: React.FC<RepaymentPlanModalProps> = ({
         </form>
       </div>
     </div>
+    </Portal>
   );
 };
 

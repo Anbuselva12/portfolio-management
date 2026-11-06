@@ -6,6 +6,7 @@ import { trackerApi } from '../../api/endpoints/tracker.api';
 import { incomeApi } from '../../api/endpoints/income.api';
 import { TrackerProject } from '../../types';
 import { formatINR } from '../../utils/currency';
+import { Portal } from '../ui/Portal';
 
 export type ProjectTagTarget =
   | { kind: 'income'; id: string; label: string; currentProjectId: string | null }
@@ -144,8 +145,9 @@ export const ProjectTagModal: React.FC<ProjectTagModalProps> = ({ target, onClos
   const noProjects = !isLoading && projects.length === 0;
 
   return (
+    <Portal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !isSaving) onClose();
       }}
@@ -156,7 +158,7 @@ export const ProjectTagModal: React.FC<ProjectTagModalProps> = ({ target, onClos
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-tag-title"
-        className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92vh] overflow-y-auto space-y-5 focus:outline-none"
+        className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92dvh] overflow-y-auto space-y-5 focus:outline-none"
       >
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-start gap-3 min-w-0">
@@ -324,5 +326,6 @@ export const ProjectTagModal: React.FC<ProjectTagModalProps> = ({ target, onClos
         </div>
       </div>
     </div>
+    </Portal>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { loansApi } from '../../api/endpoints/loans.api';
 import { formatINR } from '../../utils/currency';
 import { formatDate } from '../../utils/date';
+import { Portal } from '../ui/Portal';
 import {
   X,
   PlusCircle,
@@ -139,8 +140,9 @@ export const PartPaymentModal: React.FC<PartPaymentModalProps> = ({
   const totalCashOutflow = (parseFloat(amount) || 0) + (parseFloat(accruedInterest) || 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+    <Portal>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -390,6 +392,7 @@ export const PartPaymentModal: React.FC<PartPaymentModalProps> = ({
         </form>
       </div>
     </div>
+    </Portal>
   );
 };
 

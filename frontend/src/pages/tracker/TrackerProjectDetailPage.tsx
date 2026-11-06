@@ -66,6 +66,7 @@ import {
 } from 'recharts';
 import clsx from 'clsx';
 import { ProjectFundingReturns } from '../../components/projects/ProjectFundingReturns';
+import { Portal } from '../../components/ui/Portal';
 
 export const TrackerProjectDetailPage: React.FC = () => {
   const { id: projectId } = useParams<{ id: string }>();
@@ -2096,7 +2097,8 @@ export const TrackerProjectDetailPage: React.FC = () => {
 
       {/* Delete Expense Modal */}
       {expenseToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in">
+        <Portal>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 dark:border-slate-800">
             <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
               Delete Expense Entry?
@@ -2126,6 +2128,7 @@ export const TrackerProjectDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

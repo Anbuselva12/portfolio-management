@@ -20,12 +20,10 @@ import { FamilySettingsPage } from './pages/settings/FamilySettingsPage';
 import { MembersAccessPage } from './pages/settings/MembersAccessPage';
 import { TrackerHubPage } from './pages/tracker/TrackerHubPage';
 import { TrackerProjectDetailPage } from './pages/tracker/TrackerProjectDetailPage';
-import { FairShareTripHubPage } from './pages/fairshare/FairShareTripHubPage';
-import { FairShareTripDetailPage } from './pages/fairshare/FairShareTripDetailPage';
 
 /** Landing route for a user's preferred application (`expense_tracker` now means Expenses → Projects). */
 const landingRoute = (preferredApp?: string): string =>
-  preferredApp === 'fairshare' ? '/fairshare' : preferredApp === 'expense_tracker' ? '/expenses/projects' : '/dashboard';
+  preferredApp === 'expense_tracker' ? '/expenses/projects' : '/dashboard';
 
 /** Legacy `/tracker/projects/:id` links. */
 const LegacyTrackerProjectRedirect: React.FC = () => {
@@ -140,9 +138,6 @@ export const App: React.FC = () => {
           <Route path="tracker" element={<Navigate to="/expenses/projects" replace />} />
           <Route path="tracker/projects/:id" element={<LegacyTrackerProjectRedirect />} />
           <Route path="tracker/settings" element={<Navigate to="/settings/profile" replace />} />
-          <Route path="fairshare" element={<FairShareTripHubPage />} />
-          <Route path="fairshare/trips/:id" element={<FairShareTripDetailPage />} />
-          <Route path="fairshare/settings" element={<MyProfilePage />} />
           <Route path="settings">
             <Route index element={<Navigate to="/settings/profile" replace />} />
             <Route path="profile" element={<MyProfilePage />} />

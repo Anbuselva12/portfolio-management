@@ -450,7 +450,7 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 
 ### 4.9 Multi-App Architecture & Modular Expense Tracker
 > **Amended 2026-10-19 (owner decision):** the Expense Tracker is no longer a separate application. Its projects now live inside
-> FinFamily under **Expenses → Projects** (see §4.11). FR-80/FR-81 are superseded: the App Switcher lists **FinFamily** and **FairShare** only,
+> FinFamily under **Expenses → Projects** (see §4.11). FR-80/FR-81 are superseded: FinFamily is the only application (the App Switcher is removed; the FairShare app was retired 2026-11-06),
 > and `preferred_app = 'expense_tracker'` is interpreted as FinFamily with a landing route of `/expenses/projects`. Tracker table names are unchanged.
 
 - FR-80: The system supports an Appian-style top navigation App Switcher enabling one-click switching between FinFamily and the independent **Expense Tracker** application.
@@ -482,25 +482,6 @@ Family (1) ──< SuggestionSnapshot (N)   [cached engine runs]
 - FR-105: **Admin notification.** Each removal or departure creates a `FamilyNotification` (`member_removed` | `member_left`) with a summary of what was deleted. Admins see it as a banner on the Dashboard right after signing in until one of them dismisses it (`GET /families/notifications`, `POST /families/notifications/:id/dismiss`). Nothing is shown on the public sign-in page.
 - FR-106: **Sign-in surface.** Signing out always returns to the public landing page (`/`). The old `/login` and `/register` screens are retired: signed-out visitors are redirected to the landing page with the sign-in or sign-up drawer open (`/#signin`, `/#signup`); signed-in users are sent to the app.
 - Data model additions: `Family.is_personal` (bool, default false), `Family.owner_member_id` (nullable), and table `FamilyNotification(id, family_id, type, title, message, created_at, dismissed_at, dismissed_by_id)`. Production migration: `backend/prisma/manual-migrations/20261019_solo_workspace_notifications.postgres.sql` (additive, idempotent).
-
-### 4.10 FairShare — Trip & Event Group Expense Splitter
-- FR-88: **Independent Trip Tenancy & Security Boundary**: FairShare trips/events (`FairShareTrip`) operate under a separate security domain from FinFamily. Non-family trip participants and temporary guests have zero visibility or access to FinFamily wealth portfolios, income, loans, or household expenses.
-- FR-89: **Household / Family Units & Individual Participants**: Trips support first-class Household units (`FairShareHousehold`) grouping multiple individual participants (`FairShareParticipant`). If any member of a household contributes or incurs expenses, contributions and liabilities can be tracked individually or aggregated seamlessly to the family unit.
-- FR-90: **Registered & Guest Participant Accounts**: Trips accommodate both authenticated platform users (`Member`) and guest accounts without platform credentials. Registered trip admins can add guest participants, record expenses on their behalf, and link/claim guest profiles when users register.
-- FR-91: **Configurable Split Modes (Default & Per-Expense)**:
-  - *Equally by Headcount*: Distributed equally across all participating individuals.
-  - *Equally by Family Unit*: Distributed equally across participating households, regardless of family headcount.
-  - *Custom Percentage*: Custom weights per household/member summing to exactly 100%.
-  - *Exclusion / Exact Custom*: Support for single-family or subset-family coverage on specific items (e.g., specific activity taken by Family 1 and 2 only).
-- FR-92: **Dynamic Balance Calculation & Multi-Level Rollup Toggle**:
-  - Live calculation of Total Contributed ($C_i$) vs Total Fair Share Owed ($O_i$), yielding Net Balance ($B_i = C_i - O_i$).
-  - One-click UI toggle to view balances and settlements at either **Household / Family Level** or **Individual Member Level** at any time.
-- FR-93: **Optimal Greedy Debt Simplification Engine**:
-  - Automatically consolidates multi-party bilateral debts into the minimum number of transactions ($N-1$ or fewer) using a two-pointer greedy balance matching algorithm.
-  - Provides a clean, unambiguous "Who Pays Whom" settlement checklist.
-- FR-94: **One-Click WhatsApp Summary Export**: Generates a cleanly structured, emoji-rich WhatsApp Markdown summary (trip title, date, duration, itemized expense roll, and "Who Pays Whom" checklist) with a 1-click clipboard copy button.
-- FR-95: **Multi-Tab Excel Workbook Export**: Exports comprehensive `.xlsx` / `.csv` summaries containing high-level financial KPIs, household balance cards, and itemized transaction sheets.
-- FR-96: **Trip Lifecycle & Settlement Tracking**: Trips support statuses (`active`, `settling`, `settled`, `archived`) and recording of verified settlement transactions (`FairShareSettlement`).
 
 ---
 

@@ -5,6 +5,7 @@ import { Member } from '../../types';
 import { SlideDrawer } from '../../components/ui/SlideDrawer';
 import { SettingsNav } from '../../components/layout/SettingsNav';
 import { RemovalConfirmModal } from '../../components/family/RemovalConfirmModal';
+import { Portal } from '../../components/ui/Portal';
 import {
   Users,
   UserPlus,
@@ -568,7 +569,8 @@ export const MembersAccessPage: React.FC = () => {
 
       {/* Reset Code Modal */}
       {resetCodeModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <Portal>
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 max-w-sm w-full shadow-2xl text-center space-y-4 animate-in zoom-in-95 duration-150">
             <div className="w-12 h-12 rounded-2xl bg-cyan-100 dark:bg-cyan-950 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mx-auto">
               <KeyRound className="w-6 h-6" />
@@ -599,6 +601,7 @@ export const MembersAccessPage: React.FC = () => {
             </button>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

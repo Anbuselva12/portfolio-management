@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Loader2, X } from 'lucide-react';
+import { Portal } from '../ui/Portal';
 
 export interface RemovalImpact {
   assets: number;
@@ -71,8 +72,9 @@ export const RemovalConfirmModal: React.FC<RemovalConfirmModalProps> = ({ mode, 
   const title = mode === 'leave' ? 'Leave this family?' : `Remove ${personName}?`;
 
   return (
+    <Portal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !isWorking) onClose();
       }}
@@ -84,7 +86,7 @@ export const RemovalConfirmModal: React.FC<RemovalConfirmModalProps> = ({ mode, 
         aria-modal="true"
         aria-labelledby="removal-title"
         aria-describedby="removal-desc"
-        className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92vh] overflow-y-auto space-y-5 focus:outline-none"
+        className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 my-auto max-h-[92dvh] overflow-y-auto space-y-5 focus:outline-none"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -150,5 +152,6 @@ export const RemovalConfirmModal: React.FC<RemovalConfirmModalProps> = ({ mode, 
         </div>
       </div>
     </div>
+    </Portal>
   );
 };

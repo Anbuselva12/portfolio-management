@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { ExpensesHubTabs } from '../../components/expenses/ExpensesHubTabs';
+import { Portal } from '../../components/ui/Portal';
 
 export const TrackerHubPage: React.FC = () => {
   const [projects, setProjects] = useState<TrackerProject[]>([]);
@@ -289,8 +290,9 @@ export const TrackerHubPage: React.FC = () => {
 
       {/* New Project Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-800 space-y-5 max-h-[92vh] overflow-y-auto">
+        <Portal>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-800 space-y-5 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center">
@@ -390,6 +392,7 @@ export const TrackerHubPage: React.FC = () => {
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );
